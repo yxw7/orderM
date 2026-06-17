@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>验收单管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    body[data-active-page="02_01_验收单管理.html"] #acceptance-remark-tooltip {
+      position: fixed;
+      z-index: 60;
+      max-width: 320px;
+      padding: 8px 12px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+      font-size: 13px;
+      line-height: 1.6;
+      color: #374151;
+      white-space: pre-wrap;
+      word-break: break-word;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="验收单管理"
+  data-active-page="02_01_验收单管理.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden">
+    <!-- 检索区 -->
+    <div class="bg-white rounded border border-gray-200 p-4 mb-4">
+      <form id="acceptance-search-form">
+        <div class="grid grid-cols-4 gap-4 items-center">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">验收单号</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">验收单名称</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">资源类型</label>
+            <select class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              <option>全部</option>
+              <option>纸质书</option>
+              <option>视听资料</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2 justify-end">
+            <button type="button" id="acceptance-search-expand"
+              class="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700 mr-2">
+              展开
+              <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <button type="submit"
+              class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+            <button type="button" onclick="Common.resetForm('acceptance-search-form')"
+              class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+          </div>
+        </div>
+        <div id="acceptance-search-extra" class="hidden grid grid-cols-4 gap-4 mt-3">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">验收单状态</label>
+            <select class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm">
+              <option>全部</option>
+              <option>未开始</option>
+              <option>进行中</option>
+              <option>已结束</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">供应商</label>
+            <select class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm">
+              <option>全部</option>
+              <option>北京市图书进出口有限公司</option>
+              <option>湖北三新</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">创建人</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">创建时间</label>
+            <input type="date" class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm">
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="flex items-center gap-2 mb-4">
+      <button type="button" data-modal-open="acceptance-add-modal"
+        class="px-4 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">新增验收单</button>
+      <button type="button" id="acceptance-settlement-btn"
+        class="px-4 py-1.5 text-sm rounded bg-amber-500 text-white hover:bg-amber-600">申请结算</button>
+      <div class="relative">
+        <button type="button" data-dropdown
+          class="flex items-center gap-1 px-4 py-1.5 bg-emerald-500 text-white text-sm rounded hover:bg-emerald-600">
+          导出列表
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div data-dropdown-menu class="hidden absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-10 min-w-[120px]">
+          <a href="02_01_07_导出配置-验收单列表.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">导出配置</a>
+          <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">导出清单</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="bg-white rounded border border-gray-200" data-list-selection-root="acceptance-list">
+      <div class="overflow-x-auto table-scroll">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-3 py-2.5 text-left w-10">
+                <input type="checkbox" id="acceptance-select-all" class="rounded">
+              </th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">序号</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">验收单号</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">设为验收单</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">验收单名称</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">资源类型</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">语种</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">采选方式</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">供应商</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">发货单号</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">验收单状态</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">收/换/退书数</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">验收备注</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">分配条码</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">创建时间</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">创建人</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">结算状态</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-0 bg-gray-50">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="acceptance-table-body"></tbody>
+        </table>
+      </div>
+      <!-- 分页 -->
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+        <span id="acceptance-list-total" class="text-sm text-gray-500" data-list-selection-total
+          data-list-selection-root="acceptance-list" data-list-selection-checkbox=".acceptance-row-checkbox"
+          data-list-selection-unit="条">共 11 条</span>
+        <div class="flex items-center gap-2">
+          <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <button type="button" class="px-3 py-1 bg-sky-600 text-white rounded text-sm">1</button>
+          <button type="button" class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">2</button>
+          <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+          <select class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+            <option>10 条/页</option>
+            <option>20 条/页</option>
+            <option>50 条/页</option>
+          </select>
+          <span class="text-sm text-gray-500">跳至</span>
+          <input type="text" class="w-12 border border-gray-300 rounded px-2 py-1 text-sm text-center" value="1">
+          <span class="text-sm text-gray-500">页</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增验收单弹窗 -->
+  <div id="acceptance-add-modal" data-modal
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh]"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+        <h2 class="text-base font-medium text-gray-800">新增验收单</h2>
+        <button type="button" data-modal-close
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      </div>
+      <form id="acceptance-add-form" class="px-6 py-5 space-y-4 overflow-y-auto">
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 验收单名称
+          </label>
+          <div class="flex-1">
+            <input type="text" name="name" placeholder="请输入验收单名称" autocomplete="off"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 资源类型
+          </label>
+          <div class="flex-1">
+            <select name="resourceType"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+              <option value="">请选择资源类型</option>
+              <option value="纸质书">纸质书</option>
+              <option value="视听资料">视听资料</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 语种
+          </label>
+          <div class="flex-1">
+            <select name="language"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500">
+              <option value="">请选择语种</option>
+              <option value="英文">英文</option>
+              <option value="日文">日文</option>
+              <option value="俄文">俄文</option>
+              <option value="法文">法文</option>
+              <option value="德文">德文</option>
+              <option value="西文">西文</option>
+              <option value="意大利文">意大利文</option>
+              <option value="韩文">韩文</option>
+              <option value="其他">其他</option>
+              <option value="中文">中文</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 采选方式
+          </label>
+          <div class="flex-1">
+            <select name="method"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500">
+              <option value="">请选择采选方式</option>
+              <option value="征订目录">征订目录</option>
+              <option value="现采">现采</option>
+              <option value="交存">交存</option>
+              <option value="捐赠">捐赠</option>
+              <option value="拍卖">拍卖</option>
+              <option value="交换">交换</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 供应商
+          </label>
+          <div class="flex-1">
+            <select name="supplier"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500">
+              <option value="">请选择供应商</option>
+              <option value="北京市图书进出口有限公司">北京市图书进出口有限公司</option>
+              <option value="湖北三新">湖北三新</option>
+              <option value="湖南长沙">湖南长沙</option>
+              <option value="教图">教图</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">发货单号</label>
+          <div class="flex-1">
+            <input type="text" name="shipNo" placeholder="请输入发货单号" autocomplete="off"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0"></label>
+          <div class="flex-1 flex items-center gap-6 flex-wrap">
+            <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="setCurrent" checked class="rounded text-sky-600">
+              <span class="text-sm text-gray-700">设为当前工作验收单</span>
+            </label>
+            <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="autoBarcode" id="acceptance-auto-barcode" checked class="rounded text-sky-600">
+              <span class="text-sm text-gray-700">是否支持自动分配条码号</span>
+            </label>
+          </div>
+        </div>
+        <div id="acceptance-barcode-row" class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 条码号类型
+          </label>
+          <div class="flex-1 flex items-center gap-2">
+            <select name="barcodeType" id="acceptance-barcode-type"
+              class="w-40 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500">
+              <option value="">请选择</option>
+              <option value="小语种成人图书">小语种成人图书</option>
+              <option value="地方文献">地方文献</option>
+              <option value="全部语种">全部语种</option>
+            </select>
+            <input type="text" name="initialBarcode" id="acceptance-initial-barcode" placeholder="请输入初始条码号" autocomplete="off"
+              class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">验收备注</label>
+          <div class="flex-1">
+            <textarea name="remark" rows="4" placeholder="请输入验收备注"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-none"></textarea>
+          </div>
+        </div>
+      </form>
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+        <button type="button" data-modal-close
+          class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+        <button type="button" id="acceptance-add-submit"
+          class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑验收单弹窗 -->
+  <div id="acceptance-edit-modal" data-modal
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh]"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+        <h2 class="text-base font-medium text-gray-800">编辑验收单</h2>
+        <button type="button" data-modal-close
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      </div>
+      <form id="acceptance-edit-form" class="px-6 py-5 space-y-4 overflow-y-auto">
+        <input type="hidden" name="rowNo">
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 验收单名称
+          </label>
+          <div class="flex-1">
+            <input type="text" name="name" placeholder="请输入验收单名称" autocomplete="off"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 资源类型
+          </label>
+          <div class="flex-1">
+            <select name="resourceType"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+              <option value="">请选择资源类型</option>
+              <option value="纸质书">纸质书</option>
+              <option value="视听资料">视听资料</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 语种
+          </label>
+          <div class="flex-1">
+            <select name="language"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+              <option value="">请选择语种</option>
+              <option value="英文">英文</option>
+              <option value="日文">日文</option>
+              <option value="俄文">俄文</option>
+              <option value="法文">法文</option>
+              <option value="德文">德文</option>
+              <option value="西文">西文</option>
+              <option value="意大利文">意大利文</option>
+              <option value="韩文">韩文</option>
+              <option value="其他">其他</option>
+              <option value="中文">中文</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 采选方式
+          </label>
+          <div class="flex-1">
+            <select name="method"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+              <option value="">请选择采选方式</option>
+              <option value="征订目录">征订目录</option>
+              <option value="现采">现采</option>
+              <option value="交存">交存</option>
+              <option value="捐赠">捐赠</option>
+              <option value="拍卖">拍卖</option>
+              <option value="交换">交换</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 供应商
+          </label>
+          <div class="flex-1">
+            <select name="supplier"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+              <option value="">请选择供应商</option>
+              <option value="北京市图书进出口有限公司">北京市图书进出口有限公司</option>
+              <option value="湖北三新">湖北三新</option>
+              <option value="湖南长沙">湖南长沙</option>
+              <option value="教图">教图</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">发货单号</label>
+          <div class="flex-1">
+            <input type="text" name="shipNo" placeholder="请输入发货单号" autocomplete="off"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0"></label>
+          <div class="flex-1 flex items-center gap-6 flex-wrap">
+            <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="setCurrent" id="acceptance-edit-set-current" class="rounded text-sky-600">
+              <span class="text-sm text-gray-700">设为当前工作验收单</span>
+            </label>
+            <label id="acceptance-edit-auto-barcode-wrap" class="inline-flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="autoBarcode" id="acceptance-edit-auto-barcode" class="rounded text-sky-600">
+              <span class="text-sm text-gray-700">是否支持自动分配条码号</span>
+            </label>
+          </div>
+        </div>
+        <div id="acceptance-edit-barcode-row" class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 条码号类型
+          </label>
+          <div class="flex-1 flex items-center gap-2">
+            <select name="barcodeType" id="acceptance-edit-barcode-type"
+              class="w-40 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+              <option value="">请选择</option>
+              <option value="成人视听">成人视听</option>
+              <option value="小语种成人图书">小语种成人图书</option>
+              <option value="地方文献">地方文献</option>
+              <option value="全部语种">全部语种</option>
+            </select>
+            <input type="text" name="initialBarcode" id="acceptance-edit-initial-barcode" placeholder="请输入初始条码号" autocomplete="off"
+              class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-36 text-right pt-2 shrink-0">验收备注</label>
+          <div class="flex-1">
+            <textarea name="remark" rows="4" placeholder="请输入验收备注"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-none"></textarea>
+          </div>
+        </div>
+      </form>
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+        <button type="button" data-modal-close
+          class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+        <button type="button" id="acceptance-edit-submit"
+          class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 申请结算确认弹窗 -->
+  <div id="acceptance-settlement-confirm-modal" data-modal
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md" onclick="event.stopPropagation()">
+      <div class="px-6 py-6 flex items-start gap-4">
+        <div class="shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+          <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01M12 3a9 9 0 100 18 9 9 0 000-18z"/>
+          </svg>
+        </div>
+        <p class="text-sm text-gray-800 pt-2.5">确定申请结算该验收单吗？</p>
+      </div>
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+        <button type="button" data-modal-close
+          class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+        <button type="button" id="acceptance-settlement-confirm"
+          class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="acceptance-remark-tooltip" class="hidden" role="tooltip"></div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/acceptance-store.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    /** 验收单管理示例数据 */
+    const acceptanceRows = [
+      { no: 1, id: 'ysPG00120200602001', name: '20200602ceshi', type: '纸质书', lang: '中文', method: '现采', supplier: '北京市图书进出口有限公司', shipNo: '20200602发货单001', status: 'finished', settlement: 'settled', counts: '2/0/0', remark: false, barcode: '是', time: '2020-06-02 09:47:52', creator: '杨晓婉', detailPage: '02_01_02_验收详情按种_纸质书.html', defaultAccept: false },
+      { no: 2, id: 'ysPG00120200602002', name: '测试验收', type: '视听资料', lang: '中文', method: '现采', supplier: '湖北三新', shipNo: '123123', status: 'notStarted', settlement: 'notApplied', counts: '0/0/0', remark: false, remarkText: '', barcode: '是', autoBarcode: true, barcodeType: '', initialBarcode: '', setCurrent: false, time: '2020-06-02 10:07:42', creator: '赵付', detailPage: '02_01_05_验收详情按种_视听资料.html', defaultAccept: false },
+      { no: 3, id: 'ysPG00120200602003', name: '2025年02月20日第一批', type: '视听资料', lang: '西语', method: '现采', supplier: '北京人天', shipNo: 'ZGBBTSG21121301-266', status: 'inProgress', settlement: 'notApplied', counts: '1/0/0', remark: false, remarkText: '', barcode: '是', autoBarcode: true, barcodeType: '成人视听', initialBarcode: '001SC26300124', setCurrent: false, time: '2020-06-02 10:20:37', creator: '王二小', detailPage: '02_01_05_验收详情按种_视听资料.html', defaultAccept: false },
+      { no: 4, id: 'ysPG00120200602004', name: '测试验收', type: '视听资料', lang: '英文', method: '现采', supplier: '湖北三新', shipNo: '20200602发货单004', status: 'notStarted', settlement: 'notApplied', counts: '0/0/0', remark: true, remarkText: '测试备注内容', barcode: '否', autoBarcode: false, barcodeType: '', initialBarcode: '', setCurrent: true, time: '2020-06-02 10:20:37', creator: '王二小', detailPage: '02_01_05_验收详情按种_视听资料.html', defaultAccept: true },
+      { no: 5, id: 'ysPG00120200602005', name: '测试验收', type: '视听资料', lang: '英文', method: '现采', supplier: '湖北三新', shipNo: '20200602发货单005', status: 'notStarted', settlement: 'notApplied', counts: '0/0/0', remark: false, remarkText: '', barcode: '是', autoBarcode: true, barcodeType: '小语种成人图书', initialBarcode: '001000001', setCurrent: false, time: '2020-06-02 11:05:12', creator: '王二小', detailPage: '02_01_05_验收详情按种_视听资料.html', defaultAccept: false },
+      { no: 6, id: 'ysPG00120200602006', name: '2025年02月20日第一批', type: '纸质书', lang: '西语', method: '现采', supplier: '北京人天', shipNo: 'ZGBBTSG21121301-266', status: 'inProgress', settlement: 'pending', counts: '3/1/0', remark: false, remarkText: '', barcode: '是', autoBarcode: true, barcodeType: '全部语种', initialBarcode: '001000123456', setCurrent: false, time: '2020-06-02 14:30:00', creator: '杨晓婉', detailPage: '02_01_02_验收详情按种_纸质书.html', defaultAccept: false },
+      { no: 7, id: 'ysPG00120200602007', name: '视听验收单', type: '视听资料', lang: '英文', method: '现采', supplier: '湖北三新', shipNo: '20200602发货单007', status: 'finished', settlement: 'settled', counts: '5/0/1', remark: true, remarkText: '本批次为英文视听资料，请注意分类编目。', barcode: '是', time: '2020-06-02 16:45:30', creator: '赵付', detailPage: '02_01_05_验收详情按种_视听资料.html', defaultAccept: false },
+      { no: 8, id: 'ysPG00120200602008', name: '纸质书验收', type: '纸质书', lang: '中文', method: '现采', supplier: '北京市图书进出口有限公司', shipNo: '20200603发货单001', status: 'notStarted', settlement: 'notApplied', counts: '0/0/0', remark: false, remarkText: '', barcode: '否', autoBarcode: false, barcodeType: '', initialBarcode: '', setCurrent: false, time: '2020-06-03 09:10:00', creator: '杨晓婉', detailPage: '02_01_02_验收详情按种_纸质书.html', defaultAccept: false },
+      { no: 9, id: 'ysPG00120200602009', name: '测试验收2', type: '视听资料', lang: '中文', method: '现采', supplier: '湖北三新', shipNo: '20200603发货单002', status: 'inProgress', settlement: 'pending', counts: '2/0/0', remark: false, remarkText: '', barcode: '是', autoBarcode: true, barcodeType: '成人视听', initialBarcode: '001SC26300999', setCurrent: false, time: '2020-06-03 10:22:15', creator: '王二小', detailPage: '02_01_05_验收详情按种_视听资料.html', defaultAccept: false },
+      { no: 10, id: 'ysPG00120200602010', name: '验收单测试', type: '纸质书', lang: '中文', method: '现采', supplier: '北京市图书进出口有限公司', shipNo: '20200603发货单003', status: 'finished', settlement: 'settled', counts: '4/0/0', remark: false, barcode: '是', time: '2020-06-03 15:00:00', creator: '赵付', detailPage: '02_01_02_验收详情按种_纸质书.html', defaultAccept: false }
+    ];
+
+    /**
+     * 渲染验收单状态标签
+     * @param {string} status - 状态标识
+     * @returns {string}
+     */
+    function renderAcceptanceStatus(status) {
+      const map = {
+        finished: '<span class="inline-block px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600 border border-gray-200">已结束</span>',
+        notStarted: '<span class="inline-block px-2 py-0.5 rounded text-xs bg-gray-50 text-gray-500 border border-gray-200">未开始</span>',
+        inProgress: '<span class="inline-block px-2 py-0.5 rounded text-xs bg-sky-50 text-sky-600 border border-sky-200">进行中</span>'
+      };
+      return map[status] || '';
+    }
+
+    /**
+     * 渲染结算状态标签
+     * @param {string} settlement - 结算状态标识
+     * @returns {string}
+     */
+    function renderSettlementStatus(settlement) {
+      const map = {
+        pending: '<span class="inline-block px-2 py-0.5 rounded text-xs bg-amber-50 text-amber-600 border border-amber-200">待结算</span>',
+        settled: '<span class="inline-block px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-600 border border-emerald-200">已结算</span>',
+        notApplied: '<span class="inline-block px-2 py-0.5 rounded text-xs bg-gray-50 text-gray-500 border border-gray-200">未申请</span>'
+      };
+      return map[settlement] || '';
+    }
+
+    /**
+     * 渲染操作列
+     * @param {Object} row - 行数据
+     * @returns {string}
+     */
+    function renderAcceptanceOps(row) {
+      if (row.status === 'notStarted') {
+        return `<a href="#" class="text-sky-600 hover:underline mr-3 acceptance-edit-btn" data-row-no="${row.no}">编辑</a>
+                <a href="02_01_03_删除_结束验收单.html" class="text-red-500 hover:underline">删除</a>`;
+      }
+      if (row.status === 'inProgress') {
+        return `<a href="#" class="text-sky-600 hover:underline mr-3 acceptance-edit-btn" data-row-no="${row.no}">编辑</a>
+                <a href="02_01_03_删除_结束验收单.html" class="text-sky-600 hover:underline">结束验收</a>`;
+      }
+      return '<span class="text-gray-400">—</span>';
+    }
+
+    /**
+     * 根据资源类型解析验收详情页
+     * @param {string} resourceType - 资源类型
+     * @returns {string}
+     */
+    function resolveAcceptanceDetailPage(resourceType) {
+      if (resourceType === '视听资料') {
+        return '02_01_05_验收详情按种_视听资料.html';
+      }
+      return '02_01_02_验收详情按种_纸质书.html';
+    }
+
+    /**
+     * 跳转至验收单详情页
+     * @param {number} rowNo - 行序号
+     */
+    function navigateToAcceptanceDetail(rowNo) {
+      const row = acceptanceRows.find(r => r.no === rowNo);
+      if (!row) return;
+
+      const detailPage = resolveAcceptanceDetailPage(row.type);
+
+      const context = {
+        acceptance: {
+          id: row.id,
+          name: row.name,
+          type: row.type,
+          lang: row.lang,
+          shipNo: row.shipNo,
+          supplier: row.supplier,
+          remarkText: row.remarkText || '',
+          status: row.status,
+          totalListPrice: row.totalListPrice,
+          totalNetPrice: row.totalNetPrice,
+          discount: row.discount,
+          totalSpeciesCount: row.totalSpeciesCount,
+          totalVolumeCount: row.totalVolumeCount
+        },
+        viewMode: 'species'
+      };
+      if (row.type === '视听资料' && row.counts === '0/0/0') {
+        context.detailRows = [];
+      }
+
+      sessionStorage.setItem('acceptanceDetailContext', JSON.stringify(context));
+
+      const title = `验收详情 - ${row.id}`;
+      const tabMgr = typeof TabManager !== 'undefined' ? TabManager.getActiveManager() : null;
+      if (tabMgr?.hostPage) {
+        tabMgr.openTab(detailPage, title, { reload: true });
+        return;
+      }
+      location.href = detailPage;
+    }
+
+    /**
+     * 渲染验收备注单元格
+     * @param {Object} row - 行数据
+     * @returns {string}
+     */
+    function renderAcceptanceRemarkCell(row) {
+      const remark = (row.remarkText || '').trim();
+      if (!remark) {
+        return '<span class="text-gray-300 cursor-default select-none">查看</span>';
+      }
+      return `<span class="acceptance-remark-trigger text-sky-600 hover:underline cursor-pointer"
+        data-row-no="${row.no}">查看</span>`;
+    }
+
+    /** @type {HTMLElement|null} */
+    let acceptanceRemarkTooltip = null;
+
+    /**
+     * 定位验收备注浮层
+     * @param {HTMLElement} trigger - 触发元素
+     */
+    function positionAcceptanceRemarkTooltip(trigger) {
+      if (!acceptanceRemarkTooltip) return;
+
+      const rect = trigger.getBoundingClientRect();
+      const gap = 6;
+      let top = rect.bottom + gap;
+      let left = rect.left;
+
+      acceptanceRemarkTooltip.classList.remove('hidden');
+      const tooltipRect = acceptanceRemarkTooltip.getBoundingClientRect();
+
+      if (left + tooltipRect.width > window.innerWidth - 8) {
+        left = Math.max(8, window.innerWidth - tooltipRect.width - 8);
+      }
+      if (top + tooltipRect.height > window.innerHeight - 8) {
+        top = Math.max(8, rect.top - tooltipRect.height - gap);
+      }
+
+      acceptanceRemarkTooltip.style.top = `${top}px`;
+      acceptanceRemarkTooltip.style.left = `${left}px`;
+    }
+
+    /**
+     * 隐藏验收备注浮层
+     */
+    function hideAcceptanceRemarkTooltip() {
+      acceptanceRemarkTooltip?.classList.add('hidden');
+    }
+
+    /**
+     * 绑定验收备注浮层交互
+     */
+    function initAcceptanceRemarkTooltip() {
+      acceptanceRemarkTooltip = document.getElementById('acceptance-remark-tooltip');
+      const tbody = document.getElementById('acceptance-table-body');
+      if (!acceptanceRemarkTooltip || !tbody) return;
+
+      tbody.addEventListener('mouseover', event => {
+        const trigger = event.target.closest('.acceptance-remark-trigger');
+        if (!trigger) return;
+
+        const row = acceptanceRows.find(item => item.no === Number(trigger.dataset.rowNo));
+        const remark = (row?.remarkText || '').trim();
+        if (!remark) return;
+
+        acceptanceRemarkTooltip.textContent = remark;
+        positionAcceptanceRemarkTooltip(trigger);
+      });
+
+      tbody.addEventListener('mouseout', event => {
+        const trigger = event.target.closest('.acceptance-remark-trigger');
+        if (!trigger) return;
+
+        const related = event.relatedTarget;
+        if (related instanceof Node && trigger.contains(related)) return;
+        hideAcceptanceRemarkTooltip();
+      });
+
+      window.addEventListener('scroll', hideAcceptanceRemarkTooltip, true);
+    }
+
+    /**
+     * 渲染表格行
+     * @param {Object} row - 行数据
+     * @returns {string}
+     */
+    function renderAcceptanceRow(row) {
+      const remarkCell = renderAcceptanceRemarkCell(row);
+      const isFinished = row.status === 'finished';
+      const disabledAttr = isFinished ? ' disabled' : '';
+      const disabledClass = isFinished ? ' opacity-40 cursor-not-allowed' : '';
+      const checkedAttr = row.defaultAccept && !isFinished ? ' checked' : '';
+      const radio =
+        `<input type="radio" name="default-acceptance"${checkedAttr}${disabledAttr} class="text-sky-600 acceptance-select-radio${disabledClass}" data-row-no="${row.no}">`;
+      return `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2">
+            <input type="checkbox" class="rounded acceptance-row-checkbox" data-row-no="${row.no}">
+          </td>
+          <td class="px-3 py-2 text-gray-600">${row.no}</td>
+          <td class="px-3 py-2 whitespace-nowrap">
+            <a href="#" class="text-sky-600 hover:underline acceptance-id-link"
+              data-row-no="${row.no}">${row.id}</a>
+          </td>
+          <td class="px-3 py-2 text-center">${radio}</td>
+          <td class="px-3 py-2">${row.name}</td>
+          <td class="px-3 py-2">${row.type}</td>
+          <td class="px-3 py-2">${row.lang}</td>
+          <td class="px-3 py-2">${row.method}</td>
+          <td class="px-3 py-2">${row.supplier}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.shipNo}</td>
+          <td class="px-3 py-2">${renderAcceptanceStatus(row.status)}</td>
+          <td class="px-3 py-2">${row.counts}</td>
+          <td class="px-3 py-2">${remarkCell}</td>
+          <td class="px-3 py-2">${row.barcode}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.time}</td>
+          <td class="px-3 py-2">${row.creator}</td>
+          <td class="px-3 py-2">${renderSettlementStatus(row.settlement)}</td>
+          <td class="px-3 py-2 whitespace-nowrap sticky right-0 bg-white">${renderAcceptanceOps(row)}</td>
+        </tr>`;
+    }
+
+    /**
+     * 切换条码号类型行的启用状态
+     * @param {boolean} enabled - 是否启用
+     */
+    function toggleBarcodeFields(enabled) {
+      const row = document.getElementById('acceptance-barcode-row');
+      const typeSelect = document.getElementById('acceptance-barcode-type');
+      const initialInput = document.getElementById('acceptance-initial-barcode');
+      if (!row || !typeSelect || !initialInput) return;
+      typeSelect.disabled = !enabled;
+      initialInput.disabled = !enabled;
+      row.classList.toggle('opacity-50', !enabled);
+      if (!enabled) {
+        typeSelect.value = '';
+        initialInput.value = '';
+      }
+    }
+
+    /** 进行中状态下不可编辑的字段名 */
+    const EDIT_LOCKED_FIELDS = ['resourceType', 'language', 'method', 'supplier'];
+
+    /**
+     * 切换编辑弹窗条码号类型行的启用状态
+     * @param {boolean} enabled - 是否启用
+     */
+    function toggleEditBarcodeFields(enabled) {
+      const row = document.getElementById('acceptance-edit-barcode-row');
+      const typeSelect = document.getElementById('acceptance-edit-barcode-type');
+      const initialInput = document.getElementById('acceptance-edit-initial-barcode');
+      if (!row || !typeSelect || !initialInput) return;
+      typeSelect.disabled = !enabled;
+      initialInput.disabled = !enabled;
+      row.classList.toggle('opacity-50', !enabled);
+    }
+
+    /**
+     * 根据验收单状态设置编辑表单字段可编辑性
+     * @param {string} status - 验收单状态
+     */
+    function setEditFormFieldState(status) {
+      const form = document.getElementById('acceptance-edit-form');
+      const autoBarcodeWrap = document.getElementById('acceptance-edit-auto-barcode-wrap');
+      if (!form) return;
+      const isInProgress = status === 'inProgress';
+      EDIT_LOCKED_FIELDS.forEach(name => {
+        form.elements[name].disabled = isInProgress;
+      });
+      form.elements.autoBarcode.disabled = isInProgress;
+      if (autoBarcodeWrap) {
+        autoBarcodeWrap.classList.toggle('opacity-50', isInProgress);
+        autoBarcodeWrap.classList.toggle('cursor-not-allowed', isInProgress);
+      }
+      if (isInProgress) {
+        toggleEditBarcodeFields(false);
+      } else {
+        toggleEditBarcodeFields(form.elements.autoBarcode.checked);
+      }
+    }
+
+    /**
+     * 根据行数据填充编辑表单
+     * @param {Object} row - 行数据
+     */
+    function fillAcceptanceEditForm(row) {
+      const form = document.getElementById('acceptance-edit-form');
+      if (!form) return;
+      form.elements.rowNo.value = row.no;
+      form.elements.name.value = row.name || '';
+      form.elements.resourceType.value = row.type || '';
+      form.elements.language.value = row.lang || '';
+      form.elements.method.value = row.method || '';
+      form.elements.supplier.value = row.supplier || '';
+      form.elements.shipNo.value = row.shipNo || '';
+      form.elements.setCurrent.checked = row.setCurrent ?? row.defaultAccept ?? false;
+      const autoBarcode = row.autoBarcode ?? row.barcode === '是';
+      form.elements.autoBarcode.checked = autoBarcode;
+      form.elements.barcodeType.value = row.barcodeType || '';
+      form.elements.initialBarcode.value = row.initialBarcode || '';
+      form.elements.remark.value = row.remarkText || '';
+    }
+
+    /**
+     * 打开编辑验收单弹窗
+     * @param {number} rowNo - 行序号
+     */
+    function openAcceptanceEditModal(rowNo) {
+      const row = acceptanceRows.find(r => r.no === rowNo);
+      const modal = document.getElementById('acceptance-edit-modal');
+      if (!row || !modal || (row.status !== 'notStarted' && row.status !== 'inProgress')) return;
+      fillAcceptanceEditForm(row);
+      setEditFormFieldState(row.status);
+      modal.classList.remove('hidden');
+    }
+
+    /**
+     * 重新渲染验收单列表
+     */
+    function renderAcceptanceTable() {
+      const tbody = document.getElementById('acceptance-table-body');
+      if (tbody) tbody.innerHTML = acceptanceRows.map(renderAcceptanceRow).join('');
+      syncAcceptanceSelectAllState();
+      ListSelectionSummary.refresh('acceptance-list-total', { totalCount: acceptanceRows.length });
+    }
+
+    /**
+     * 获取已勾选的验收单行号列表
+     * @returns {number[]}
+     */
+    function getCheckedAcceptanceRowNos() {
+      return Array.from(document.querySelectorAll('.acceptance-row-checkbox:checked'))
+        .map(el => Number(el.dataset.rowNo))
+        .filter(no => !Number.isNaN(no));
+    }
+
+    /**
+     * 同步表头全选复选框状态
+     */
+    function syncAcceptanceSelectAllState() {
+      const selectAll = document.getElementById('acceptance-select-all');
+      const rowChecks = document.querySelectorAll('.acceptance-row-checkbox');
+      if (!selectAll || !rowChecks.length) return;
+      const checkedCount = document.querySelectorAll('.acceptance-row-checkbox:checked').length;
+      selectAll.checked = checkedCount > 0 && checkedCount === rowChecks.length;
+      selectAll.indeterminate = checkedCount > 0 && checkedCount < rowChecks.length;
+    }
+
+    /**
+     * 打开申请结算确认弹窗
+     */
+    function openSettlementConfirmModal() {
+      const checkedNos = getCheckedAcceptanceRowNos();
+      if (!checkedNos.length) {
+        alert('请先勾选验收单');
+        return;
+      }
+      const modal = document.getElementById('acceptance-settlement-confirm-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭申请结算确认弹窗
+     */
+    function closeSettlementConfirmModal() {
+      const modal = document.getElementById('acceptance-settlement-confirm-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    /**
+     * 设置当前工作验收单并同步列表单选状态
+     * @param {number} rowNo - 行序号
+     */
+    function setCurrentAcceptanceByNo(rowNo) {
+      const row = acceptanceRows.find(r => r.no === rowNo);
+      if (!row || row.status === 'finished') return;
+      acceptanceRows.forEach(r => {
+        const selected = r.no === rowNo;
+        r.defaultAccept = selected;
+        r.setCurrent = selected;
+      });
+      AcceptanceStore.set(AcceptanceStore.fromRow(row));
+      renderAcceptanceTable();
+    }
+
+    /**
+     * 从本地存储或默认选中行初始化当前工作验收单
+     */
+    function initCurrentAcceptanceFromStore() {
+      const stored = AcceptanceStore.get();
+      if (stored?.no) {
+        const matched = acceptanceRows.find(r => r.no === stored.no);
+        if (matched?.status === 'finished') {
+          AcceptanceStore.clear();
+        } else if (matched) {
+          Object.assign(matched, {
+            name: stored.name,
+            type: stored.type,
+            lang: stored.lang,
+            method: stored.method,
+            supplier: stored.supplier,
+            shipNo: stored.shipNo,
+            defaultAccept: true,
+            setCurrent: true
+          });
+          acceptanceRows.forEach(r => {
+            if (r.no !== stored.no) {
+              r.defaultAccept = false;
+              r.setCurrent = false;
+            }
+          });
+          return;
+        }
+      }
+      const defaultRow = acceptanceRows.find(r => r.defaultAccept);
+      if (defaultRow) AcceptanceStore.set(AcceptanceStore.fromRow(defaultRow));
+    }
+
+    /**
+     * 根据编辑表单更新行数据
+     * @param {HTMLFormElement} form - 编辑表单
+     * @returns {Object|null}
+     */
+    function updateRowFromEditForm(form) {
+      const rowNo = Number(form.elements.rowNo.value);
+      const row = acceptanceRows.find(r => r.no === rowNo);
+      if (!row) return null;
+      row.name = form.elements.name.value.trim();
+      if (!form.elements.resourceType.disabled) row.type = form.elements.resourceType.value;
+      if (!form.elements.language.disabled) row.lang = form.elements.language.value;
+      if (!form.elements.method.disabled) row.method = form.elements.method.value;
+      if (!form.elements.supplier.disabled) row.supplier = form.elements.supplier.value;
+      row.shipNo = form.elements.shipNo.value.trim();
+      row.setCurrent = form.elements.setCurrent.checked;
+      row.remarkText = form.elements.remark.value.trim();
+      row.remark = !!row.remarkText;
+      return row;
+    }
+
+    /**
+     * 重置新增验收单表单
+     */
+    function resetAcceptanceAddForm() {
+      const form = document.getElementById('acceptance-add-form');
+      if (!form) return;
+      form.reset();
+      const autoBarcode = document.getElementById('acceptance-auto-barcode');
+      if (autoBarcode) {
+        autoBarcode.checked = true;
+        toggleBarcodeFields(true);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initCurrentAcceptanceFromStore();
+      renderAcceptanceTable();
+      initAcceptanceRemarkTooltip();
+
+      const tbody = document.getElementById('acceptance-table-body');
+      if (tbody) {
+        tbody.addEventListener('click', e => {
+          const idLink = e.target.closest('.acceptance-id-link');
+          if (idLink) {
+            e.preventDefault();
+            navigateToAcceptanceDetail(Number(idLink.dataset.rowNo));
+            return;
+          }
+
+          const editBtn = e.target.closest('.acceptance-edit-btn');
+          if (!editBtn) return;
+          e.preventDefault();
+          openAcceptanceEditModal(Number(editBtn.dataset.rowNo));
+        });
+        tbody.addEventListener('change', e => {
+          const radio = e.target.closest('.acceptance-select-radio');
+          if (radio) {
+            if (radio.disabled) return;
+            setCurrentAcceptanceByNo(Number(radio.dataset.rowNo));
+            return;
+          }
+          if (e.target.classList.contains('acceptance-row-checkbox')) {
+            syncAcceptanceSelectAllState();
+          }
+        });
+      }
+
+      const selectAll = document.getElementById('acceptance-select-all');
+      if (selectAll) {
+        selectAll.addEventListener('change', () => {
+          document.querySelectorAll('.acceptance-row-checkbox').forEach(cb => {
+            cb.checked = selectAll.checked;
+          });
+          selectAll.indeterminate = false;
+        });
+      }
+
+      document.getElementById('acceptance-settlement-btn')?.addEventListener('click', openSettlementConfirmModal);
+      document.getElementById('acceptance-settlement-confirm')?.addEventListener('click', closeSettlementConfirmModal);
+
+      const expandBtn = document.getElementById('acceptance-search-expand');
+      const extra = document.getElementById('acceptance-search-extra');
+      if (expandBtn && extra) {
+        let expanded = false;
+        expandBtn.addEventListener('click', () => {
+          expanded = !expanded;
+          extra.classList.toggle('hidden', !expanded);
+          expandBtn.childNodes[0].textContent = expanded ? '收起 ' : '展开 ';
+          expandBtn.querySelector('svg').classList.toggle('rotate-180', expanded);
+        });
+      }
+
+      const autoBarcode = document.getElementById('acceptance-auto-barcode');
+      if (autoBarcode) {
+        autoBarcode.addEventListener('change', () => {
+          toggleBarcodeFields(autoBarcode.checked);
+        });
+      }
+
+      const addModal = document.getElementById('acceptance-add-modal');
+      const addBtn = document.querySelector('[data-modal-open="acceptance-add-modal"]');
+      if (addBtn) {
+        addBtn.addEventListener('click', resetAcceptanceAddForm);
+      }
+
+      const submitBtn = document.getElementById('acceptance-add-submit');
+      if (submitBtn && addModal) {
+        submitBtn.addEventListener('click', () => {
+          const form = document.getElementById('acceptance-add-form');
+          if (form?.elements.setCurrent.checked) {
+            const acceptance = AcceptanceStore.fromForm(form, { status: 'notStarted' });
+            AcceptanceStore.set(acceptance);
+          }
+          addModal.classList.add('hidden');
+          resetAcceptanceAddForm();
+        });
+      }
+
+      const editAutoBarcode = document.getElementById('acceptance-edit-auto-barcode');
+      if (editAutoBarcode) {
+        editAutoBarcode.addEventListener('change', () => {
+          if (editAutoBarcode.disabled) return;
+          toggleEditBarcodeFields(editAutoBarcode.checked);
+          if (!editAutoBarcode.checked) {
+            const form = document.getElementById('acceptance-edit-form');
+            if (form) {
+              form.elements.barcodeType.value = '';
+              form.elements.initialBarcode.value = '';
+            }
+          }
+        });
+      }
+
+      const editModal = document.getElementById('acceptance-edit-modal');
+      const editSubmitBtn = document.getElementById('acceptance-edit-submit');
+      if (editSubmitBtn && editModal) {
+        editSubmitBtn.addEventListener('click', () => {
+          const form = document.getElementById('acceptance-edit-form');
+          const row = form ? updateRowFromEditForm(form) : null;
+          if (row && form.elements.setCurrent.checked) {
+            acceptanceRows.forEach(r => {
+              r.defaultAccept = r.no === row.no;
+              r.setCurrent = r.no === row.no;
+            });
+            AcceptanceStore.set(AcceptanceStore.fromRow(row));
+            renderAcceptanceTable();
+          } else if (row && !form.elements.setCurrent.checked && row.defaultAccept) {
+            row.defaultAccept = false;
+            AcceptanceStore.clear();
+            renderAcceptanceTable();
+          } else if (row) {
+            renderAcceptanceTable();
+          }
+          editModal.classList.add('hidden');
+        });
+      }
+    });
+  </script>
+</body>
+</html>

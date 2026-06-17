@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>退换撤订原因参数</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    /** 退换撤订原因参数：页签与表格滚动 */
+    body[data-active-page="07_01_退换撤订原因参数.html"] #page-content {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body[data-active-page="07_01_退换撤订原因参数.html"] #reason-params-page {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    body[data-active-page="07_01_退换撤订原因参数.html"] .reason-tab.active {
+      color: #0284c7;
+      border-bottom-color: #0284c7;
+    }
+
+    body[data-active-page="07_01_退换撤订原因参数.html"] .reason-table-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    body[data-active-page="07_01_退换撤订原因参数.html"] .reason-table-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    body[data-active-page="07_01_退换撤订原因参数.html"] .reason-table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="退换撤订原因参数"
+  data-active-page="07_01_退换撤订原因参数.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden">
+    <div id="reason-params-page">
+      <!-- 页签 -->
+      <div class="flex gap-8 border-b border-gray-200 mb-4 shrink-0 bg-white px-1">
+        <button type="button" data-reason-tab="exchange"
+          class="reason-tab active px-1 py-2.5 text-sm text-gray-600 border-b-2 border-transparent hover:text-sky-600 transition-colors">
+          换货原因
+        </button>
+        <button type="button" data-reason-tab="return"
+          class="reason-tab px-1 py-2.5 text-sm text-gray-600 border-b-2 border-transparent hover:text-sky-600 transition-colors">
+          退货原因
+        </button>
+        <button type="button" data-reason-tab="cancel"
+          class="reason-tab px-1 py-2.5 text-sm text-gray-600 border-b-2 border-transparent hover:text-sky-600 transition-colors">
+          撤订原因
+        </button>
+        <button type="button" data-reason-tab="revokeReceive"
+          class="reason-tab px-1 py-2.5 text-sm text-gray-600 border-b-2 border-transparent hover:text-sky-600 transition-colors">
+          撤销收货原因
+        </button>
+      </div>
+
+      <!-- 检索区（三个 Tab 共用） -->
+      <div class="bg-white rounded border border-gray-200 p-4 mb-4 shrink-0">
+        <form id="reason-search-form" class="relative">
+          <div class="absolute top-0 right-0 flex items-center gap-2">
+            <button type="button" id="reason-search-expand"
+              class="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700">
+              收起
+              <svg class="w-3 h-3 transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <button type="submit"
+              class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+            <button type="button" onclick="Common.resetForm('reason-search-form')"
+              class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+          </div>
+          <div class="grid grid-cols-3 gap-4 pr-72">
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">原因</label>
+              <input type="text" placeholder="请输入"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">状态</label>
+              <select class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <option>全部</option>
+                <option>使用中</option>
+                <option>已停用</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">创建日期</label>
+              <div class="flex flex-1 items-center gap-2">
+                <input type="date"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <span class="text-gray-400 text-sm">~</span>
+                <input type="date"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+            </div>
+          </div>
+          <div id="reason-search-extra" class="grid grid-cols-3 gap-4 mt-3 pr-72">
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">创建人</label>
+              <input type="text" placeholder="请输入"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- 换货原因 -->
+      <div data-reason-panel="exchange" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="flex items-center gap-2 mb-4 shrink-0">
+          <button type="button" data-reason-add="exchange"
+            class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">新增换货原因</button>
+        </div>
+        <div class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div class="reason-table-scroll table-scroll">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">原因内容</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">下拉列表排序</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">创建人</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1">
+                      创建日期
+                      <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                      </svg>
+                    </span>
+                  </th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-8 bg-gray-50">操作</th>
+                  <th class="px-2 py-2.5 w-16 sticky right-0 bg-gray-50"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100" id="reason-table-exchange"></tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white">
+            <span id="exchange-reason-count" class="text-sm text-gray-500">共 2 条记录</span>
+            <div class="flex items-center gap-3">
+              <span class="text-sm text-gray-500">第 1 / 1 页</span>
+              <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <input type="text" value="1" readonly
+                class="w-10 border border-gray-300 rounded px-2 py-1 text-sm text-center text-gray-600 bg-white">
+              <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+              <select class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+                <option>50 条/页</option>
+                <option>20 条/页</option>
+                <option>10 条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 退货原因 -->
+      <div data-reason-panel="return" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="flex items-center gap-2 mb-4 shrink-0">
+          <button type="button" data-reason-add="return"
+            class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">新增退货原因</button>
+        </div>
+        <div class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div class="reason-table-scroll table-scroll">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">原因内容</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">下拉列表排序</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">创建人</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1">
+                      创建日期
+                      <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                      </svg>
+                    </span>
+                  </th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-8 bg-gray-50">操作</th>
+                  <th class="px-2 py-2.5 w-16 sticky right-0 bg-gray-50"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100" id="reason-table-return"></tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white">
+            <span id="return-reason-count" class="text-sm text-gray-500">共 2 条记录</span>
+            <div class="flex items-center gap-3">
+              <span class="text-sm text-gray-500">第 1 / 1 页</span>
+              <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <input type="text" value="1" readonly
+                class="w-10 border border-gray-300 rounded px-2 py-1 text-sm text-center text-gray-600 bg-white">
+              <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+              <select class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+                <option>50 条/页</option>
+                <option>20 条/页</option>
+                <option>10 条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 撤订原因 -->
+      <div data-reason-panel="cancel" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="flex items-center gap-2 mb-4 shrink-0">
+          <button type="button" data-reason-add="cancel"
+            class="inline-flex items-center gap-1 px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">
+            <span class="text-base leading-none">+</span>
+            新增撤订原因
+          </button>
+        </div>
+        <div class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div class="reason-table-scroll table-scroll">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">原因内容</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">下拉列表排序</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">创建人</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1">
+                      创建日期
+                      <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                      </svg>
+                    </span>
+                  </th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-8 bg-gray-50">操作</th>
+                  <th class="px-2 py-2.5 w-16 sticky right-0 bg-gray-50"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100" id="reason-table-cancel"></tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white">
+            <span id="cancel-reason-count" class="text-sm text-gray-500">共 2 条记录</span>
+            <div class="flex items-center gap-3">
+              <span class="text-sm text-gray-500">第 1 / 1 页</span>
+              <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <input type="text" value="1" readonly
+                class="w-10 border border-gray-300 rounded px-2 py-1 text-sm text-center text-gray-600 bg-white">
+              <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+              <select class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+                <option>50 条/页</option>
+                <option>20 条/页</option>
+                <option>10 条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 撤销收货原因 -->
+      <div data-reason-panel="revokeReceive" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="flex items-center gap-2 mb-4 shrink-0">
+          <button type="button" data-reason-add="revokeReceive"
+            class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">新增撤销收货原因</button>
+        </div>
+        <div class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div class="reason-table-scroll table-scroll">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">原因内容</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">下拉列表排序</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">创建人</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">创建日期</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-8 bg-gray-50">操作</th>
+                  <th class="px-2 py-2.5 w-16 sticky right-0 bg-gray-50"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100" id="reason-table-revokeReceive"></tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white">
+            <span id="revokeReceive-reason-count" class="text-sm text-gray-500">共 3 条记录</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增/编辑原因弹窗（换货/退货/撤订/撤销收货共用） -->
+    <div id="reason-form-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 id="reason-form-modal-title" class="text-base font-medium text-gray-800">新增换货原因</h2>
+          <button type="button" id="reason-form-modal-close"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="reason-form" class="px-6 py-5 space-y-4">
+          <input type="hidden" name="reasonType" value="">
+          <input type="hidden" name="editIndex" value="">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 原因内容：
+            </label>
+            <div class="flex-1">
+              <input type="text" name="content" placeholder="请输入" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="content">请输入原因内容</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 状态：
+            </label>
+            <div class="flex-1 pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="status" checked class="sr-only" id="reason-status-toggle">
+                <span id="reason-status-track"
+                  class="relative w-11 h-6 bg-sky-600 rounded-full transition-colors">
+                  <span id="reason-status-thumb"
+                    class="absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
+                </span>
+                <span id="reason-status-label" class="text-sm text-gray-700">启用</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">下拉列表排序：</label>
+            <div class="flex-1">
+              <input type="text" name="sort" value="1" autocomplete="off"
+                class="w-20 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注：</label>
+            <div class="flex-1">
+              <textarea name="remark" rows="4" placeholder=""
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-y min-h-[96px]"></textarea>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button type="button" id="reason-form-cancel"
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="reason-form-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/reason-params-store.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    /** 各 Tab 示例数据 */
+    const reasonTabData = {
+      exchange: [
+        { content: '换货', status: 'active', sort: 1, creator: '赵付', created: '2026-05-22 08:55:41', remark: '' },
+        { content: '残缺损', status: 'active', sort: 1, creator: '李会申测试账号', created: '2026-05-21 09:45:18', remark: '' }
+      ],
+      return: [
+        { content: '退货', status: 'active', sort: 1, creator: '赵付', created: '2026-05-22 08:55:48' },
+        { content: '损坏退货', status: 'active', sort: 1, creator: '李会申测试账号', created: '2026-05-21 09:46:09' }
+      ],
+      cancel: [
+        { content: '撤订', status: 'active', sort: 1, creator: '赵付', created: '2026-05-22 08:55:56' },
+        { content: '退订', status: 'active', sort: 1, creator: '李会申测试账号', created: '2026-05-21 09:46:27' }
+      ],
+      revokeReceive: [
+        { content: '录入错误', status: 'active', sort: 1, creator: '赵付', created: '2026-05-22 09:10:12' },
+        { content: '重复收货', status: 'active', sort: 2, creator: '杨晓婉', created: '2026-05-22 09:11:05' },
+        { content: '品相差', status: 'active', sort: 3, creator: '王二小', created: '2026-05-22 09:12:18' }
+      ]
+    };
+
+    if (!localStorage.getItem(ReasonParamsStore.STORAGE_KEY)) {
+      ReasonParamsStore.saveAll(reasonTabData);
+    }
+
+    /** @type {Record<string, Object[]>} */
+    let currentReasonData = {};
+    /** @type {boolean} */
+    let isReasonEditMode = false;
+
+    /** @type {Record<string, string>} */
+    const reasonTypeLabels = {
+      exchange: '换货原因',
+      return: '退货原因',
+      cancel: '撤订原因',
+      revokeReceive: '撤销收货原因'
+    };
+
+    /** @type {string[]} */
+    const reasonTabKeys = Object.keys(reasonTypeLabels);
+
+    /**
+     * 加载全部原因数据
+     * @returns {Record<string, Object[]>}
+     */
+    function loadAllReasonData() {
+      const data = {};
+      reasonTabKeys.forEach(key => {
+        data[key] = ReasonParamsStore.getReasons(key).map(item => ({
+          ...item,
+          remark: item.remark ?? '',
+          creator: item.creator || '赵付',
+          created: item.created || formatReasonDateTime(new Date())
+        }));
+      });
+      return data;
+    }
+
+    /**
+     * 格式化日期时间
+     * @param {Date} date - 日期对象
+     * @returns {string}
+     */
+    function formatReasonDateTime(date) {
+      const pad = value => String(value).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} `
+        + `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
+    /**
+     * 持久化原因数据
+     */
+    function persistReasonData() {
+      ReasonParamsStore.saveAll(currentReasonData);
+    }
+
+    /**
+     * 更新原因状态开关样式
+     * @param {boolean} enabled - 是否启用
+     */
+    function updateReasonStatusToggle(enabled) {
+      const track = document.getElementById('reason-status-track');
+      const thumb = document.getElementById('reason-status-thumb');
+      const label = document.getElementById('reason-status-label');
+      if (track) {
+        track.classList.toggle('bg-sky-600', enabled);
+        track.classList.toggle('bg-gray-200', !enabled);
+      }
+      if (thumb) thumb.style.left = enabled ? '22px' : '2px';
+      if (label) label.textContent = enabled ? '启用' : '停用';
+    }
+
+    /**
+     * 清除原因表单校验提示
+     */
+    function clearReasonFormErrors() {
+      document.querySelectorAll('#reason-form [data-error]').forEach(el => {
+        el.classList.add('hidden');
+      });
+    }
+
+    /**
+     * 校验原因表单
+     * @param {HTMLFormElement} form - 表单元素
+     * @returns {boolean}
+     */
+    function validateReasonForm(form) {
+      clearReasonFormErrors();
+      const content = form.content.value.trim();
+      if (!content) {
+        form.querySelector('[data-error="content"]')?.classList.remove('hidden');
+        return false;
+      }
+      return true;
+    }
+
+    /**
+     * 重置新增原因表单
+     * @param {string} tabKey - Tab 标识
+     */
+    function resetAddReasonForm(tabKey) {
+      isReasonEditMode = false;
+      const form = document.getElementById('reason-form');
+      const title = document.getElementById('reason-form-modal-title');
+      const submitBtn = document.getElementById('reason-form-submit');
+      const label = reasonTypeLabels[tabKey] || '原因';
+      if (!form) return;
+
+      form.reset();
+      form.reasonType.value = tabKey;
+      form.editIndex.value = '';
+      form.sort.value = '1';
+      if (title) title.textContent = `新增${label}`;
+      if (submitBtn) submitBtn.textContent = '提交';
+
+      clearReasonFormErrors();
+      const toggle = document.getElementById('reason-status-toggle');
+      if (toggle) {
+        toggle.checked = true;
+        updateReasonStatusToggle(true);
+      }
+    }
+
+    /**
+     * 打开新增原因弹窗
+     * @param {string} tabKey - Tab 标识
+     */
+    function openAddReasonModal(tabKey) {
+      resetAddReasonForm(tabKey);
+      document.getElementById('reason-form-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 打开编辑原因弹窗
+     * @param {string} tabKey - Tab 标识
+     * @param {number} index - 行索引
+     */
+    function openEditReasonModal(tabKey, index) {
+      const row = currentReasonData[tabKey]?.[index];
+      if (!row) return;
+
+      isReasonEditMode = true;
+      const form = document.getElementById('reason-form');
+      const title = document.getElementById('reason-form-modal-title');
+      const submitBtn = document.getElementById('reason-form-submit');
+      const label = reasonTypeLabels[tabKey] || '原因';
+      if (!form) return;
+
+      clearReasonFormErrors();
+      if (title) title.textContent = `编辑${label}`;
+      if (submitBtn) submitBtn.textContent = '保存';
+
+      form.reasonType.value = tabKey;
+      form.editIndex.value = String(index);
+      form.content.value = row.content || '';
+      form.sort.value = String(row.sort ?? 1);
+      form.remark.value = row.remark || '';
+
+      const statusEnabled = row.status === 'active';
+      const toggle = document.getElementById('reason-status-toggle');
+      if (toggle) {
+        toggle.checked = statusEnabled;
+        updateReasonStatusToggle(statusEnabled);
+      }
+
+      document.getElementById('reason-form-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭原因表单弹窗
+     */
+    function closeReasonFormModal() {
+      document.getElementById('reason-form-modal')?.classList.add('hidden');
+      clearReasonFormErrors();
+    }
+
+    /**
+     * 提交原因表单
+     */
+    function submitReasonForm() {
+      const form = document.getElementById('reason-form');
+      if (!form || !validateReasonForm(form)) return;
+
+      const tabKey = form.reasonType.value;
+      if (!tabKey || !currentReasonData[tabKey]) return;
+
+      const statusEnabled = document.getElementById('reason-status-toggle')?.checked ?? true;
+      const sortValue = Number.parseInt(form.sort.value, 10);
+      const payload = {
+        content: form.content.value.trim(),
+        status: statusEnabled ? 'active' : 'inactive',
+        sort: Number.isNaN(sortValue) ? 1 : sortValue,
+        remark: form.remark.value.trim()
+      };
+
+      if (isReasonEditMode && form.editIndex.value !== '') {
+        const index = Number.parseInt(form.editIndex.value, 10);
+        const row = currentReasonData[tabKey][index];
+        if (row) Object.assign(row, payload);
+      } else {
+        currentReasonData[tabKey].unshift({
+          ...payload,
+          creator: '赵付',
+          created: formatReasonDateTime(new Date())
+        });
+      }
+
+      persistReasonData();
+      renderReasonTable(tabKey);
+      closeReasonFormModal();
+    }
+
+    /**
+     * 渲染指定 Tab 原因表格
+     * @param {string} tabKey - Tab 标识
+     */
+    function renderReasonTable(tabKey) {
+      const rows = currentReasonData[tabKey] || [];
+      const tbody = document.getElementById(`reason-table-${tabKey}`);
+      if (tbody) {
+        tbody.innerHTML = rows.map((row, i) => renderReasonRow(row, i + 1, tabKey, i)).join('');
+      }
+      const countEl = document.getElementById(`${tabKey}-reason-count`);
+      if (countEl) countEl.textContent = `共 ${rows.length} 条记录`;
+    }
+
+    /**
+     * 渲染全部原因表格
+     */
+    function renderAllReasonTables() {
+      reasonTabKeys.forEach(tabKey => renderReasonTable(tabKey));
+    }
+
+    /**
+     * 渲染原因状态
+     * @param {string} status - 状态标识
+     * @returns {string}
+     */
+    function renderReasonStatus(status) {
+      if (status === 'active') {
+        return '<span class="text-green-600">使用中</span>';
+      }
+      return '<span class="text-red-500">已停用</span>';
+    }
+
+    /**
+     * 渲染操作列
+     * @param {Object} row - 行数据
+     * @param {string} tabKey - Tab 标识
+     * @param {number} index - 行索引
+     * @returns {string}
+     */
+    function renderReasonOps(row, tabKey, index) {
+      const editAction = `<button type="button" class="text-sky-600 hover:underline mr-3" data-reason-edit data-reason-tab="${tabKey}" data-row-index="${index}">编辑</button>`;
+
+      if (row.status === 'active') {
+        return `
+          ${editAction}
+          <a href="07_01_03_停用_删除原因.html" class="text-sky-600 hover:underline">停用</a>`;
+      }
+      return `
+        ${editAction}
+        <a href="07_01_03_停用_删除原因.html" class="text-sky-600 hover:underline mr-3">启用</a>
+        <a href="07_01_03_停用_删除原因.html" class="text-sky-600 hover:underline">删除</a>`;
+    }
+
+    /**
+     * 渲染排序按钮列
+     * @returns {string}
+     */
+    function renderSortButtons() {
+      return `
+        <td class="px-2 py-2 sticky right-0 bg-white">
+          <div class="flex flex-col items-center gap-0.5">
+            <button type="button" class="text-gray-400 hover:text-sky-600 leading-none" title="上移">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+              </svg>
+            </button>
+            <button type="button" class="text-gray-400 hover:text-sky-600 leading-none" title="下移">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+          </div>
+        </td>`;
+    }
+
+    /**
+     * 渲染原因表格行
+     * @param {Object} row - 行数据
+     * @param {number} index - 行序号
+     * @param {string} tabKey - Tab 标识
+     * @param {number} rowIndex - 行索引
+     * @returns {string}
+     */
+    function renderReasonRow(row, index, tabKey, rowIndex) {
+      return `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 text-gray-600">${index}</td>
+          <td class="px-3 py-2">
+            <a href="07_01_04_查看.html" class="text-sky-600 hover:underline">${row.content}</a>
+          </td>
+          <td class="px-3 py-2">${renderReasonStatus(row.status)}</td>
+          <td class="px-3 py-2">${row.sort}</td>
+          <td class="px-3 py-2">${row.creator}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.created}</td>
+          <td class="px-3 py-2 whitespace-nowrap sticky right-8 bg-white">${renderReasonOps(row, tabKey, rowIndex)}</td>
+          ${renderSortButtons()}
+        </tr>`;
+    }
+
+    /**
+     * 切换原因参数 Tab
+     * @param {string} tabKey - Tab 标识
+     */
+    function switchReasonTab(tabKey) {
+      document.querySelectorAll('[data-reason-tab]').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.reasonTab === tabKey);
+      });
+      document.querySelectorAll('[data-reason-panel]').forEach(panel => {
+        const isActive = panel.dataset.reasonPanel === tabKey;
+        panel.classList.toggle('hidden', !isActive);
+        panel.classList.toggle('flex', isActive);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      currentReasonData = loadAllReasonData();
+      renderAllReasonTables();
+
+      document.getElementById('reason-params-page')?.addEventListener('click', event => {
+        const addBtn = event.target.closest('[data-reason-add]');
+        if (addBtn) {
+          openAddReasonModal(addBtn.dataset.reasonAdd);
+          return;
+        }
+        const editBtn = event.target.closest('[data-reason-edit]');
+        if (editBtn) {
+          const tabKey = editBtn.dataset.reasonTab;
+          const index = Number.parseInt(editBtn.dataset.rowIndex, 10);
+          if (tabKey && !Number.isNaN(index)) openEditReasonModal(tabKey, index);
+        }
+      });
+
+      document.getElementById('reason-form-modal-close')?.addEventListener('click', closeReasonFormModal);
+      document.getElementById('reason-form-cancel')?.addEventListener('click', closeReasonFormModal);
+      document.getElementById('reason-form-submit')?.addEventListener('click', submitReasonForm);
+
+      const reasonStatusToggle = document.getElementById('reason-status-toggle');
+      if (reasonStatusToggle) {
+        reasonStatusToggle.addEventListener('change', () => {
+          updateReasonStatusToggle(reasonStatusToggle.checked);
+        });
+      }
+
+      document.querySelectorAll('[data-reason-tab]').forEach(tab => {
+        tab.addEventListener('click', () => switchReasonTab(tab.dataset.reasonTab));
+      });
+
+      const expandBtn = document.getElementById('reason-search-expand');
+      const extra = document.getElementById('reason-search-extra');
+      if (expandBtn && extra) {
+        let expanded = true;
+        expandBtn.addEventListener('click', () => {
+          expanded = !expanded;
+          extra.classList.toggle('hidden', !expanded);
+          expandBtn.childNodes[0].textContent = expanded ? '收起 ' : '展开 ';
+          expandBtn.querySelector('svg').classList.toggle('rotate-180', expanded);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

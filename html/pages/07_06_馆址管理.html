@@ -1,0 +1,3505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>馆址管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    body[data-active-page="07_06_馆址管理.html"] #page-content {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body[data-active-page="07_06_馆址管理.html"] #location-manage-page {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    body[data-active-page="07_06_馆址管理.html"] .location-tab.active {
+      color: #0284c7;
+      border-bottom-color: #0284c7;
+    }
+
+    body[data-active-page="07_06_馆址管理.html"] .location-table-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    body[data-active-page="07_06_馆址管理.html"] .location-table-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    body[data-active-page="07_06_馆址管理.html"] .location-table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="馆址管理"
+  data-active-page="07_06_馆址管理.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden">
+    <div id="location-manage-page">
+      <!-- 顶部页签 -->
+      <div class="flex gap-8 border-b border-gray-200 mb-4 shrink-0 bg-white px-1">
+        <button type="button" data-location-tab="site"
+          class="location-tab active px-1 py-2.5 text-sm text-gray-600 border-b-2 border-transparent hover:text-sky-600 transition-colors">
+          馆址列表
+        </button>
+        <button type="button" data-location-tab="branch"
+          class="location-tab px-1 py-2.5 text-sm text-gray-600 border-b-2 border-transparent hover:text-sky-600 transition-colors">
+          分馆列表
+        </button>
+        <button type="button" data-location-tab="collection"
+          class="location-tab px-1 py-2.5 text-sm text-gray-600 border-b-2 border-transparent hover:text-sky-600 transition-colors">
+          馆藏地列表
+        </button>
+      </div>
+
+      <!-- 馆址列表 -->
+      <div data-location-panel="site" class="flex flex-col flex-1 min-h-0">
+        <div class="bg-white rounded border border-gray-200 p-4 mb-4 shrink-0">
+          <form id="site-search-form" class="relative">
+            <div class="absolute top-0 right-0 flex items-center gap-2">
+              <button type="submit"
+                class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+              <button type="button" id="site-search-reset"
+                class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+            </div>
+            <div class="grid grid-cols-3 gap-4 pr-40">
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">馆址编码</label>
+                <input type="text" name="code" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">馆址名称</label>
+                <input type="text" name="name" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-12 text-right">状态</label>
+                <select name="status"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                  <option value="">全部</option>
+                  <option value="active">使用中</option>
+                  <option value="inactive">已停用</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="flex items-center gap-2 mb-4 shrink-0">
+          <button type="button" id="site-add-btn"
+            class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">新增馆址</button>
+          <button type="button" id="site-import-btn"
+            class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">批量导入</button>
+        </div>
+        <div class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden" data-list-selection-root="site">
+          <div class="location-table-scroll table-scroll">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2.5 text-left w-10"><input type="checkbox" id="site-select-all" class="rounded border-gray-300"></th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">馆址编码</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">馆址名称</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">备注</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-0 bg-gray-50 min-w-[180px]">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100" id="site-table-body"></tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white" id="site-pagination"></div>
+        </div>
+      </div>
+
+      <!-- 分馆列表 -->
+      <div data-location-panel="branch" class="hidden flex flex-col flex-1 min-h-0">
+        <div class="bg-white rounded border border-gray-200 p-4 mb-4 shrink-0">
+          <form id="branch-search-form" class="relative">
+            <div class="absolute top-0 right-0 flex items-center gap-2">
+              <button type="button" id="branch-search-expand"
+                class="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700">
+                展开
+                <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+              <button type="submit"
+                class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+              <button type="button" id="branch-search-reset"
+                class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+            </div>
+            <div class="grid grid-cols-3 gap-4 pr-52">
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">馆址编码</label>
+                <input type="text" name="siteCode" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">馆址名称</label>
+                <input type="text" name="siteName" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">分馆编码</label>
+                <input type="text" name="code" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+            </div>
+            <div id="branch-search-extra" class="hidden grid grid-cols-3 gap-4 mt-3">
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">分馆名称</label>
+                <input type="text" name="name" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-12 text-right">状态</label>
+                <select name="status"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                  <option value="">全部</option>
+                  <option value="active">使用中</option>
+                  <option value="inactive">已停用</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="flex items-center gap-2 mb-4 shrink-0">
+          <button type="button" id="branch-add-btn"
+            class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">新增分馆</button>
+          <button type="button" id="branch-import-btn"
+            class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">批量导入</button>
+        </div>
+        <div class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden" data-list-selection-root="branch">
+          <div class="location-table-scroll table-scroll">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2.5 text-left w-10"><input type="checkbox" id="branch-select-all" class="rounded border-gray-300"></th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">馆址编码</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">馆址名称</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">分馆编码</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">分馆名称</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">备注</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-0 bg-gray-50 min-w-[180px]">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100" id="branch-table-body"></tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white" id="branch-pagination"></div>
+        </div>
+      </div>
+
+      <!-- 馆藏地列表 -->
+      <div data-location-panel="collection" class="hidden flex flex-col flex-1 min-h-0">
+        <div class="bg-white rounded border border-gray-200 p-4 mb-4 shrink-0">
+          <form id="collection-search-form" class="relative">
+            <div class="absolute top-0 right-0 flex items-center gap-2">
+              <button type="button" id="collection-search-expand"
+                class="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700">
+                展开
+                <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+              <button type="submit"
+                class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+              <button type="button" id="collection-search-reset"
+                class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+            </div>
+            <div class="grid grid-cols-3 gap-4 pr-52">
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">馆址编码</label>
+                <input type="text" name="siteCode" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">馆址名称</label>
+                <input type="text" name="siteName" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">分馆编码</label>
+                <input type="text" name="branchCode" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+            </div>
+            <div id="collection-search-extra" class="hidden grid grid-cols-3 gap-4 mt-3">
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">分馆名称</label>
+                <input type="text" name="branchName" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">馆藏地编码</label>
+                <input type="text" name="code" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">馆藏地名称</label>
+                <input type="text" name="name" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-12 text-right">状态</label>
+                <select name="status"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                  <option value="">全部</option>
+                  <option value="active">使用中</option>
+                  <option value="inactive">已停用</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="flex items-center gap-2 mb-4 shrink-0">
+          <button type="button" id="collection-add-btn"
+            class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">新增馆藏地</button>
+          <button type="button" id="collection-import-btn"
+            class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">批量导入</button>
+        </div>
+        <div class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden" data-list-selection-root="collection">
+          <div class="location-table-scroll table-scroll">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2.5 text-left w-10"><input type="checkbox" id="collection-select-all" class="rounded border-gray-300"></th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">馆址编码</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">馆址名称</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">分馆编码</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">分馆名称</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">馆藏地编码</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">馆藏地名称</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">备注</th>
+                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-0 bg-gray-50 min-w-[180px]">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100" id="collection-table-body"></tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white" id="collection-pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 提交结果提示 -->
+    <div id="site-form-toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 z-[60] min-w-[240px]">
+      <div id="site-form-toast-inner"
+        class="flex items-center gap-2 px-4 py-2.5 rounded shadow-lg text-sm text-white bg-green-500">
+        <svg id="site-form-toast-icon" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span id="site-form-toast-text">提交成功</span>
+      </div>
+    </div>
+
+    <!-- 新增/编辑馆址弹窗 -->
+    <div id="site-form-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 id="site-form-modal-title" class="text-base font-medium text-gray-800">新增馆址</h2>
+          <button type="button" id="site-form-modal-close"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="site-form" class="px-6 py-5 space-y-4">
+          <input type="hidden" name="siteId">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 馆址编码
+            </label>
+            <div class="flex-1">
+              <input type="text" name="code" placeholder="请输入" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="code">请输入馆址编码</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 馆址名称
+            </label>
+            <div class="flex-1">
+              <input type="text" name="name" placeholder="请输入" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="name">请输入馆址名称</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 状态
+            </label>
+            <div class="flex-1 pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="status" checked class="sr-only" id="site-form-status-toggle">
+                <span id="site-form-status-track"
+                  class="relative w-11 h-6 bg-sky-600 rounded-full transition-colors">
+                  <span id="site-form-status-thumb"
+                    class="absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
+                </span>
+                <span id="site-form-status-label" class="text-sm text-gray-700">开启</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
+            <div class="flex-1">
+              <textarea name="remark" rows="4" placeholder="请输入"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-none overflow-y-auto"></textarea>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="remark">备注长度不能超过200个字符</p>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button type="button" id="site-form-cancel"
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="site-form-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增/编辑分馆弹窗 -->
+    <div id="branch-form-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 id="branch-form-modal-title" class="text-base font-medium text-gray-800">新增分馆</h2>
+          <button type="button" id="branch-form-modal-close"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="branch-form" class="px-6 py-5 space-y-4">
+          <input type="hidden" name="branchId">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 馆址名称
+            </label>
+            <div class="flex-1">
+              <select name="siteId"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">请选择</option>
+              </select>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="siteId">请选择所属馆址</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 分馆编码
+            </label>
+            <div class="flex-1">
+              <input type="text" name="code" placeholder="请输入" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="code">请输入分馆编码</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 分馆名称
+            </label>
+            <div class="flex-1">
+              <input type="text" name="name" placeholder="请输入" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="name">请输入分馆名称</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 状态
+            </label>
+            <div class="flex-1 pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="status" checked class="sr-only" id="branch-form-status-toggle">
+                <span id="branch-form-status-track"
+                  class="relative w-11 h-6 bg-sky-600 rounded-full transition-colors">
+                  <span id="branch-form-status-thumb"
+                    class="absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
+                </span>
+                <span id="branch-form-status-label" class="text-sm text-gray-700">开启</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
+            <div class="flex-1">
+              <textarea name="remark" rows="4" placeholder="请输入"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-none overflow-y-auto"></textarea>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="remark">备注长度不能超过200个字符</p>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button type="button" id="branch-form-cancel"
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="branch-form-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增/编辑馆藏地弹窗 -->
+    <div id="collection-form-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 id="collection-form-modal-title" class="text-base font-medium text-gray-800">新增馆藏地</h2>
+          <button type="button" id="collection-form-modal-close"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="collection-form" class="px-6 py-5 space-y-4">
+          <input type="hidden" name="collectionId">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 馆址名称
+            </label>
+            <div class="flex-1">
+              <select name="siteId"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">请选择</option>
+              </select>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="siteId">请选择所属馆址</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 分馆名称
+            </label>
+            <div class="flex-1">
+              <select name="branchId"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">请先选择馆址</option>
+              </select>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="branchId">请选择所属分馆</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 馆藏地编码
+            </label>
+            <div class="flex-1">
+              <input type="text" name="code" placeholder="请输入" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="code">请输入馆藏地编码</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 馆藏地名称
+            </label>
+            <div class="flex-1">
+              <input type="text" name="name" placeholder="请输入" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="name">请输入馆藏地名称</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 状态
+            </label>
+            <div class="flex-1 pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="status" checked class="sr-only" id="collection-form-status-toggle">
+                <span id="collection-form-status-track"
+                  class="relative w-11 h-6 bg-sky-600 rounded-full transition-colors">
+                  <span id="collection-form-status-thumb"
+                    class="absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
+                </span>
+                <span id="collection-form-status-label" class="text-sm text-gray-700">开启</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
+            <div class="flex-1">
+              <textarea name="remark" rows="4" placeholder="请输入"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-none overflow-y-auto"></textarea>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="remark">备注长度不能超过200个字符</p>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button type="button" id="collection-form-cancel"
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="collection-form-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 馆址批量导入弹窗 -->
+    <div id="site-import-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 class="text-base font-medium text-gray-800">批量导入</h2>
+          <button type="button" id="site-import-modal-close"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+
+        <!-- 步骤一：上传文件 -->
+        <div id="site-import-step-upload" class="px-6 py-5 space-y-5">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-1 shrink-0">导入模板</label>
+            <button type="button" id="site-import-download-template"
+              class="px-4 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">下载导入模板</button>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-1 shrink-0">导入说明</label>
+            <ol class="flex-1 text-sm text-gray-600 list-decimal list-inside space-y-1">
+              <li>文件格式必须为 Excel 格式</li>
+              <li>数据记录不超过 2000 条</li>
+              <li>模板的表头不可更改，不可删除</li>
+            </ol>
+          </div>
+          <p class="text-sm text-orange-500 pl-[7.5rem]">支持扩展名：.xls .xlsx</p>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-1 shrink-0">文件上传</label>
+            <div class="flex-1">
+              <div class="flex items-center gap-3 flex-wrap">
+                <button type="button" id="site-import-upload-btn"
+                  class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-50">上传文件</button>
+                <input type="file" id="site-import-file-input" accept=".xls,.xlsx" class="hidden">
+                <div id="site-import-file-info" class="hidden items-center gap-2 text-sm text-gray-700">
+                  <span id="site-import-file-name"></span>
+                  <button type="button" id="site-import-file-remove"
+                    class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+                </div>
+              </div>
+              <p id="site-import-file-error" class="text-red-500 text-xs mt-1 hidden">请上传文件</p>
+              <p id="site-import-parse-error" class="text-red-500 text-xs mt-1 hidden"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 步骤二：解析结果 -->
+        <div id="site-import-step-result" class="hidden px-6 py-8 space-y-4">
+          <p id="site-import-result-summary" class="text-sm text-gray-700"></p>
+          <div id="site-import-download-wrap" class="hidden">
+            <button type="button" id="site-import-download-result"
+              class="text-sm text-sky-600 hover:underline">下载解析结果</button>
+          </div>
+          <p class="text-sm text-orange-500">提示：解析全部成功，才可入库</p>
+        </div>
+
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button type="button" id="site-import-cancel"
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="site-import-parse-btn"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">开始解析</button>
+          <button type="button" id="site-import-confirm-btn"
+            class="hidden px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed">确定导入</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分馆批量导入弹窗 -->
+    <div id="branch-import-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 class="text-base font-medium text-gray-800">批量导入</h2>
+          <button type="button" id="branch-import-modal-close"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+
+        <!-- 步骤一：上传文件 -->
+        <div id="branch-import-step-upload" class="px-6 py-5 space-y-5">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-1 shrink-0">导入模板</label>
+            <button type="button" id="branch-import-download-template"
+              class="px-4 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">下载导入模板</button>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-1 shrink-0">导入说明</label>
+            <ol class="flex-1 text-sm text-gray-600 list-decimal list-inside space-y-1">
+              <li>文件格式必须为 Excel 格式</li>
+              <li>数据记录不超过 2000 条</li>
+              <li>模板的表头不可更改，不可删除</li>
+            </ol>
+          </div>
+          <p class="text-sm text-orange-500 pl-[7.5rem]">支持扩展名：.xls .xlsx</p>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-1 shrink-0">文件上传</label>
+            <div class="flex-1">
+              <div class="flex items-center gap-3 flex-wrap">
+                <button type="button" id="branch-import-upload-btn"
+                  class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-50">上传文件</button>
+                <input type="file" id="branch-import-file-input" accept=".xls,.xlsx" class="hidden">
+                <div id="branch-import-file-info" class="hidden items-center gap-2 text-sm text-gray-700">
+                  <span id="branch-import-file-name"></span>
+                  <button type="button" id="branch-import-file-remove"
+                    class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+                </div>
+              </div>
+              <p id="branch-import-file-error" class="text-red-500 text-xs mt-1 hidden">请上传文件</p>
+              <p id="branch-import-parse-error" class="text-red-500 text-xs mt-1 hidden"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 步骤二：解析结果 -->
+        <div id="branch-import-step-result" class="hidden px-6 py-8 space-y-4">
+          <p id="branch-import-result-summary" class="text-sm text-gray-700"></p>
+          <div id="branch-import-download-wrap" class="hidden">
+            <button type="button" id="branch-import-download-result"
+              class="text-sm text-sky-600 hover:underline">下载解析结果</button>
+          </div>
+          <p class="text-sm text-orange-500">提示：解析全部成功，才可入库</p>
+        </div>
+
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button type="button" id="branch-import-cancel"
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="branch-import-parse-btn"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">开始解析</button>
+          <button type="button" id="branch-import-confirm-btn"
+            class="hidden px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed">确定导入</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 馆藏地批量导入弹窗 -->
+    <div id="collection-import-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 class="text-base font-medium text-gray-800">批量导入</h2>
+          <button type="button" id="collection-import-modal-close"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+
+        <!-- 步骤一：上传文件 -->
+        <div id="collection-import-step-upload" class="px-6 py-5 space-y-5">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-1 shrink-0">导入模板</label>
+            <button type="button" id="collection-import-download-template"
+              class="px-4 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">下载导入模板</button>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-1 shrink-0">导入说明</label>
+            <ol class="flex-1 text-sm text-gray-600 list-decimal list-inside space-y-1">
+              <li>文件格式必须为 Excel 格式</li>
+              <li>数据记录不超过 2000 条</li>
+              <li>模板的表头不可更改，不可删除</li>
+            </ol>
+          </div>
+          <p class="text-sm text-orange-500 pl-[7.5rem]">支持扩展名：.xls .xlsx</p>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-1 shrink-0">文件上传</label>
+            <div class="flex-1">
+              <div class="flex items-center gap-3 flex-wrap">
+                <button type="button" id="collection-import-upload-btn"
+                  class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-50">上传文件</button>
+                <input type="file" id="collection-import-file-input" accept=".xls,.xlsx" class="hidden">
+                <div id="collection-import-file-info" class="hidden items-center gap-2 text-sm text-gray-700">
+                  <span id="collection-import-file-name"></span>
+                  <button type="button" id="collection-import-file-remove"
+                    class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+                </div>
+              </div>
+              <p id="collection-import-file-error" class="text-red-500 text-xs mt-1 hidden">请上传文件</p>
+              <p id="collection-import-parse-error" class="text-red-500 text-xs mt-1 hidden"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 步骤二：解析结果 -->
+        <div id="collection-import-step-result" class="hidden px-6 py-8 space-y-4">
+          <p id="collection-import-result-summary" class="text-sm text-gray-700"></p>
+          <div id="collection-import-download-wrap" class="hidden">
+            <button type="button" id="collection-import-download-result"
+              class="text-sm text-sky-600 hover:underline">下载解析结果</button>
+          </div>
+          <p class="text-sm text-orange-500">提示：解析全部成功，才可入库</p>
+        </div>
+
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button type="button" id="collection-import-cancel"
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="collection-import-parse-btn"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">开始解析</button>
+          <button type="button" id="collection-import-confirm-btn"
+            class="hidden px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed">确定导入</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    /** 馆址数据（顶层） */
+    const siteRows = [
+      { id: 'site-1', code: 'ST001_C1', name: '首都华威桥馆', status: 'active', remark: '首都图书馆主馆文献借阅区域' },
+      { id: 'site-2', code: 'ST001_C2', name: '首都大兴机场分馆', status: 'active', remark: '' },
+      { id: 'site-3', code: 'ST001_C3', name: '北京城市图书馆', status: 'active', remark: '' },
+      { id: 'site-4', code: 'ST001_C4', name: '其他馆址（首都图书馆）', status: 'active', remark: '' },
+      { id: 'site-5', code: '', name: '测试停用馆址', status: 'inactive', remark: '编码为空示例' }
+    ];
+
+    /** 分馆数据（归属馆址） */
+    const branchRows = [
+      { id: 'branch-1', siteId: 'site-1', code: 'STD01', name: '首图地方文献', status: 'active', remark: '' },
+      { id: 'branch-2', siteId: 'site-1', code: 'STE01', name: '市少儿图书馆', status: 'active', remark: '' },
+      { id: 'branch-3', siteId: 'site-2', code: 'STG01', name: '首图古籍', status: 'active', remark: '' },
+      { id: 'branch-4', siteId: 'site-3', code: 'STK01', name: '首图期刊分馆', status: 'active', remark: '' },
+      { id: 'branch-5', siteId: 'site-5', code: '', name: '测试停用分馆', status: 'inactive', remark: '' }
+    ];
+
+    /** 馆藏地数据（归属分馆） */
+    const collectionRows = [
+      { id: 'col-1', branchId: 'branch-1', code: 'CL001', name: '北京地方文献阅览室', status: 'active', remark: '' },
+      { id: 'col-2', branchId: 'branch-2', code: 'CL002', name: '首少.少儿钢琴厂书库', status: 'active', remark: '' },
+      { id: 'col-3', branchId: 'branch-3', code: 'CL003', name: '历史文献阅览室', status: 'active', remark: '' },
+      { id: 'col-4', branchId: 'branch-4', code: 'CL004', name: '首图刊.中文报刊阅览室', status: 'active', remark: '' },
+      { id: 'col-5', branchId: 'branch-5', code: '', name: '测试停用馆藏地', status: 'inactive', remark: '' }
+    ];
+
+    /** 四级馆藏地现有编码（馆址编码白名单） */
+    const LEVEL4_SITE_CODES = [
+      'ST001_C1', 'ST001_C2', 'ST001_C3', 'ST001_C4', 'ST001_C5',
+      'ST002_C1', 'ST002_C2', 'ST003_C1'
+    ];
+
+    /** 馆址编码最大长度 */
+    const SITE_CODE_MAX = 32;
+    /** 馆址名称最大长度 */
+    const SITE_NAME_MAX = 64;
+    /** 备注最大长度 */
+    const SITE_REMARK_MAX = 200;
+
+    /** 是否编辑馆址模式 */
+    let isSiteEditMode = false;
+    /** 是否编辑分馆模式 */
+    let isBranchEditMode = false;
+    /** 是否编辑馆藏地模式 */
+    let isCollectionEditMode = false;
+
+    /** 四级馆藏地现有编码（馆藏地编码白名单） */
+    const LEVEL4_COLLECTION_CODES = [
+      'CL001', 'CL002', 'CL003', 'CL004', 'CL005', 'CL006', 'CL007', 'CL008',
+      'CL009', 'CL010', 'STD02', 'STE02', 'STG02', 'STK02', 'STB01', 'STC01'
+    ];
+
+    /** 馆藏地编码最大长度 */
+    const COLLECTION_CODE_MAX = 32;
+    /** 馆藏地名称最大长度 */
+    const COLLECTION_NAME_MAX = 64;
+    /** 馆藏地备注最大长度 */
+    const COLLECTION_REMARK_MAX = 200;
+
+    /** 四级馆址编码范围内允许的分馆编码 */
+    const LEVEL4_BRANCH_CODES = [
+      'STD01', 'STE01', 'STG01', 'STK01', 'STB01', 'STC01', 'STD02', 'STE02', 'STF01', 'STH01'
+    ];
+
+    /** 馆址与分馆编码前缀映射 */
+    const SITE_BRANCH_PREFIXES = {
+      'site-1': ['STD', 'STE'],
+      'site-2': ['STG'],
+      'site-3': ['STK'],
+      'site-4': ['STB', 'STC']
+    };
+
+    /** 分馆编码最大长度 */
+    const BRANCH_CODE_MAX = 32;
+    /** 分馆名称最大长度 */
+    const BRANCH_NAME_MAX = 64;
+    /** 分馆备注最大长度 */
+    const BRANCH_REMARK_MAX = 200;
+
+    /** 批量导入上下文 */
+    /** @type {File|null} */
+    let siteImportUploadedFile = null;
+    /** @type {{ total: number, success: number, fail: number, successRows: Array<Object>, errorRows: Array<Object> }|null} */
+    let siteImportParseResult = null;
+
+    /** 导入模板表头 */
+    const SITE_IMPORT_HEADERS = ['馆址编码', '馆址名称', '状态', '备注'];
+
+    /** 分馆批量导入上下文 */
+    /** @type {File|null} */
+    let branchImportUploadedFile = null;
+    /** @type {{ total: number, success: number, fail: number, successRows: Array<Object>, errorRows: Array<Object> }|null} */
+    let branchImportParseResult = null;
+
+    /** 分馆导入模板表头 */
+    const BRANCH_IMPORT_HEADERS = ['馆址编码', '馆址名称', '分馆编码', '分馆名称', '状态', '备注'];
+
+    /** 馆藏地批量导入上下文 */
+    /** @type {File|null} */
+    let collectionImportUploadedFile = null;
+    /** @type {{ total: number, success: number, fail: number, successRows: Array<Object>, errorRows: Array<Object> }|null} */
+    let collectionImportParseResult = null;
+
+    /** 馆藏地导入模板表头 */
+    const COLLECTION_IMPORT_HEADERS = [
+      '馆址编码', '馆址名称', '分馆编码', '分馆名称', '馆藏地编码', '馆藏地名称', '状态', '备注'
+    ];
+    /** 当前页签 */
+    let currentLocationTab = 'site';
+    /** @type {Object} */
+    const locationPageState = {
+      site: { page: 1, pageSize: 5, displayRows: [] },
+      branch: { page: 1, pageSize: 5, displayRows: [] },
+      collection: { page: 1, pageSize: 5, displayRows: [] }
+    };
+
+    /**
+     * 模糊匹配
+     * @param {string} source - 源字符串
+     * @param {string} keyword - 关键字
+     * @returns {boolean}
+     */
+    function fuzzyMatch(source, keyword) {
+      if (!keyword) return true;
+      return String(source || '').toLowerCase().includes(keyword.toLowerCase());
+    }
+
+    /**
+     * 根据 ID 获取馆址
+     * @param {string} siteId - 馆址 ID
+     * @returns {Object|undefined}
+     */
+    function getSiteById(siteId) {
+      return siteRows.find(row => row.id === siteId);
+    }
+
+    /**
+     * 根据编码获取馆址
+     * @param {string} siteCode - 馆址编码
+     * @returns {Object|undefined}
+     */
+    function getSiteByCode(siteCode) {
+      return siteRows.find(row => row.code === siteCode);
+    }
+
+    /**
+     * 根据 ID 获取分馆
+     * @param {string} branchId - 分馆 ID
+     * @returns {Object|undefined}
+     */
+    function getBranchById(branchId) {
+      return branchRows.find(row => row.id === branchId);
+    }
+
+    /**
+     * 根据馆址 ID 与分馆编码获取分馆
+     * @param {string} siteId - 馆址 ID
+     * @param {string} branchCode - 分馆编码
+     * @returns {Object|undefined}
+     */
+    function getBranchBySiteAndCode(siteId, branchCode) {
+      return branchRows.find(row => row.siteId === siteId && row.code === branchCode);
+    }
+
+    /**
+     * 根据 ID 获取馆藏地
+     * @param {string} collectionId - 馆藏地 ID
+     * @returns {Object|undefined}
+     */
+    function getCollectionById(collectionId) {
+      return collectionRows.find(row => row.id === collectionId);
+    }
+
+    /**
+     * 获取分馆完整信息（含所属馆址）
+     * @param {Object} branch - 分馆数据
+     * @returns {Object}
+     */
+    function enrichBranchRow(branch) {
+      const site = getSiteById(branch.siteId);
+      return {
+        ...branch,
+        siteCode: site?.code || '-',
+        siteName: site?.name || '-'
+      };
+    }
+
+    /**
+     * 获取馆藏地完整信息（含所属分馆与馆址）
+     * @param {Object} collection - 馆藏地数据
+     * @returns {Object}
+     */
+    function enrichCollectionRow(collection) {
+      const branch = getBranchById(collection.branchId);
+      const site = branch ? getSiteById(branch.siteId) : null;
+      return {
+        ...collection,
+        branchCode: branch?.code || '-',
+        branchName: branch?.name || '-',
+        siteCode: site?.code || '-',
+        siteName: site?.name || '-'
+      };
+    }
+
+    /**
+     * 渲染状态列
+     * @param {string} status - 状态
+     * @returns {string}
+     */
+    function renderLocationStatus(status) {
+      return status === 'active'
+        ? '<span class="text-green-600">使用中</span>'
+        : '<span class="text-gray-500">已停用</span>';
+    }
+
+    /**
+     * 渲染备注列
+     * @param {string} remark - 备注
+     * @returns {string}
+     */
+    function renderRemarkCell(remark) {
+      if (!remark) return '<span class="text-gray-400">-</span>';
+      return `<button type="button" class="location-remark-btn text-sky-600 hover:underline" data-remark="${remark.replace(/"/g, '&quot;')}">查看</button>`;
+    }
+
+    /**
+     * 渲染操作列
+     * @param {Object} row - 行数据
+     * @param {'site'|'branch'|'collection'} type - 类型
+     * @returns {string}
+     */
+    function renderLocationOps(row, type) {
+      const toggleLabel = row.status === 'active' ? '停用' : '启用';
+      if (type === 'site') {
+        return `
+          <button type="button" class="text-sky-600 hover:underline mr-2 site-edit-btn" data-site-id="${row.id}">编辑</button>
+          <a href="#" class="text-sky-600 hover:underline mr-2">${toggleLabel}</a>
+          <a href="#" class="text-sky-600 hover:underline">删除</a>`;
+      }
+      if (type === 'branch') {
+        return `
+          <button type="button" class="text-sky-600 hover:underline mr-2 branch-edit-btn" data-branch-id="${row.id}">编辑</button>
+          <a href="#" class="text-sky-600 hover:underline mr-2">${toggleLabel}</a>
+          <a href="#" class="text-sky-600 hover:underline">删除</a>`;
+      }
+      return `
+        <button type="button" class="text-sky-600 hover:underline mr-2 collection-edit-btn" data-collection-id="${row.id}">编辑</button>
+        <a href="#" class="text-sky-600 hover:underline mr-2">${toggleLabel}</a>
+        <a href="#" class="text-sky-600 hover:underline">删除</a>`;
+    }
+
+    /**
+     * 显示馆址表单错误
+     * @param {string} field - 字段名
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showSiteFormError(field, message, show) {
+      const el = document.querySelector(`#site-form [data-error="${field}"]`);
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 清除馆址表单错误
+     */
+    function clearSiteFormErrors() {
+      document.querySelectorAll('#site-form [data-error]').forEach(el => el.classList.add('hidden'));
+    }
+
+    /**
+     * 更新馆址状态开关视觉
+     * @param {boolean} enabled - 是否开启
+     */
+    function updateSiteStatusToggle(enabled) {
+      const track = document.getElementById('site-form-status-track');
+      const thumb = document.getElementById('site-form-status-thumb');
+      const label = document.getElementById('site-form-status-label');
+      if (track) track.classList.toggle('bg-sky-600', enabled);
+      if (track) track.classList.toggle('bg-gray-200', !enabled);
+      if (thumb) thumb.style.left = enabled ? '22px' : '2px';
+      if (label) label.textContent = enabled ? '开启' : '关闭';
+    }
+
+    /**
+     * 显示提交结果提示
+     * @param {boolean} success - 是否成功
+     * @param {string} [message] - 自定义提示
+     */
+    function showSiteFormToast(success, message) {
+      const toast = document.getElementById('site-form-toast');
+      const inner = document.getElementById('site-form-toast-inner');
+      const text = document.getElementById('site-form-toast-text');
+      const icon = document.getElementById('site-form-toast-icon');
+      if (!toast || !inner || !text || !icon) return;
+
+      text.textContent = message || (success ? '提交成功' : '提交失败');
+      inner.className = success
+        ? 'flex items-center gap-2 px-4 py-2.5 rounded shadow-lg text-sm text-white bg-green-500'
+        : 'flex items-center gap-2 px-4 py-2.5 rounded shadow-lg text-sm text-white bg-red-500';
+      icon.innerHTML = success
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+
+      toast.classList.remove('hidden');
+      clearTimeout(showSiteFormToast._timer);
+      showSiteFormToast._timer = setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    /**
+     * 校验馆址编码是否属于四级馆藏地现有编码
+     * @param {string} code - 馆址编码
+     * @returns {boolean}
+     */
+    function isValidLevel4SiteCode(code) {
+      return LEVEL4_SITE_CODES.includes(code.trim());
+    }
+
+    /**
+     * 校验馆址编码是否重复
+     * @param {string} code - 馆址编码
+     * @param {string|null} excludeId - 排除的馆址 ID
+     * @returns {boolean}
+     */
+    function isDuplicateSiteCode(code, excludeId = null) {
+      return siteRows.some(row => row.id !== excludeId && row.code === code);
+    }
+
+    /**
+     * 校验馆址名称是否重复
+     * @param {string} name - 馆址名称
+     * @param {string|null} excludeId - 排除的馆址 ID
+     * @returns {boolean}
+     */
+    function isDuplicateSiteName(name, excludeId = null) {
+      return siteRows.some(row => row.id !== excludeId && row.name === name);
+    }
+
+    /**
+     * 校验馆址编码（新增时可实时校验层级）
+     * @param {string} code - 馆址编码
+     * @param {boolean} isEdit - 是否编辑模式
+     * @param {string|null} excludeId - 排除 ID
+     * @returns {boolean}
+     */
+    function validateSiteCodeField(code, isEdit, excludeId = null) {
+      if (isEdit) return true;
+
+      if (!code) {
+        showSiteFormError('code', '请输入馆址编码', true);
+        return false;
+      }
+      if (code.length > SITE_CODE_MAX) {
+        showSiteFormError('code', '馆址编码长度不能超过32个字符', true);
+        return false;
+      }
+      if (!isValidLevel4SiteCode(code)) {
+        showSiteFormError('code', '馆址编码必须属于四级馆藏地现有编码', true);
+        return false;
+      }
+      if (isDuplicateSiteCode(code, excludeId)) {
+        showSiteFormError('code', '馆址编码已存在，请修改', true);
+        return false;
+      }
+      showSiteFormError('code', '', false);
+      return true;
+    }
+
+    /**
+     * 校验馆址表单
+     * @param {HTMLFormElement} form - 表单
+     * @returns {boolean}
+     */
+    function validateSiteForm(form) {
+      clearSiteFormErrors();
+      let valid = true;
+      const siteId = form.siteId.value || null;
+      const code = form.code.value.trim();
+      const name = form.name.value.trim();
+      const remark = form.remark.value;
+
+      if (!isSiteEditMode) {
+        if (!code) {
+          showSiteFormError('code', '请输入馆址编码', true);
+          valid = false;
+        } else if (code.length > SITE_CODE_MAX) {
+          showSiteFormError('code', '馆址编码长度不能超过32个字符', true);
+          valid = false;
+        } else if (!isValidLevel4SiteCode(code)) {
+          showSiteFormError('code', '馆址编码必须属于四级馆藏地现有编码', true);
+          valid = false;
+        } else if (isDuplicateSiteCode(code, siteId)) {
+          showSiteFormError('code', '馆址编码已存在，请修改', true);
+          valid = false;
+        }
+      }
+
+      if (!name) {
+        showSiteFormError('name', '请输入馆址名称', true);
+        valid = false;
+      } else if (name.length > SITE_NAME_MAX) {
+        showSiteFormError('name', '馆址名称长度不能超过64个字符', true);
+        valid = false;
+      } else if (isDuplicateSiteName(name, siteId)) {
+        showSiteFormError('name', '已存在同名馆址', true);
+        valid = false;
+      }
+
+      if (remark.length > SITE_REMARK_MAX) {
+        showSiteFormError('remark', '备注长度不能超过200个字符', true);
+        valid = false;
+      }
+
+      return valid;
+    }
+
+    /**
+     * 同步馆址列表展示数据
+     */
+    function syncSiteDisplayRows() {
+      const form = document.getElementById('site-search-form');
+      if (form && (form.code.value || form.name.value || form.status.value)) {
+        searchSite(form);
+      } else {
+        locationPageState.site.displayRows = [...siteRows];
+        refreshSiteTable();
+      }
+    }
+
+    /**
+     * 重置新增馆址表单
+     */
+    function resetAddSiteForm() {
+      isSiteEditMode = false;
+      const form = document.getElementById('site-form');
+      const title = document.getElementById('site-form-modal-title');
+      if (!form) return;
+
+      form.reset();
+      form.siteId.value = '';
+      form.code.readOnly = false;
+      form.code.classList.remove('bg-gray-50', 'text-gray-600', 'cursor-not-allowed', 'border-gray-200');
+      form.code.classList.add('border-gray-300');
+      if (title) title.textContent = '新增馆址';
+
+      clearSiteFormErrors();
+      const toggle = document.getElementById('site-form-status-toggle');
+      if (toggle) {
+        toggle.checked = true;
+        updateSiteStatusToggle(true);
+      }
+    }
+
+    /**
+     * 打开新增馆址弹窗
+     */
+    function openAddSiteModal() {
+      resetAddSiteForm();
+      document.getElementById('site-form-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 打开编辑馆址弹窗
+     * @param {string} siteId - 馆址 ID
+     */
+    function openEditSiteModal(siteId) {
+      const row = getSiteById(siteId);
+      if (!row) return;
+
+      isSiteEditMode = true;
+      const form = document.getElementById('site-form');
+      const title = document.getElementById('site-form-modal-title');
+      if (!form) return;
+
+      clearSiteFormErrors();
+      if (title) title.textContent = '编辑馆址';
+
+      form.siteId.value = row.id;
+      form.code.value = row.code;
+      form.code.readOnly = true;
+      form.code.classList.add('bg-gray-50', 'text-gray-600', 'cursor-not-allowed', 'border-gray-200');
+      form.code.classList.remove('border-gray-300');
+      form.name.value = row.name;
+      form.remark.value = row.remark || '';
+
+      const statusEnabled = row.status === 'active';
+      const toggle = document.getElementById('site-form-status-toggle');
+      if (toggle) {
+        toggle.checked = statusEnabled;
+        updateSiteStatusToggle(statusEnabled);
+      }
+
+      document.getElementById('site-form-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭馆址表单弹窗
+     */
+    function closeSiteFormModal() {
+      document.getElementById('site-form-modal')?.classList.add('hidden');
+      clearSiteFormErrors();
+    }
+
+    /**
+     * 提交馆址表单
+     */
+    function submitSiteForm() {
+      const form = document.getElementById('site-form');
+      if (!form || !validateSiteForm(form)) {
+        showSiteFormToast(false);
+        return;
+      }
+
+      const siteId = form.siteId.value;
+      const statusEnabled = document.getElementById('site-form-status-toggle')?.checked ?? true;
+      const payload = {
+        code: form.code.value.trim(),
+        name: form.name.value.trim(),
+        status: statusEnabled ? 'active' : 'inactive',
+        remark: form.remark.value.trim()
+      };
+
+      if (isSiteEditMode && siteId) {
+        const row = getSiteById(siteId);
+        if (row) Object.assign(row, payload);
+      } else {
+        siteRows.unshift({
+          id: `site-${Date.now()}`,
+          ...payload
+        });
+      }
+
+      closeSiteFormModal();
+      syncSiteDisplayRows();
+      showSiteFormToast(true);
+    }
+
+    /**
+     * 获取启用中的馆址列表
+     * @returns {Array<Object>}
+     */
+    function getActiveSites() {
+      return [...siteRows]
+        .filter(row => row.status === 'active')
+        .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+    }
+
+    /**
+     * 初始化分馆表单馆址下拉
+     * @param {HTMLSelectElement} select - 下拉框
+     * @param {string} [selectedId=''] - 选中馆址 ID
+     * @param {boolean} [disabled=false] - 是否禁用
+     */
+    function initBranchSiteSelect(select, selectedId = '', disabled = false) {
+      if (!select) return;
+      const sites = getActiveSites();
+      select.innerHTML = '<option value="">请选择</option>' +
+        sites.map(site => `<option value="${site.id}">${site.name}</option>`).join('');
+      select.value = selectedId;
+      select.disabled = disabled;
+      select.classList.toggle('bg-gray-50', disabled);
+      select.classList.toggle('text-gray-600', disabled);
+      select.classList.toggle('cursor-not-allowed', disabled);
+    }
+
+    /**
+     * 显示分馆表单错误
+     * @param {string} field - 字段名
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showBranchFormError(field, message, show) {
+      const el = document.querySelector(`#branch-form [data-error="${field}"]`);
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 清除分馆表单错误
+     */
+    function clearBranchFormErrors() {
+      document.querySelectorAll('#branch-form [data-error]').forEach(el => el.classList.add('hidden'));
+    }
+
+    /**
+     * 更新分馆状态开关视觉
+     * @param {boolean} enabled - 是否开启
+     */
+    function updateBranchStatusToggle(enabled) {
+      const track = document.getElementById('branch-form-status-track');
+      const thumb = document.getElementById('branch-form-status-thumb');
+      const label = document.getElementById('branch-form-status-label');
+      if (track) track.classList.toggle('bg-sky-600', enabled);
+      if (track) track.classList.toggle('bg-gray-200', !enabled);
+      if (thumb) thumb.style.left = enabled ? '22px' : '2px';
+      if (label) label.textContent = enabled ? '开启' : '关闭';
+    }
+
+    /**
+     * 校验分馆编码是否在所属馆址编码范围内
+     * @param {string} code - 分馆编码
+     * @param {string} siteId - 馆址 ID
+     * @returns {boolean}
+     */
+    function isBranchCodeInSiteRange(code, siteId) {
+      if (!LEVEL4_BRANCH_CODES.includes(code)) return false;
+      const prefixes = SITE_BRANCH_PREFIXES[siteId];
+      if (!prefixes) return true;
+      return prefixes.some(prefix => code.startsWith(prefix));
+    }
+
+    /**
+     * 校验分馆编码是否重复
+     * @param {string} code - 分馆编码
+     * @param {string|null} excludeId - 排除的分馆 ID
+     * @returns {boolean}
+     */
+    function isDuplicateBranchCode(code, excludeId = null) {
+      return branchRows.some(row => row.id !== excludeId && row.code === code);
+    }
+
+    /**
+     * 校验同馆址下分馆名称是否重复
+     * @param {string} name - 分馆名称
+     * @param {string} siteId - 馆址 ID
+     * @param {string|null} excludeId - 排除的分馆 ID
+     * @returns {boolean}
+     */
+    function isDuplicateBranchName(name, siteId, excludeId = null) {
+      return branchRows.some(row =>
+        row.id !== excludeId && row.siteId === siteId && row.name === name
+      );
+    }
+
+    /**
+     * 校验分馆编码字段（新增时可实时校验）
+     * @param {string} code - 分馆编码
+     * @param {string} siteId - 馆址 ID
+     * @param {boolean} isEdit - 是否编辑模式
+     * @param {string|null} excludeId - 排除 ID
+     * @returns {boolean}
+     */
+    function validateBranchCodeField(code, siteId, isEdit, excludeId = null) {
+      if (isEdit) return true;
+
+      if (!code) {
+        showBranchFormError('code', '请输入分馆编码', true);
+        return false;
+      }
+      if (code.length > BRANCH_CODE_MAX) {
+        showBranchFormError('code', '分馆编码长度不能超过32个字符', true);
+        return false;
+      }
+      if (!siteId) {
+        showBranchFormError('siteId', '请选择所属馆址', true);
+        return false;
+      }
+      if (!isBranchCodeInSiteRange(code, siteId)) {
+        showBranchFormError('code', '分馆编码必须属于四级馆址编码范围内', true);
+        return false;
+      }
+      if (isDuplicateBranchCode(code, excludeId)) {
+        showBranchFormError('code', '分馆编码已存在，请修改', true);
+        return false;
+      }
+      showBranchFormError('code', '', false);
+      return true;
+    }
+
+    /**
+     * 校验分馆表单
+     * @param {HTMLFormElement} form - 表单
+     * @returns {boolean}
+     */
+    function validateBranchForm(form) {
+      clearBranchFormErrors();
+      let valid = true;
+
+      const branchId = form.branchId.value || null;
+      const siteId = form.siteId.value;
+      const code = form.code.value.trim();
+      const name = form.name.value.trim();
+      const remark = form.remark.value;
+
+      if (!siteId) {
+        showBranchFormError('siteId', '请选择所属馆址', true);
+        valid = false;
+      }
+
+      if (!isBranchEditMode) {
+        if (!code) {
+          showBranchFormError('code', '请输入分馆编码', true);
+          valid = false;
+        } else if (code.length > BRANCH_CODE_MAX) {
+          showBranchFormError('code', '分馆编码长度不能超过32个字符', true);
+          valid = false;
+        } else if (siteId && !isBranchCodeInSiteRange(code, siteId)) {
+          showBranchFormError('code', '分馆编码必须属于四级馆址编码范围内', true);
+          valid = false;
+        } else if (isDuplicateBranchCode(code, branchId)) {
+          showBranchFormError('code', '分馆编码已存在，请修改', true);
+          valid = false;
+        }
+      }
+
+      if (!name) {
+        showBranchFormError('name', '请输入分馆名称', true);
+        valid = false;
+      } else if (name.length > BRANCH_NAME_MAX) {
+        showBranchFormError('name', '分馆名称长度不能超过64个字符', true);
+        valid = false;
+      } else if (siteId && isDuplicateBranchName(name, siteId, branchId)) {
+        showBranchFormError('name', '该馆址下已存在同名分馆', true);
+        valid = false;
+      }
+
+      if (remark.length > BRANCH_REMARK_MAX) {
+        showBranchFormError('remark', '备注长度不能超过200个字符', true);
+        valid = false;
+      }
+
+      return valid;
+    }
+
+    /**
+     * 同步分馆列表展示数据
+     */
+    function syncBranchDisplayRows() {
+      const form = document.getElementById('branch-search-form');
+      if (form && (form.siteCode.value || form.siteName.value || form.code.value ||
+        form.name.value || form.status.value)) {
+        searchBranch(form);
+      } else {
+        locationPageState.branch.displayRows = branchRows.map(enrichBranchRow);
+        refreshBranchTable();
+      }
+    }
+
+    /**
+     * 设置分馆编码输入框只读状态
+     * @param {HTMLInputElement} input - 编码输入框
+     * @param {boolean} readonly - 是否只读
+     */
+    function setBranchCodeReadonly(input, readonly) {
+      if (!input) return;
+      input.readOnly = readonly;
+      input.classList.toggle('bg-gray-50', readonly);
+      input.classList.toggle('text-gray-600', readonly);
+      input.classList.toggle('cursor-not-allowed', readonly);
+      input.classList.toggle('border-gray-200', readonly);
+      input.classList.toggle('border-gray-300', !readonly);
+    }
+
+    /**
+     * 重置新增分馆表单
+     */
+    function resetAddBranchForm() {
+      isBranchEditMode = false;
+      const form = document.getElementById('branch-form');
+      const title = document.getElementById('branch-form-modal-title');
+      if (!form) return;
+
+      form.reset();
+      form.branchId.value = '';
+      if (title) title.textContent = '新增分馆';
+
+      initBranchSiteSelect(form.siteId, '', false);
+      setBranchCodeReadonly(form.code, false);
+      clearBranchFormErrors();
+
+      const toggle = document.getElementById('branch-form-status-toggle');
+      if (toggle) {
+        toggle.checked = true;
+        updateBranchStatusToggle(true);
+      }
+    }
+
+    /**
+     * 打开新增分馆弹窗
+     */
+    function openAddBranchModal() {
+      resetAddBranchForm();
+      document.getElementById('branch-form-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 打开编辑分馆弹窗
+     * @param {string} branchId - 分馆 ID
+     */
+    function openEditBranchModal(branchId) {
+      const row = getBranchById(branchId);
+      if (!row) return;
+
+      isBranchEditMode = true;
+      const form = document.getElementById('branch-form');
+      const title = document.getElementById('branch-form-modal-title');
+      if (!form) return;
+
+      clearBranchFormErrors();
+      if (title) title.textContent = '编辑分馆';
+
+      form.branchId.value = row.id;
+      initBranchSiteSelect(form.siteId, row.siteId, true);
+      form.code.value = row.code;
+      setBranchCodeReadonly(form.code, true);
+      form.name.value = row.name;
+      form.remark.value = row.remark || '';
+
+      const statusEnabled = row.status === 'active';
+      const toggle = document.getElementById('branch-form-status-toggle');
+      if (toggle) {
+        toggle.checked = statusEnabled;
+        updateBranchStatusToggle(statusEnabled);
+      }
+
+      document.getElementById('branch-form-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭分馆表单弹窗
+     */
+    function closeBranchFormModal() {
+      document.getElementById('branch-form-modal')?.classList.add('hidden');
+      clearBranchFormErrors();
+    }
+
+    /**
+     * 提交分馆表单
+     */
+    function submitBranchForm() {
+      const form = document.getElementById('branch-form');
+      if (!form || !validateBranchForm(form)) {
+        showSiteFormToast(false);
+        return;
+      }
+
+      const branchId = form.branchId.value;
+      const statusEnabled = document.getElementById('branch-form-status-toggle')?.checked ?? true;
+      const payload = {
+        siteId: form.siteId.value,
+        code: form.code.value.trim(),
+        name: form.name.value.trim(),
+        status: statusEnabled ? 'active' : 'inactive',
+        remark: form.remark.value.trim()
+      };
+
+      if (isBranchEditMode && branchId) {
+        const row = getBranchById(branchId);
+        if (row) Object.assign(row, payload);
+      } else {
+        branchRows.unshift({
+          id: `branch-${Date.now()}`,
+          ...payload
+        });
+      }
+
+      closeBranchFormModal();
+      syncBranchDisplayRows();
+      showSiteFormToast(true);
+    }
+
+    /**
+     * 获取指定馆址下启用中的分馆列表
+     * @param {string} siteId - 馆址 ID
+     * @returns {Array<Object>}
+     */
+    function getActiveBranchesBySiteId(siteId) {
+      return branchRows
+        .filter(row => row.siteId === siteId && row.status === 'active')
+        .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+    }
+
+    /**
+     * 初始化馆藏地表单馆址下拉
+     * @param {HTMLSelectElement} select - 下拉框
+     * @param {string} [selectedId=''] - 选中馆址 ID
+     * @param {boolean} [disabled=false] - 是否禁用
+     */
+    function initCollectionSiteSelect(select, selectedId = '', disabled = false) {
+      if (!select) return;
+      const sites = getActiveSites();
+      select.innerHTML = '<option value="">请选择</option>' +
+        sites.map(site => `<option value="${site.id}">${site.name}</option>`).join('');
+      select.value = selectedId;
+      select.disabled = disabled;
+      select.classList.toggle('bg-gray-50', disabled);
+      select.classList.toggle('text-gray-600', disabled);
+      select.classList.toggle('cursor-not-allowed', disabled);
+    }
+
+    /**
+     * 初始化馆藏地表单分馆下拉
+     * @param {HTMLSelectElement} select - 下拉框
+     * @param {string} siteId - 馆址 ID
+     * @param {string} [selectedId=''] - 选中分馆 ID
+     * @param {boolean} [disabled=false] - 是否禁用
+     */
+    function initCollectionBranchSelect(select, siteId, selectedId = '', disabled = false) {
+      if (!select) return;
+
+      if (!siteId && !disabled) {
+        select.innerHTML = '<option value="">请先选择馆址</option>';
+        select.value = '';
+        select.disabled = true;
+        select.classList.add('bg-gray-50', 'text-gray-600', 'cursor-not-allowed');
+        return;
+      }
+
+      const branches = getActiveBranchesBySiteId(siteId);
+      select.innerHTML = '<option value="">请选择</option>' +
+        branches.map(branch => `<option value="${branch.id}">${branch.name}</option>`).join('');
+      select.value = selectedId;
+      select.disabled = disabled;
+      select.classList.toggle('bg-gray-50', disabled);
+      select.classList.toggle('text-gray-600', disabled);
+      select.classList.toggle('cursor-not-allowed', disabled);
+    }
+
+    /**
+     * 显示馆藏地表单错误
+     * @param {string} field - 字段名
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showCollectionFormError(field, message, show) {
+      const el = document.querySelector(`#collection-form [data-error="${field}"]`);
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 清除馆藏地表单错误
+     */
+    function clearCollectionFormErrors() {
+      document.querySelectorAll('#collection-form [data-error]').forEach(el => el.classList.add('hidden'));
+    }
+
+    /**
+     * 更新馆藏地状态开关视觉
+     * @param {boolean} enabled - 是否开启
+     */
+    function updateCollectionStatusToggle(enabled) {
+      const track = document.getElementById('collection-form-status-track');
+      const thumb = document.getElementById('collection-form-status-thumb');
+      const label = document.getElementById('collection-form-status-label');
+      if (track) track.classList.toggle('bg-sky-600', enabled);
+      if (track) track.classList.toggle('bg-gray-200', !enabled);
+      if (thumb) thumb.style.left = enabled ? '22px' : '2px';
+      if (label) label.textContent = enabled ? '开启' : '关闭';
+    }
+
+    /**
+     * 校验馆藏地编码是否属于四级馆藏地现有编码
+     * @param {string} code - 馆藏地编码
+     * @returns {boolean}
+     */
+    function isValidCollectionCode(code) {
+      return LEVEL4_COLLECTION_CODES.includes(code);
+    }
+
+    /**
+     * 校验馆藏地编码是否重复
+     * @param {string} code - 馆藏地编码
+     * @param {string|null} excludeId - 排除的馆藏地 ID
+     * @returns {boolean}
+     */
+    function isDuplicateCollectionCode(code, excludeId = null) {
+      return collectionRows.some(row => row.id !== excludeId && row.code === code);
+    }
+
+    /**
+     * 校验同分馆下馆藏地名称是否重复
+     * @param {string} name - 馆藏地名称
+     * @param {string} branchId - 分馆 ID
+     * @param {string|null} excludeId - 排除的馆藏地 ID
+     * @returns {boolean}
+     */
+    function isDuplicateCollectionName(name, branchId, excludeId = null) {
+      return collectionRows.some(row =>
+        row.id !== excludeId && row.branchId === branchId && row.name === name
+      );
+    }
+
+    /**
+     * 校验馆藏地编码字段（新增时可实时校验）
+     * @param {string} code - 馆藏地编码
+     * @param {boolean} isEdit - 是否编辑模式
+     * @param {string|null} excludeId - 排除 ID
+     * @returns {boolean}
+     */
+    function validateCollectionCodeField(code, isEdit, excludeId = null) {
+      if (isEdit) return true;
+
+      if (!code) {
+        showCollectionFormError('code', '请输入馆藏地编码', true);
+        return false;
+      }
+      if (code.length > COLLECTION_CODE_MAX) {
+        showCollectionFormError('code', '馆藏地编码长度不能超过32个字符', true);
+        return false;
+      }
+      if (!isValidCollectionCode(code)) {
+        showCollectionFormError('code', '馆藏地编码必须属于四级馆藏地现有编码', true);
+        return false;
+      }
+      if (isDuplicateCollectionCode(code, excludeId)) {
+        showCollectionFormError('code', '馆藏地编码已存在，请修改', true);
+        return false;
+      }
+      showCollectionFormError('code', '', false);
+      return true;
+    }
+
+    /**
+     * 校验馆藏地表单
+     * @param {HTMLFormElement} form - 表单
+     * @returns {boolean}
+     */
+    function validateCollectionForm(form) {
+      clearCollectionFormErrors();
+      let valid = true;
+
+      const collectionId = form.collectionId.value || null;
+      const siteId = form.siteId.value;
+      const branchId = form.branchId.value;
+      const code = form.code.value.trim();
+      const name = form.name.value.trim();
+      const remark = form.remark.value;
+
+      if (!siteId) {
+        showCollectionFormError('siteId', '请选择所属馆址', true);
+        valid = false;
+      }
+
+      if (!branchId) {
+        showCollectionFormError('branchId', '请选择所属分馆', true);
+        valid = false;
+      }
+
+      if (!isCollectionEditMode) {
+        if (!code) {
+          showCollectionFormError('code', '请输入馆藏地编码', true);
+          valid = false;
+        } else if (code.length > COLLECTION_CODE_MAX) {
+          showCollectionFormError('code', '馆藏地编码长度不能超过32个字符', true);
+          valid = false;
+        } else if (!isValidCollectionCode(code)) {
+          showCollectionFormError('code', '馆藏地编码必须属于四级馆藏地现有编码', true);
+          valid = false;
+        } else if (isDuplicateCollectionCode(code, collectionId)) {
+          showCollectionFormError('code', '馆藏地编码已存在，请修改', true);
+          valid = false;
+        }
+      }
+
+      if (!name) {
+        showCollectionFormError('name', '请输入馆藏地名称', true);
+        valid = false;
+      } else if (name.length > COLLECTION_NAME_MAX) {
+        showCollectionFormError('name', '馆藏地名称长度不能超过64个字符', true);
+        valid = false;
+      } else if (branchId && isDuplicateCollectionName(name, branchId, collectionId)) {
+        showCollectionFormError('name', '该分馆下已存在同名馆藏地', true);
+        valid = false;
+      }
+
+      if (remark.length > COLLECTION_REMARK_MAX) {
+        showCollectionFormError('remark', '备注长度不能超过200个字符', true);
+        valid = false;
+      }
+
+      return valid;
+    }
+
+    /**
+     * 同步馆藏地列表展示数据
+     */
+    function syncCollectionDisplayRows() {
+      const form = document.getElementById('collection-search-form');
+      if (form && (form.siteCode.value || form.siteName.value || form.branchCode.value ||
+        form.branchName.value || form.code.value || form.name.value || form.status.value)) {
+        searchCollection(form);
+      } else {
+        locationPageState.collection.displayRows = collectionRows.map(enrichCollectionRow);
+        refreshCollectionTable();
+      }
+    }
+
+    /**
+     * 设置馆藏地编码输入框只读状态
+     * @param {HTMLInputElement} input - 编码输入框
+     * @param {boolean} readonly - 是否只读
+     */
+    function setCollectionCodeReadonly(input, readonly) {
+      if (!input) return;
+      input.readOnly = readonly;
+      input.classList.toggle('bg-gray-50', readonly);
+      input.classList.toggle('text-gray-600', readonly);
+      input.classList.toggle('cursor-not-allowed', readonly);
+      input.classList.toggle('border-gray-200', readonly);
+      input.classList.toggle('border-gray-300', !readonly);
+    }
+
+    /**
+     * 重置新增馆藏地表单
+     */
+    function resetAddCollectionForm() {
+      isCollectionEditMode = false;
+      const form = document.getElementById('collection-form');
+      const title = document.getElementById('collection-form-modal-title');
+      if (!form) return;
+
+      form.reset();
+      form.collectionId.value = '';
+      if (title) title.textContent = '新增馆藏地';
+
+      initCollectionSiteSelect(form.siteId, '', false);
+      initCollectionBranchSelect(form.branchId, '', '', false);
+      setCollectionCodeReadonly(form.code, false);
+      clearCollectionFormErrors();
+
+      const toggle = document.getElementById('collection-form-status-toggle');
+      if (toggle) {
+        toggle.checked = true;
+        updateCollectionStatusToggle(true);
+      }
+    }
+
+    /**
+     * 打开新增馆藏地弹窗
+     */
+    function openAddCollectionModal() {
+      resetAddCollectionForm();
+      document.getElementById('collection-form-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 打开编辑馆藏地弹窗
+     * @param {string} collectionId - 馆藏地 ID
+     */
+    function openEditCollectionModal(collectionId) {
+      const row = getCollectionById(collectionId);
+      if (!row) return;
+
+      const branch = getBranchById(row.branchId);
+      if (!branch) return;
+
+      isCollectionEditMode = true;
+      const form = document.getElementById('collection-form');
+      const title = document.getElementById('collection-form-modal-title');
+      if (!form) return;
+
+      clearCollectionFormErrors();
+      if (title) title.textContent = '编辑馆藏地';
+
+      form.collectionId.value = row.id;
+      initCollectionSiteSelect(form.siteId, branch.siteId, true);
+      initCollectionBranchSelect(form.branchId, branch.siteId, row.branchId, true);
+      form.code.value = row.code;
+      setCollectionCodeReadonly(form.code, true);
+      form.name.value = row.name;
+      form.remark.value = row.remark || '';
+
+      const statusEnabled = row.status === 'active';
+      const toggle = document.getElementById('collection-form-status-toggle');
+      if (toggle) {
+        toggle.checked = statusEnabled;
+        updateCollectionStatusToggle(statusEnabled);
+      }
+
+      document.getElementById('collection-form-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭馆藏地表单弹窗
+     */
+    function closeCollectionFormModal() {
+      document.getElementById('collection-form-modal')?.classList.add('hidden');
+      clearCollectionFormErrors();
+    }
+
+    /**
+     * 提交馆藏地表单
+     */
+    function submitCollectionForm() {
+      const form = document.getElementById('collection-form');
+      if (!form || !validateCollectionForm(form)) {
+        showSiteFormToast(false);
+        return;
+      }
+
+      const collectionId = form.collectionId.value;
+      const statusEnabled = document.getElementById('collection-form-status-toggle')?.checked ?? true;
+      const payload = {
+        branchId: form.branchId.value,
+        code: form.code.value.trim(),
+        name: form.name.value.trim(),
+        status: statusEnabled ? 'active' : 'inactive',
+        remark: form.remark.value.trim()
+      };
+
+      if (isCollectionEditMode && collectionId) {
+        const row = getCollectionById(collectionId);
+        if (row) Object.assign(row, payload);
+      } else {
+        collectionRows.unshift({
+          id: `col-${Date.now()}`,
+          ...payload
+        });
+      }
+
+      closeCollectionFormModal();
+      syncCollectionDisplayRows();
+      showSiteFormToast(true);
+    }
+
+    /**
+     * 显示批量导入文件错误
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showSiteImportFileError(message, show) {
+      const el = document.getElementById('site-import-file-error');
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 显示批量导入解析前错误
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showSiteImportParseError(message, show) {
+      const el = document.getElementById('site-import-parse-error');
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 切换批量导入步骤
+     * @param {'upload'|'result'} step - 步骤
+     */
+    function switchSiteImportStep(step) {
+      const uploadStep = document.getElementById('site-import-step-upload');
+      const resultStep = document.getElementById('site-import-step-result');
+      const parseBtn = document.getElementById('site-import-parse-btn');
+      const confirmBtn = document.getElementById('site-import-confirm-btn');
+
+      uploadStep?.classList.toggle('hidden', step !== 'upload');
+      resultStep?.classList.toggle('hidden', step !== 'result');
+      parseBtn?.classList.toggle('hidden', step !== 'upload');
+      confirmBtn?.classList.toggle('hidden', step !== 'result');
+    }
+
+    /**
+     * 渲染批量导入解析结果
+     */
+    function renderSiteImportResult() {
+      const summaryEl = document.getElementById('site-import-result-summary');
+      const downloadWrap = document.getElementById('site-import-download-wrap');
+      const confirmBtn = document.getElementById('site-import-confirm-btn');
+      if (!siteImportParseResult || !summaryEl) return;
+
+      const { total, success, fail } = siteImportParseResult;
+      summaryEl.innerHTML = `共解析到 ${total} 条数据，其中 <span class="text-teal-600">${success}</span> 条成功，<span class="text-red-500">${fail}</span> 条失败`;
+
+      if (downloadWrap) downloadWrap.classList.toggle('hidden', fail <= 0);
+
+      if (confirmBtn) {
+        confirmBtn.disabled = fail > 0;
+        confirmBtn.classList.toggle('opacity-50', fail > 0);
+        confirmBtn.classList.toggle('cursor-not-allowed', fail > 0);
+      }
+    }
+
+    /**
+     * 重置批量导入弹窗
+     */
+    function resetSiteImportModal() {
+      siteImportUploadedFile = null;
+      siteImportParseResult = null;
+      switchSiteImportStep('upload');
+
+      const fileInput = document.getElementById('site-import-file-input');
+      const fileInfo = document.getElementById('site-import-file-info');
+      if (fileInput) fileInput.value = '';
+      if (fileInfo) {
+        fileInfo.classList.add('hidden');
+        fileInfo.classList.remove('flex');
+      }
+
+      showSiteImportFileError('请上传文件', false);
+      showSiteImportParseError('', false);
+    }
+
+    /**
+     * 打开批量导入弹窗
+     */
+    function openSiteImportModal() {
+      resetSiteImportModal();
+      document.getElementById('site-import-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭批量导入弹窗
+     */
+    function closeSiteImportModal() {
+      document.getElementById('site-import-modal')?.classList.add('hidden');
+      resetSiteImportModal();
+    }
+
+    /**
+     * 设置已上传文件
+     * @param {File|null} file - 文件
+     */
+    function setSiteImportFile(file) {
+      siteImportUploadedFile = file;
+      const fileInfo = document.getElementById('site-import-file-info');
+      const fileNameEl = document.getElementById('site-import-file-name');
+
+      if (file && fileInfo && fileNameEl) {
+        fileNameEl.textContent = file.name;
+        fileInfo.classList.remove('hidden');
+        fileInfo.classList.add('flex');
+        showSiteImportFileError('', false);
+        showSiteImportParseError('', false);
+      } else if (fileInfo) {
+        fileInfo.classList.add('hidden');
+        fileInfo.classList.remove('flex');
+      }
+    }
+
+    /**
+     * 下载馆址导入模板
+     */
+    function downloadSiteImportTemplate() {
+      const sample = ['ST001_C5', '示例馆址名称', '使用中', '示例备注'];
+      const content = `\uFEFF${SITE_IMPORT_HEADERS.join(',')}\n${sample.join(',')}\n`;
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '馆址导入模板.csv';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    /**
+     * 下载馆址导入解析错误文件
+     */
+    function downloadSiteImportErrorFile() {
+      if (!siteImportParseResult || siteImportParseResult.errorRows.length === 0) return;
+
+      const headers = [...SITE_IMPORT_HEADERS, '错误原因'];
+      const lines = siteImportParseResult.errorRows.map(row => [
+        row.code, row.name, row.statusText, row.remark, row.errorReason
+      ].map(value => `"${String(value || '').replace(/"/g, '""')}"`).join(','));
+      const content = `\uFEFF${headers.join(',')}\n${lines.join('\n')}\n`;
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+      link.href = URL.createObjectURL(blob);
+      link.download = `馆址导入解析错误文件_${timestamp}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    /**
+     * 校验上传文件扩展名
+     * @param {string} fileName - 文件名
+     * @returns {boolean}
+     */
+    function isValidSiteImportFileName(fileName) {
+      return /\.(xls|xlsx)$/i.test(fileName);
+    }
+
+    /**
+     * 模拟解析馆址导入文件
+     * @param {File} file - 上传文件
+     * @returns {{ ok: boolean, message?: string, result?: Object }}
+     */
+    function simulateSiteImportParse(file) {
+      const name = file.name.toLowerCase();
+
+      if (!isValidSiteImportFileName(file.name)) {
+        return { ok: false, message: '导入文件格式不符' };
+      }
+      if (name.includes('header') || name.includes('表头')) {
+        return { ok: false, message: '模板的表头更改了' };
+      }
+      if (name.includes('2000') || name.includes('超限')) {
+        return { ok: false, message: '数据记录超过2000条' };
+      }
+
+      const existingCodes = new Set(siteRows.map(row => row.code).filter(Boolean));
+      const existingNames = new Set(siteRows.map(row => row.name));
+
+      if (name.includes('success') || name.includes('全部成功')) {
+        const importCodes = ['ST002_C1', 'ST002_C2', 'ST003_C1'].filter(code => !existingCodes.has(code));
+        const successRows = importCodes.map((code, index) => ({
+          code,
+          name: `批量导入馆址${index + 1}`,
+          status: 'active',
+          remark: ''
+        }));
+        return {
+          ok: true,
+          result: {
+            total: successRows.length,
+            success: successRows.length,
+            fail: 0,
+            successRows,
+            errorRows: []
+          }
+        };
+      }
+
+      const total = 100;
+      const fail = 10;
+      const errorReasons = [
+        '馆址编码重复',
+        '馆址编码不属于四级馆藏地现有编码',
+        '馆址名称长度不能超过64个字符',
+        '已存在同名馆址'
+      ];
+      const errorRows = Array.from({ length: fail }, (_, index) => ({
+        code: index === 0 ? 'ST001_C1' : `INVALID_${index}`,
+        name: index === 3 ? '首都华威桥馆' : `失败馆址${index + 1}`,
+        statusText: '使用中',
+        remark: '',
+        errorReason: errorReasons[index % errorReasons.length]
+      }));
+
+      const successRows = Array.from({ length: total - fail }, (_, index) => ({
+        code: `ST002_C${String(index + 10).padStart(2, '0')}`,
+        name: `导入馆址${index + 1}`,
+        status: 'active',
+        remark: index % 4 === 0 ? '批量导入' : ''
+      })).filter(row => !existingCodes.has(row.code) && !existingNames.has(row.name));
+
+      return {
+        ok: true,
+        result: {
+          total,
+          success: total - fail,
+          fail,
+          successRows,
+          errorRows
+        }
+      };
+    }
+
+    /**
+     * 开始解析馆址导入文件
+     */
+    function startSiteImportParse() {
+      showSiteImportParseError('', false);
+
+      if (!siteImportUploadedFile) {
+        showSiteImportFileError('请上传文件', true);
+        return;
+      }
+
+      const parseOutcome = simulateSiteImportParse(siteImportUploadedFile);
+      if (!parseOutcome.ok) {
+        showSiteImportParseError(parseOutcome.message || '解析失败', true);
+        return;
+      }
+
+      siteImportParseResult = parseOutcome.result;
+      renderSiteImportResult();
+      switchSiteImportStep('result');
+    }
+
+    /**
+     * 确认导入馆址
+     */
+    function confirmSiteImport() {
+      if (!siteImportParseResult || siteImportParseResult.fail > 0) {
+        showSiteFormToast(false, '解析全部成功，才可入库');
+        return;
+      }
+
+      siteImportParseResult.successRows.forEach(row => {
+        if (siteRows.some(item => item.code === row.code)) return;
+        siteRows.unshift({
+          id: `site-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          code: row.code,
+          name: row.name,
+          status: row.status,
+          remark: row.remark || ''
+        });
+      });
+
+      closeSiteImportModal();
+      syncSiteDisplayRows();
+      showSiteFormToast(true, '导入成功');
+    }
+
+    /**
+     * 显示分馆批量导入文件错误
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showBranchImportFileError(message, show) {
+      const el = document.getElementById('branch-import-file-error');
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 显示分馆批量导入解析前错误
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showBranchImportParseError(message, show) {
+      const el = document.getElementById('branch-import-parse-error');
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 切换分馆批量导入步骤
+     * @param {'upload'|'result'} step - 步骤
+     */
+    function switchBranchImportStep(step) {
+      const uploadStep = document.getElementById('branch-import-step-upload');
+      const resultStep = document.getElementById('branch-import-step-result');
+      const parseBtn = document.getElementById('branch-import-parse-btn');
+      const confirmBtn = document.getElementById('branch-import-confirm-btn');
+
+      uploadStep?.classList.toggle('hidden', step !== 'upload');
+      resultStep?.classList.toggle('hidden', step !== 'result');
+      parseBtn?.classList.toggle('hidden', step !== 'upload');
+      confirmBtn?.classList.toggle('hidden', step !== 'result');
+    }
+
+    /**
+     * 渲染分馆批量导入解析结果
+     */
+    function renderBranchImportResult() {
+      const summaryEl = document.getElementById('branch-import-result-summary');
+      const downloadWrap = document.getElementById('branch-import-download-wrap');
+      const confirmBtn = document.getElementById('branch-import-confirm-btn');
+      if (!branchImportParseResult || !summaryEl) return;
+
+      const { total, success, fail } = branchImportParseResult;
+      summaryEl.innerHTML = `共解析到 ${total} 条数据，其中 <span class="text-teal-600">${success}</span> 条成功，<span class="text-red-500">${fail}</span> 条失败`;
+
+      if (downloadWrap) downloadWrap.classList.toggle('hidden', fail <= 0);
+
+      if (confirmBtn) {
+        confirmBtn.disabled = fail > 0;
+        confirmBtn.classList.toggle('opacity-50', fail > 0);
+        confirmBtn.classList.toggle('cursor-not-allowed', fail > 0);
+      }
+    }
+
+    /**
+     * 重置分馆批量导入弹窗
+     */
+    function resetBranchImportModal() {
+      branchImportUploadedFile = null;
+      branchImportParseResult = null;
+      switchBranchImportStep('upload');
+
+      const fileInput = document.getElementById('branch-import-file-input');
+      const fileInfo = document.getElementById('branch-import-file-info');
+      if (fileInput) fileInput.value = '';
+      if (fileInfo) {
+        fileInfo.classList.add('hidden');
+        fileInfo.classList.remove('flex');
+      }
+
+      showBranchImportFileError('请上传文件', false);
+      showBranchImportParseError('', false);
+    }
+
+    /**
+     * 打开分馆批量导入弹窗
+     */
+    function openBranchImportModal() {
+      resetBranchImportModal();
+      document.getElementById('branch-import-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭分馆批量导入弹窗
+     */
+    function closeBranchImportModal() {
+      document.getElementById('branch-import-modal')?.classList.add('hidden');
+      resetBranchImportModal();
+    }
+
+    /**
+     * 设置分馆批量导入已上传文件
+     * @param {File|null} file - 文件
+     */
+    function setBranchImportFile(file) {
+      branchImportUploadedFile = file;
+      const fileInfo = document.getElementById('branch-import-file-info');
+      const fileNameEl = document.getElementById('branch-import-file-name');
+
+      if (file && fileInfo && fileNameEl) {
+        fileNameEl.textContent = file.name;
+        fileInfo.classList.remove('hidden');
+        fileInfo.classList.add('flex');
+        showBranchImportFileError('', false);
+        showBranchImportParseError('', false);
+      } else if (fileInfo) {
+        fileInfo.classList.add('hidden');
+        fileInfo.classList.remove('flex');
+      }
+    }
+
+    /**
+     * 下载分馆导入模板
+     */
+    function downloadBranchImportTemplate() {
+      const sample = ['ST001_C1', '首都华威桥馆', 'STD01', '首图地方文献', '使用中', '示例备注'];
+      const content = `\uFEFF${BRANCH_IMPORT_HEADERS.join(',')}\n${sample.join(',')}\n`;
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '分馆导入模板.csv';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    /**
+     * 下载分馆导入解析错误文件
+     */
+    function downloadBranchImportErrorFile() {
+      if (!branchImportParseResult || branchImportParseResult.errorRows.length === 0) return;
+
+      const headers = [...BRANCH_IMPORT_HEADERS, '错误原因'];
+      const lines = branchImportParseResult.errorRows.map(row => [
+        row.siteCode, row.siteName, row.branchCode, row.branchName, row.statusText, row.remark, row.errorReason
+      ].map(value => `"${String(value || '').replace(/"/g, '""')}"`).join(','));
+      const content = `\uFEFF${headers.join(',')}\n${lines.join('\n')}\n`;
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+      link.href = URL.createObjectURL(blob);
+      link.download = `分馆导入解析错误文件_${timestamp}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    /**
+     * 校验分馆导入单行数据
+     * @param {Object} row - 导入行
+     * @param {Set<string>} fileBranchCodes - 文件内已出现的分馆编码
+     * @returns {string|null} 错误原因，无错误返回 null
+     */
+    function validateBranchImportRow(row, fileBranchCodes) {
+      const siteCode = String(row.siteCode || '').trim();
+      const branchCode = String(row.branchCode || '').trim();
+      const branchName = String(row.branchName || '').trim();
+      const remark = String(row.remark || '');
+
+      if (!siteCode) return '馆址编码不能为空';
+      if (!branchCode) return '分馆编码不能为空';
+      if (!branchName) return '分馆名称不能为空';
+      if (branchCode.length > BRANCH_CODE_MAX) return '分馆编码长度不能超过32个字符';
+      if (branchName.length > BRANCH_NAME_MAX) return '分馆名称长度不能超过64个字符';
+      if (remark.length > BRANCH_REMARK_MAX) return '备注长度不能超过200个字符';
+
+      const site = getSiteByCode(siteCode);
+      if (!site) return '馆址编码不存在';
+
+      if (fileBranchCodes.has(branchCode)) return '分馆编码重复';
+      if (isDuplicateBranchCode(branchCode)) return '分馆编码重复';
+
+      if (!isBranchCodeInSiteRange(branchCode, site.id)) {
+        return '分馆编码不属于当前馆址编码';
+      }
+
+      if (isDuplicateBranchName(branchName, site.id)) {
+        return '同馆址下已存在同名分馆';
+      }
+
+      fileBranchCodes.add(branchCode);
+      return null;
+    }
+
+    /**
+     * 模拟解析分馆导入文件
+     * @param {File} file - 上传文件
+     * @returns {{ ok: boolean, message?: string, result?: Object }}
+     */
+    function simulateBranchImportParse(file) {
+      const name = file.name.toLowerCase();
+
+      if (!isValidSiteImportFileName(file.name)) {
+        return { ok: false, message: '导入文件格式不符' };
+      }
+      if (name.includes('header') || name.includes('表头')) {
+        return { ok: false, message: '模板的表头更改了' };
+      }
+      if (name.includes('2000') || name.includes('超限')) {
+        return { ok: false, message: '数据记录超过2000条' };
+      }
+
+      const existingBranchCodes = new Set(branchRows.map(row => row.code).filter(Boolean));
+      const fileBranchCodes = new Set();
+
+      if (name.includes('success') || name.includes('全部成功')) {
+        const site = getSiteByCode('ST001_C1') || siteRows.find(row => row.code);
+        const importCodes = ['STF01', 'STH01', 'STD02'].filter(code =>
+          !existingBranchCodes.has(code) && site && isBranchCodeInSiteRange(code, site.id)
+        );
+        const successRows = importCodes.map((code, index) => ({
+          siteCode: site?.code || 'ST001_C1',
+          siteName: site?.name || '首都华威桥馆',
+          siteId: site?.id || 'site-1',
+          branchCode: code,
+          branchName: `批量导入分馆${index + 1}`,
+          status: 'active',
+          remark: ''
+        }));
+        return {
+          ok: true,
+          result: {
+            total: successRows.length,
+            success: successRows.length,
+            fail: 0,
+            successRows,
+            errorRows: []
+          }
+        };
+      }
+
+      const total = 100;
+      const fail = 10;
+      const errorReasons = [
+        '分馆编码重复',
+        '分馆编码不属于当前馆址编码',
+        '分馆名称长度不能超过64个字符',
+        '馆址编码不存在',
+        '同馆址下已存在同名分馆'
+      ];
+      const errorRows = Array.from({ length: fail }, (_, index) => ({
+        siteCode: index === 3 ? 'INVALID_SITE' : 'ST001_C1',
+        siteName: index === 3 ? '不存在馆址' : '首都华威桥馆',
+        branchCode: index === 0 ? 'STD01' : `INVALID_${index}`,
+        branchName: index === 2 ? 'A'.repeat(BRANCH_NAME_MAX + 1) : index === 4 ? '首图地方文献' : `失败分馆${index + 1}`,
+        statusText: '使用中',
+        remark: '',
+        errorReason: errorReasons[index % errorReasons.length]
+      }));
+
+      const successRows = Array.from({ length: total - fail }, (_, index) => {
+        const site = getSiteByCode('ST001_C1') || siteRows[0];
+        const branchCode = `STF${String(index + 10).padStart(2, '0')}`;
+        return {
+          siteCode: site?.code || 'ST001_C1',
+          siteName: site?.name || '首都华威桥馆',
+          siteId: site?.id || 'site-1',
+          branchCode,
+          branchName: `导入分馆${index + 1}`,
+          status: 'active',
+          remark: index % 4 === 0 ? '批量导入' : ''
+        };
+      }).filter(row =>
+        !existingBranchCodes.has(row.branchCode) &&
+        validateBranchImportRow(row, new Set()) === null
+      );
+
+      return {
+        ok: true,
+        result: {
+          total,
+          success: total - fail,
+          fail,
+          successRows,
+          errorRows
+        }
+      };
+    }
+
+    /**
+     * 开始解析分馆导入文件
+     */
+    function startBranchImportParse() {
+      showBranchImportParseError('', false);
+
+      if (!branchImportUploadedFile) {
+        showBranchImportFileError('请上传文件', true);
+        return;
+      }
+
+      const parseOutcome = simulateBranchImportParse(branchImportUploadedFile);
+      if (!parseOutcome.ok) {
+        showBranchImportParseError(parseOutcome.message || '解析失败', true);
+        return;
+      }
+
+      branchImportParseResult = parseOutcome.result;
+      renderBranchImportResult();
+      switchBranchImportStep('result');
+    }
+
+    /**
+     * 确认导入分馆
+     */
+    function confirmBranchImport() {
+      if (!branchImportParseResult || branchImportParseResult.fail > 0) {
+        showSiteFormToast(false, '解析全部成功，才可入库');
+        return;
+      }
+
+      branchImportParseResult.successRows.forEach(row => {
+        if (branchRows.some(item => item.code === row.branchCode)) return;
+        branchRows.unshift({
+          id: `branch-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          siteId: row.siteId,
+          code: row.branchCode,
+          name: row.branchName,
+          status: row.status,
+          remark: row.remark || ''
+        });
+      });
+
+      closeBranchImportModal();
+      syncBranchDisplayRows();
+      showSiteFormToast(true, '导入成功');
+    }
+
+    /**
+     * 显示馆藏地批量导入文件错误
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showCollectionImportFileError(message, show) {
+      const el = document.getElementById('collection-import-file-error');
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 显示馆藏地批量导入解析前错误
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showCollectionImportParseError(message, show) {
+      const el = document.getElementById('collection-import-parse-error');
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 切换馆藏地批量导入步骤
+     * @param {'upload'|'result'} step - 步骤
+     */
+    function switchCollectionImportStep(step) {
+      const uploadStep = document.getElementById('collection-import-step-upload');
+      const resultStep = document.getElementById('collection-import-step-result');
+      const parseBtn = document.getElementById('collection-import-parse-btn');
+      const confirmBtn = document.getElementById('collection-import-confirm-btn');
+
+      uploadStep?.classList.toggle('hidden', step !== 'upload');
+      resultStep?.classList.toggle('hidden', step !== 'result');
+      parseBtn?.classList.toggle('hidden', step !== 'upload');
+      confirmBtn?.classList.toggle('hidden', step !== 'result');
+    }
+
+    /**
+     * 渲染馆藏地批量导入解析结果
+     */
+    function renderCollectionImportResult() {
+      const summaryEl = document.getElementById('collection-import-result-summary');
+      const downloadWrap = document.getElementById('collection-import-download-wrap');
+      const confirmBtn = document.getElementById('collection-import-confirm-btn');
+      if (!collectionImportParseResult || !summaryEl) return;
+
+      const { total, success, fail } = collectionImportParseResult;
+      summaryEl.innerHTML = `共解析到 ${total} 条数据，其中 <span class="text-teal-600">${success}</span> 条成功，<span class="text-red-500">${fail}</span> 条失败`;
+
+      if (downloadWrap) downloadWrap.classList.toggle('hidden', fail <= 0);
+
+      if (confirmBtn) {
+        confirmBtn.disabled = fail > 0;
+        confirmBtn.classList.toggle('opacity-50', fail > 0);
+        confirmBtn.classList.toggle('cursor-not-allowed', fail > 0);
+      }
+    }
+
+    /**
+     * 重置馆藏地批量导入弹窗
+     */
+    function resetCollectionImportModal() {
+      collectionImportUploadedFile = null;
+      collectionImportParseResult = null;
+      switchCollectionImportStep('upload');
+
+      const fileInput = document.getElementById('collection-import-file-input');
+      const fileInfo = document.getElementById('collection-import-file-info');
+      if (fileInput) fileInput.value = '';
+      if (fileInfo) {
+        fileInfo.classList.add('hidden');
+        fileInfo.classList.remove('flex');
+      }
+
+      showCollectionImportFileError('请上传文件', false);
+      showCollectionImportParseError('', false);
+    }
+
+    /**
+     * 打开馆藏地批量导入弹窗
+     */
+    function openCollectionImportModal() {
+      resetCollectionImportModal();
+      document.getElementById('collection-import-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭馆藏地批量导入弹窗
+     */
+    function closeCollectionImportModal() {
+      document.getElementById('collection-import-modal')?.classList.add('hidden');
+      resetCollectionImportModal();
+    }
+
+    /**
+     * 设置馆藏地批量导入已上传文件
+     * @param {File|null} file - 文件
+     */
+    function setCollectionImportFile(file) {
+      collectionImportUploadedFile = file;
+      const fileInfo = document.getElementById('collection-import-file-info');
+      const fileNameEl = document.getElementById('collection-import-file-name');
+
+      if (file && fileInfo && fileNameEl) {
+        fileNameEl.textContent = file.name;
+        fileInfo.classList.remove('hidden');
+        fileInfo.classList.add('flex');
+        showCollectionImportFileError('', false);
+        showCollectionImportParseError('', false);
+      } else if (fileInfo) {
+        fileInfo.classList.add('hidden');
+        fileInfo.classList.remove('flex');
+      }
+    }
+
+    /**
+     * 下载馆藏地导入模板
+     */
+    function downloadCollectionImportTemplate() {
+      const sample = [
+        'ST001_C1', '首都华威桥馆', 'STD01', '首图地方文献',
+        'CL005', '首图地方文献阅览室', '使用中', '示例备注'
+      ];
+      const content = `\uFEFF${COLLECTION_IMPORT_HEADERS.join(',')}\n${sample.join(',')}\n`;
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '馆藏地导入模板.csv';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    /**
+     * 下载馆藏地导入解析错误文件
+     */
+    function downloadCollectionImportErrorFile() {
+      if (!collectionImportParseResult || collectionImportParseResult.errorRows.length === 0) return;
+
+      const headers = [...COLLECTION_IMPORT_HEADERS, '错误原因'];
+      const lines = collectionImportParseResult.errorRows.map(row => [
+        row.siteCode, row.siteName, row.branchCode, row.branchName,
+        row.collectionCode, row.collectionName, row.statusText, row.remark, row.errorReason
+      ].map(value => `"${String(value || '').replace(/"/g, '""')}"`).join(','));
+      const content = `\uFEFF${headers.join(',')}\n${lines.join('\n')}\n`;
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+      link.href = URL.createObjectURL(blob);
+      link.download = `馆藏地导入解析错误文件_${timestamp}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    /**
+     * 校验馆藏地导入单行数据
+     * @param {Object} row - 导入行
+     * @param {Set<string>} fileCollectionCodes - 文件内已出现的馆藏地编码
+     * @returns {string|null} 错误原因，无错误返回 null
+     */
+    function validateCollectionImportRow(row, fileCollectionCodes) {
+      const siteCode = String(row.siteCode || '').trim();
+      const branchCode = String(row.branchCode || '').trim();
+      const collectionCode = String(row.collectionCode || '').trim();
+      const collectionName = String(row.collectionName || '').trim();
+      const remark = String(row.remark || '');
+
+      if (!siteCode) return '馆址编码不能为空';
+      if (!branchCode) return '分馆编码不能为空';
+      if (!collectionCode) return '馆藏地编码不能为空';
+      if (!collectionName) return '馆藏地名称不能为空';
+      if (collectionCode.length > COLLECTION_CODE_MAX) return '馆藏地编码长度不能超过32个字符';
+      if (collectionName.length > COLLECTION_NAME_MAX) return '馆藏地名称长度不能超过64个字符';
+      if (remark.length > COLLECTION_REMARK_MAX) return '备注长度不能超过200个字符';
+
+      const site = getSiteByCode(siteCode);
+      if (!site) return '馆址不存在';
+
+      const branch = getBranchBySiteAndCode(site.id, branchCode);
+      if (!branch) return '分馆不存在';
+
+      if (fileCollectionCodes.has(collectionCode)) return '馆藏地编码重复';
+      if (isDuplicateCollectionCode(collectionCode)) return '馆藏地编码重复';
+
+      if (!isValidCollectionCode(collectionCode)) {
+        return '馆藏地编码必须属于四级馆藏地现有编码';
+      }
+
+      if (isDuplicateCollectionName(collectionName, branch.id)) {
+        return '该分馆下已存在同名馆藏地';
+      }
+
+      fileCollectionCodes.add(collectionCode);
+      return null;
+    }
+
+    /**
+     * 模拟解析馆藏地导入文件
+     * @param {File} file - 上传文件
+     * @returns {{ ok: boolean, message?: string, result?: Object }}
+     */
+    function simulateCollectionImportParse(file) {
+      const name = file.name.toLowerCase();
+
+      if (!isValidSiteImportFileName(file.name)) {
+        return { ok: false, message: '导入文件格式不符' };
+      }
+      if (name.includes('header') || name.includes('表头')) {
+        return { ok: false, message: '模板的表头更改了' };
+      }
+      if (name.includes('2000') || name.includes('超限')) {
+        return { ok: false, message: '数据记录超过2000条' };
+      }
+
+      const existingCollectionCodes = new Set(collectionRows.map(row => row.code).filter(Boolean));
+
+      if (name.includes('success') || name.includes('全部成功')) {
+        const site = getSiteByCode('ST001_C1') || siteRows.find(row => row.code);
+        const branch = site ? getBranchBySiteAndCode(site.id, 'STD01') : null;
+        const importCodes = ['CL005', 'CL006', 'CL007'].filter(code =>
+          !existingCollectionCodes.has(code) && isValidCollectionCode(code)
+        );
+        const successRows = importCodes.map((code, index) => ({
+          siteCode: site?.code || 'ST001_C1',
+          siteName: site?.name || '首都华威桥馆',
+          branchCode: branch?.code || 'STD01',
+          branchName: branch?.name || '首图地方文献',
+          branchId: branch?.id || 'branch-1',
+          collectionCode: code,
+          collectionName: `批量导入馆藏地${index + 1}`,
+          status: 'active',
+          remark: ''
+        }));
+        return {
+          ok: true,
+          result: {
+            total: successRows.length,
+            success: successRows.length,
+            fail: 0,
+            successRows,
+            errorRows: []
+          }
+        };
+      }
+
+      const total = 100;
+      const fail = 10;
+      const errorReasons = [
+        '馆藏地编码重复',
+        '馆藏地编码必须属于四级馆藏地现有编码',
+        '馆藏地名称长度不能超过64个字符',
+        '馆址不存在',
+        '分馆不存在',
+        '该分馆下已存在同名馆藏地'
+      ];
+      const errorRows = Array.from({ length: fail }, (_, index) => ({
+        siteCode: index === 3 ? 'INVALID_SITE' : 'ST001_C1',
+        siteName: index === 3 ? '不存在馆址' : '首都华威桥馆',
+        branchCode: index === 4 ? 'INVALID_BRANCH' : 'STD01',
+        branchName: index === 4 ? '不存在分馆' : '首图地方文献',
+        collectionCode: index === 0 ? 'CL001' : index === 1 ? 'INVALID_CODE' : `FAIL_${index}`,
+        collectionName: index === 2 ? 'A'.repeat(COLLECTION_NAME_MAX + 1) : index === 5 ? '北京地方文献阅览室' : `失败馆藏地${index + 1}`,
+        statusText: '使用中',
+        remark: '',
+        errorReason: errorReasons[index % errorReasons.length]
+      }));
+
+      const successRows = Array.from({ length: total - fail }, (_, index) => {
+        const site = getSiteByCode('ST001_C1') || siteRows[0];
+        const branch = site ? getBranchBySiteAndCode(site.id, 'STD01') : null;
+        const collectionCode = `CL${String(index + 20).padStart(3, '0')}`;
+        return {
+          siteCode: site?.code || 'ST001_C1',
+          siteName: site?.name || '首都华威桥馆',
+          branchCode: branch?.code || 'STD01',
+          branchName: branch?.name || '首图地方文献',
+          branchId: branch?.id || 'branch-1',
+          collectionCode,
+          collectionName: `导入馆藏地${index + 1}`,
+          status: 'active',
+          remark: index % 4 === 0 ? '批量导入' : ''
+        };
+      }).filter(row =>
+        !existingCollectionCodes.has(row.collectionCode) &&
+        validateCollectionImportRow(row, new Set()) === null
+      );
+
+      return {
+        ok: true,
+        result: {
+          total,
+          success: total - fail,
+          fail,
+          successRows,
+          errorRows
+        }
+      };
+    }
+
+    /**
+     * 开始解析馆藏地导入文件
+     */
+    function startCollectionImportParse() {
+      showCollectionImportParseError('', false);
+
+      if (!collectionImportUploadedFile) {
+        showCollectionImportFileError('请上传文件', true);
+        return;
+      }
+
+      const parseOutcome = simulateCollectionImportParse(collectionImportUploadedFile);
+      if (!parseOutcome.ok) {
+        showCollectionImportParseError(parseOutcome.message || '解析失败', true);
+        return;
+      }
+
+      collectionImportParseResult = parseOutcome.result;
+      renderCollectionImportResult();
+      switchCollectionImportStep('result');
+    }
+
+    /**
+     * 确认导入馆藏地
+     */
+    function confirmCollectionImport() {
+      if (!collectionImportParseResult || collectionImportParseResult.fail > 0) {
+        showSiteFormToast(false, '解析全部成功，才可入库');
+        return;
+      }
+
+      collectionImportParseResult.successRows.forEach(row => {
+        if (collectionRows.some(item => item.code === row.collectionCode)) return;
+        collectionRows.unshift({
+          id: `col-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          branchId: row.branchId,
+          code: row.collectionCode,
+          name: row.collectionName,
+          status: row.status,
+          remark: row.remark || ''
+        });
+      });
+
+      closeCollectionImportModal();
+      syncCollectionDisplayRows();
+      showSiteFormToast(true, '导入成功');
+    }
+
+    /**
+     * 渲染分页
+     * @param {string} type - 页签类型
+     * @param {number} total - 总数
+     */
+    function renderLocationPagination(type, total) {
+      const container = document.getElementById(`${type}-pagination`);
+      const state = locationPageState[type];
+      if (!container) return;
+
+      const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+      if (state.page > totalPages) state.page = totalPages;
+
+      const pages = [];
+      for (let i = 1; i <= Math.min(totalPages, 5); i += 1) {
+        pages.push(i);
+      }
+
+      container.innerHTML = `
+        <span id="${type}-pagination-total" class="text-sm text-gray-500" data-list-selection-total
+          data-list-selection-root="${type}" data-list-selection-checkbox=".location-row-checkbox"
+          data-list-selection-unit="个项目" data-list-selection-total-count="${total}">总共 ${total} 个项目</span>
+        <div class="flex items-center gap-2">
+          <button type="button" class="location-page-btn px-2 py-1 border border-gray-300 rounded text-sm ${state.page <= 1 ? 'text-gray-400' : 'text-gray-600'}"
+            data-type="${type}" data-action="prev" ${state.page <= 1 ? 'disabled' : ''}>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          ${pages.map(page => `
+            <button type="button" class="location-page-btn px-2.5 py-1 rounded text-sm border ${page === state.page ? 'bg-sky-600 text-white border-sky-600' : 'border-gray-300 text-gray-600'}"
+              data-type="${type}" data-action="goto" data-page="${page}">${page}</button>`).join('')}
+          <button type="button" class="location-page-btn px-2 py-1 border border-gray-300 rounded text-sm ${state.page >= totalPages ? 'text-gray-400' : 'text-gray-600'}"
+            data-type="${type}" data-action="next" ${state.page >= totalPages ? 'disabled' : ''}>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+          <select class="location-page-size border border-gray-300 rounded px-2 py-1 text-sm text-gray-600" data-type="${type}">
+            <option value="5" ${state.pageSize === 5 ? 'selected' : ''}>5 条/页</option>
+            <option value="10" ${state.pageSize === 10 ? 'selected' : ''}>10 条/页</option>
+            <option value="20" ${state.pageSize === 20 ? 'selected' : ''}>20 条/页</option>
+          </select>
+          <span class="text-sm text-gray-500">跳至</span>
+          <input type="number" min="1" max="${totalPages}" value="${state.page}"
+            class="location-page-jump w-12 border border-gray-300 rounded px-2 py-1 text-sm text-center text-gray-600" data-type="${type}">
+          <span class="text-sm text-gray-500">页</span>
+        </div>`;
+
+      ListSelectionSummary.refresh(`${type}-pagination-total`, {
+        totalCount: total,
+        unit: '个项目'
+      });
+    }
+
+    /**
+     * 渲染馆址列表
+     */
+    function refreshSiteTable() {
+      const tbody = document.getElementById('site-table-body');
+      const rows = locationPageState.site.displayRows;
+      const state = locationPageState.site;
+      if (!tbody) return;
+
+      const start = (state.page - 1) * state.pageSize;
+      const pageRows = rows.slice(start, start + state.pageSize);
+
+      if (pageRows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="px-3 py-16 text-center text-sm text-gray-400">未检索到结果</td></tr>`;
+      } else {
+        tbody.innerHTML = pageRows.map((row, i) => `
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2"><input type="checkbox" class="rounded border-gray-300 location-row-checkbox"></td>
+            <td class="px-3 py-2 text-gray-600">${start + i + 1}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.code || '-'}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.name}</td>
+            <td class="px-3 py-2">${renderLocationStatus(row.status)}</td>
+            <td class="px-3 py-2">${renderRemarkCell(row.remark)}</td>
+            <td class="px-3 py-2 whitespace-nowrap sticky right-0 bg-white">${renderLocationOps(row, 'site')}</td>
+          </tr>`).join('');
+      }
+
+      renderLocationPagination('site', rows.length);
+    }
+
+    /**
+     * 渲染分馆列表
+     */
+    function refreshBranchTable() {
+      const tbody = document.getElementById('branch-table-body');
+      const rows = locationPageState.branch.displayRows;
+      const state = locationPageState.branch;
+      if (!tbody) return;
+
+      const start = (state.page - 1) * state.pageSize;
+      const pageRows = rows.slice(start, start + state.pageSize);
+
+      if (pageRows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="px-3 py-16 text-center text-sm text-gray-400">未检索到结果</td></tr>`;
+      } else {
+        tbody.innerHTML = pageRows.map((row, i) => `
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2"><input type="checkbox" class="rounded border-gray-300 location-row-checkbox"></td>
+            <td class="px-3 py-2 text-gray-600">${start + i + 1}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.siteCode}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.siteName}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.code || '-'}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.name}</td>
+            <td class="px-3 py-2">${renderLocationStatus(row.status)}</td>
+            <td class="px-3 py-2">${renderRemarkCell(row.remark)}</td>
+            <td class="px-3 py-2 whitespace-nowrap sticky right-0 bg-white">${renderLocationOps(row, 'branch')}</td>
+          </tr>`).join('');
+      }
+
+      renderLocationPagination('branch', rows.length);
+    }
+
+    /**
+     * 渲染馆藏地列表
+     */
+    function refreshCollectionTable() {
+      const tbody = document.getElementById('collection-table-body');
+      const rows = locationPageState.collection.displayRows;
+      const state = locationPageState.collection;
+      if (!tbody) return;
+
+      const start = (state.page - 1) * state.pageSize;
+      const pageRows = rows.slice(start, start + state.pageSize);
+
+      if (pageRows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="px-3 py-16 text-center text-sm text-gray-400">未检索到结果</td></tr>`;
+      } else {
+        tbody.innerHTML = pageRows.map((row, i) => `
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2"><input type="checkbox" class="rounded border-gray-300 location-row-checkbox"></td>
+            <td class="px-3 py-2 text-gray-600">${start + i + 1}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.siteCode}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.siteName}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.branchCode}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.branchName}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.code || '-'}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${row.name}</td>
+            <td class="px-3 py-2">${renderLocationStatus(row.status)}</td>
+            <td class="px-3 py-2">${renderRemarkCell(row.remark)}</td>
+            <td class="px-3 py-2 whitespace-nowrap sticky right-0 bg-white">${renderLocationOps(row, 'collection')}</td>
+          </tr>`).join('');
+      }
+
+      renderLocationPagination('collection', rows.length);
+    }
+
+    /**
+     * 检索馆址
+     * @param {HTMLFormElement} form - 表单
+     */
+    function searchSite(form) {
+      const code = form.code.value.trim();
+      const name = form.name.value.trim();
+      const status = form.status.value;
+
+      locationPageState.site.displayRows = siteRows.filter(row => {
+        if (!fuzzyMatch(row.code, code)) return false;
+        if (!fuzzyMatch(row.name, name)) return false;
+        if (status && row.status !== status) return false;
+        return true;
+      });
+      locationPageState.site.page = 1;
+      refreshSiteTable();
+    }
+
+    /**
+     * 检索分馆
+     * @param {HTMLFormElement} form - 表单
+     */
+    function searchBranch(form) {
+      const siteCode = form.siteCode.value.trim();
+      const siteName = form.siteName.value.trim();
+      const code = form.code.value.trim();
+      const name = form.name.value.trim();
+      const status = form.status.value;
+
+      locationPageState.branch.displayRows = branchRows
+        .map(enrichBranchRow)
+        .filter(row => {
+          if (!fuzzyMatch(row.siteCode, siteCode)) return false;
+          if (!fuzzyMatch(row.siteName, siteName)) return false;
+          if (!fuzzyMatch(row.code, code)) return false;
+          if (!fuzzyMatch(row.name, name)) return false;
+          if (status && row.status !== status) return false;
+          return true;
+        });
+      locationPageState.branch.page = 1;
+      refreshBranchTable();
+    }
+
+    /**
+     * 检索馆藏地
+     * @param {HTMLFormElement} form - 表单
+     */
+    function searchCollection(form) {
+      const siteCode = form.siteCode.value.trim();
+      const siteName = form.siteName.value.trim();
+      const branchCode = form.branchCode.value.trim();
+      const branchName = form.branchName.value.trim();
+      const code = form.code.value.trim();
+      const name = form.name.value.trim();
+      const status = form.status.value;
+
+      locationPageState.collection.displayRows = collectionRows
+        .map(enrichCollectionRow)
+        .filter(row => {
+          if (!fuzzyMatch(row.siteCode, siteCode)) return false;
+          if (!fuzzyMatch(row.siteName, siteName)) return false;
+          if (!fuzzyMatch(row.branchCode, branchCode)) return false;
+          if (!fuzzyMatch(row.branchName, branchName)) return false;
+          if (!fuzzyMatch(row.code, code)) return false;
+          if (!fuzzyMatch(row.name, name)) return false;
+          if (status && row.status !== status) return false;
+          return true;
+        });
+      locationPageState.collection.page = 1;
+      refreshCollectionTable();
+    }
+
+    /**
+     * 切换页签
+     * @param {string} tab - 页签标识
+     */
+    function switchLocationTab(tab) {
+      currentLocationTab = tab;
+      document.querySelectorAll('[data-location-tab]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.locationTab === tab);
+      });
+      document.querySelectorAll('[data-location-panel]').forEach(panel => {
+        const isActive = panel.dataset.locationPanel === tab;
+        panel.classList.toggle('hidden', !isActive);
+        panel.classList.toggle('flex', isActive);
+        panel.classList.toggle('flex-col', isActive);
+        panel.classList.toggle('flex-1', isActive);
+        panel.classList.toggle('min-h-0', isActive);
+      });
+    }
+
+    /**
+     * 切换检索区展开/收起
+     * @param {string} type - 页签类型
+     */
+    function toggleSearchExpand(type) {
+      const extra = document.getElementById(`${type}-search-extra`);
+      const btn = document.getElementById(`${type}-search-expand`);
+      if (!extra || !btn) return;
+
+      const expanded = extra.classList.toggle('hidden') === false;
+      const textNode = Array.from(btn.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+      if (textNode) textNode.textContent = expanded ? '收起 ' : '展开 ';
+      const icon = btn.querySelector('svg');
+      if (icon) icon.classList.toggle('rotate-180', expanded);
+    }
+
+    /**
+     * 处理分页操作
+     * @param {HTMLElement} target - 触发元素
+     */
+    function handleLocationPagination(target) {
+      const type = target.dataset.type;
+      const state = locationPageState[type];
+      const total = state.displayRows.length;
+      const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+
+      if (target.classList.contains('location-page-size')) {
+        state.pageSize = Number(target.value) || 5;
+        state.page = 1;
+        if (type === 'site') refreshSiteTable();
+        if (type === 'branch') refreshBranchTable();
+        if (type === 'collection') refreshCollectionTable();
+        return;
+      }
+
+      if (target.classList.contains('location-page-jump')) {
+        if (target.type !== 'number') return;
+        return;
+      }
+
+      if (!target.classList.contains('location-page-btn')) return;
+
+      const action = target.dataset.action;
+      if (action === 'prev' && state.page > 1) state.page -= 1;
+      if (action === 'next' && state.page < totalPages) state.page += 1;
+      if (action === 'goto') state.page = Number(target.dataset.page);
+
+      if (type === 'site') refreshSiteTable();
+      if (type === 'branch') refreshBranchTable();
+      if (type === 'collection') refreshCollectionTable();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      locationPageState.site.displayRows = [...siteRows];
+      locationPageState.branch.displayRows = branchRows.map(enrichBranchRow);
+      locationPageState.collection.displayRows = collectionRows.map(enrichCollectionRow);
+
+      refreshSiteTable();
+      refreshBranchTable();
+      refreshCollectionTable();
+
+      document.querySelectorAll('[data-location-tab]').forEach(btn => {
+        btn.addEventListener('click', () => switchLocationTab(btn.dataset.locationTab));
+      });
+
+      document.getElementById('site-search-form')?.addEventListener('submit', e => {
+        e.preventDefault();
+        searchSite(e.target);
+      });
+      document.getElementById('site-search-reset')?.addEventListener('click', () => {
+        const form = document.getElementById('site-search-form');
+        if (form) {
+          form.reset();
+          locationPageState.site.displayRows = [...siteRows];
+          locationPageState.site.page = 1;
+          refreshSiteTable();
+        }
+      });
+
+      document.getElementById('site-add-btn')?.addEventListener('click', openAddSiteModal);
+      document.getElementById('branch-add-btn')?.addEventListener('click', openAddBranchModal);
+      document.getElementById('collection-add-btn')?.addEventListener('click', openAddCollectionModal);
+      document.getElementById('branch-form-submit')?.addEventListener('click', submitBranchForm);
+      document.getElementById('branch-form-cancel')?.addEventListener('click', closeBranchFormModal);
+      document.getElementById('branch-form-modal-close')?.addEventListener('click', closeBranchFormModal);
+
+      document.getElementById('collection-form-submit')?.addEventListener('click', submitCollectionForm);
+      document.getElementById('collection-form-cancel')?.addEventListener('click', closeCollectionFormModal);
+      document.getElementById('collection-form-modal-close')?.addEventListener('click', closeCollectionFormModal);
+
+      const collectionStatusToggle = document.getElementById('collection-form-status-toggle');
+      if (collectionStatusToggle) {
+        collectionStatusToggle.addEventListener('change', () => updateCollectionStatusToggle(collectionStatusToggle.checked));
+      }
+
+      const collectionForm = document.getElementById('collection-form');
+      if (collectionForm) {
+        collectionForm.siteId?.addEventListener('change', () => {
+          if (!isCollectionEditMode) {
+            initCollectionBranchSelect(collectionForm.branchId, collectionForm.siteId.value, '', false);
+            showCollectionFormError('branchId', '', false);
+          }
+        });
+        collectionForm.code?.addEventListener('input', () => {
+          if (!isCollectionEditMode) {
+            validateCollectionCodeField(
+              collectionForm.code.value.trim(),
+              false,
+              collectionForm.collectionId.value || null
+            );
+          }
+        });
+      }
+
+      const branchStatusToggle = document.getElementById('branch-form-status-toggle');
+      if (branchStatusToggle) {
+        branchStatusToggle.addEventListener('change', () => updateBranchStatusToggle(branchStatusToggle.checked));
+      }
+
+      const branchForm = document.getElementById('branch-form');
+      if (branchForm) {
+        branchForm.code?.addEventListener('input', () => {
+          if (!isBranchEditMode) {
+            validateBranchCodeField(
+              branchForm.code.value.trim(),
+              branchForm.siteId.value,
+              false
+            );
+          }
+        });
+        branchForm.siteId?.addEventListener('change', () => {
+          if (!isBranchEditMode && branchForm.code.value.trim()) {
+            validateBranchCodeField(
+              branchForm.code.value.trim(),
+              branchForm.siteId.value,
+              false
+            );
+          }
+        });
+      }
+
+      document.getElementById('site-import-btn')?.addEventListener('click', openSiteImportModal);
+      document.getElementById('site-import-modal-close')?.addEventListener('click', closeSiteImportModal);
+      document.getElementById('site-import-cancel')?.addEventListener('click', closeSiteImportModal);
+      document.getElementById('site-import-download-template')?.addEventListener('click', downloadSiteImportTemplate);
+      document.getElementById('site-import-upload-btn')?.addEventListener('click', () => {
+        document.getElementById('site-import-file-input')?.click();
+      });
+      document.getElementById('site-import-file-input')?.addEventListener('change', e => {
+        const file = e.target.files?.[0] || null;
+        if (file && !isValidSiteImportFileName(file.name)) {
+          showSiteImportParseError('导入文件格式不符', true);
+          e.target.value = '';
+          setSiteImportFile(null);
+          return;
+        }
+        setSiteImportFile(file);
+      });
+      document.getElementById('site-import-file-remove')?.addEventListener('click', () => {
+        const fileInput = document.getElementById('site-import-file-input');
+        if (fileInput) fileInput.value = '';
+        setSiteImportFile(null);
+        showSiteImportFileError('请上传文件', false);
+        showSiteImportParseError('', false);
+      });
+      document.getElementById('site-import-parse-btn')?.addEventListener('click', startSiteImportParse);
+      document.getElementById('site-import-download-result')?.addEventListener('click', downloadSiteImportErrorFile);
+      document.getElementById('site-import-confirm-btn')?.addEventListener('click', confirmSiteImport);
+
+      document.getElementById('branch-import-btn')?.addEventListener('click', openBranchImportModal);
+      document.getElementById('branch-import-modal-close')?.addEventListener('click', closeBranchImportModal);
+      document.getElementById('branch-import-cancel')?.addEventListener('click', closeBranchImportModal);
+      document.getElementById('branch-import-download-template')?.addEventListener('click', downloadBranchImportTemplate);
+      document.getElementById('branch-import-upload-btn')?.addEventListener('click', () => {
+        document.getElementById('branch-import-file-input')?.click();
+      });
+      document.getElementById('branch-import-file-input')?.addEventListener('change', e => {
+        const file = e.target.files?.[0] || null;
+        if (file && !isValidSiteImportFileName(file.name)) {
+          showBranchImportParseError('导入文件格式不符', true);
+          e.target.value = '';
+          setBranchImportFile(null);
+          return;
+        }
+        setBranchImportFile(file);
+      });
+      document.getElementById('branch-import-file-remove')?.addEventListener('click', () => {
+        const fileInput = document.getElementById('branch-import-file-input');
+        if (fileInput) fileInput.value = '';
+        setBranchImportFile(null);
+        showBranchImportFileError('请上传文件', false);
+        showBranchImportParseError('', false);
+      });
+      document.getElementById('branch-import-parse-btn')?.addEventListener('click', startBranchImportParse);
+      document.getElementById('branch-import-download-result')?.addEventListener('click', downloadBranchImportErrorFile);
+      document.getElementById('branch-import-confirm-btn')?.addEventListener('click', confirmBranchImport);
+
+      document.getElementById('collection-import-btn')?.addEventListener('click', openCollectionImportModal);
+      document.getElementById('collection-import-modal-close')?.addEventListener('click', closeCollectionImportModal);
+      document.getElementById('collection-import-cancel')?.addEventListener('click', closeCollectionImportModal);
+      document.getElementById('collection-import-download-template')?.addEventListener('click', downloadCollectionImportTemplate);
+      document.getElementById('collection-import-upload-btn')?.addEventListener('click', () => {
+        document.getElementById('collection-import-file-input')?.click();
+      });
+      document.getElementById('collection-import-file-input')?.addEventListener('change', e => {
+        const file = e.target.files?.[0] || null;
+        if (file && !isValidSiteImportFileName(file.name)) {
+          showCollectionImportParseError('导入文件格式不符', true);
+          e.target.value = '';
+          setCollectionImportFile(null);
+          return;
+        }
+        setCollectionImportFile(file);
+      });
+      document.getElementById('collection-import-file-remove')?.addEventListener('click', () => {
+        const fileInput = document.getElementById('collection-import-file-input');
+        if (fileInput) fileInput.value = '';
+        setCollectionImportFile(null);
+        showCollectionImportFileError('请上传文件', false);
+        showCollectionImportParseError('', false);
+      });
+      document.getElementById('collection-import-parse-btn')?.addEventListener('click', startCollectionImportParse);
+      document.getElementById('collection-import-download-result')?.addEventListener('click', downloadCollectionImportErrorFile);
+      document.getElementById('collection-import-confirm-btn')?.addEventListener('click', confirmCollectionImport);
+
+      document.getElementById('site-form-submit')?.addEventListener('click', submitSiteForm);
+      document.getElementById('site-form-cancel')?.addEventListener('click', closeSiteFormModal);
+      document.getElementById('site-form-modal-close')?.addEventListener('click', closeSiteFormModal);
+
+      const siteStatusToggle = document.getElementById('site-form-status-toggle');
+      if (siteStatusToggle) {
+        siteStatusToggle.addEventListener('change', () => updateSiteStatusToggle(siteStatusToggle.checked));
+      }
+
+      const siteForm = document.getElementById('site-form');
+      if (siteForm) {
+        siteForm.code?.addEventListener('input', () => {
+          if (!isSiteEditMode) {
+            validateSiteCodeField(siteForm.code.value.trim(), false);
+          }
+        });
+      }
+
+      document.getElementById('branch-search-form')?.addEventListener('submit', e => {
+        e.preventDefault();
+        searchBranch(e.target);
+      });
+      document.getElementById('branch-search-reset')?.addEventListener('click', () => {
+        const form = document.getElementById('branch-search-form');
+        if (form) {
+          form.reset();
+          locationPageState.branch.displayRows = branchRows.map(enrichBranchRow);
+          locationPageState.branch.page = 1;
+          refreshBranchTable();
+        }
+      });
+      document.getElementById('branch-search-expand')?.addEventListener('click', () => toggleSearchExpand('branch'));
+
+      document.getElementById('collection-search-form')?.addEventListener('submit', e => {
+        e.preventDefault();
+        searchCollection(e.target);
+      });
+      document.getElementById('collection-search-reset')?.addEventListener('click', () => {
+        const form = document.getElementById('collection-search-form');
+        if (form) {
+          form.reset();
+          locationPageState.collection.displayRows = collectionRows.map(enrichCollectionRow);
+          locationPageState.collection.page = 1;
+          refreshCollectionTable();
+        }
+      });
+      document.getElementById('collection-search-expand')?.addEventListener('click', () => toggleSearchExpand('collection'));
+
+      document.getElementById('location-manage-page')?.addEventListener('click', e => {
+        const pageBtn = e.target.closest('.location-page-btn, .location-page-size');
+        if (pageBtn) {
+          handleLocationPagination(pageBtn);
+          return;
+        }
+        const remarkBtn = e.target.closest('.location-remark-btn');
+        if (remarkBtn) {
+          alert(remarkBtn.dataset.remark || '暂无备注');
+          return;
+        }
+        const editBtn = e.target.closest('.site-edit-btn');
+        if (editBtn) {
+          e.preventDefault();
+          openEditSiteModal(editBtn.dataset.siteId);
+          return;
+        }
+        const branchEditBtn = e.target.closest('.branch-edit-btn');
+        if (branchEditBtn) {
+          e.preventDefault();
+          openEditBranchModal(branchEditBtn.dataset.branchId);
+          return;
+        }
+        const collectionEditBtn = e.target.closest('.collection-edit-btn');
+        if (collectionEditBtn) {
+          e.preventDefault();
+          openEditCollectionModal(collectionEditBtn.dataset.collectionId);
+        }
+      });
+
+      document.getElementById('location-manage-page')?.addEventListener('change', e => {
+        if (e.target.classList.contains('location-page-size')) {
+          handleLocationPagination(e.target);
+        }
+      });
+
+      document.getElementById('location-manage-page')?.addEventListener('keydown', e => {
+        if (e.target.classList.contains('location-page-jump') && e.key === 'Enter') {
+          const type = e.target.dataset.type;
+          const state = locationPageState[type];
+          const totalPages = Math.max(1, Math.ceil(state.displayRows.length / state.pageSize));
+          let page = Number(e.target.value);
+          if (Number.isNaN(page) || page < 1) page = 1;
+          if (page > totalPages) page = totalPages;
+          state.page = page;
+          if (type === 'site') refreshSiteTable();
+          if (type === 'branch') refreshBranchTable();
+          if (type === 'collection') refreshCollectionTable();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

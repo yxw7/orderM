@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>条码号供应商代码</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    /** 条码号供应商代码：固定页面高度，表格区域独立滚动 */
+    body[data-active-page="07_03_条码号供应商代码.html"] #page-content {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body[data-active-page="07_03_条码号供应商代码.html"] #barcode-supplier-page {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    body[data-active-page="07_03_条码号供应商代码.html"] .barcode-supplier-table-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    body[data-active-page="07_03_条码号供应商代码.html"] .barcode-supplier-table-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    body[data-active-page="07_03_条码号供应商代码.html"] .barcode-supplier-table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    /** 新增弹窗：可搜索下拉 */
+    body[data-active-page="07_03_条码号供应商代码.html"] .search-select-panel {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    body[data-active-page="07_03_条码号供应商代码.html"] .search-select-option:hover,
+    body[data-active-page="07_03_条码号供应商代码.html"] .search-select-option.active {
+      background: #f0f9ff;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="条码号供应商代码"
+  data-active-page="07_03_条码号供应商代码.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden">
+    <div id="barcode-supplier-page">
+      <!-- 检索区 -->
+      <div class="bg-white rounded border border-gray-200 p-4 mb-4 shrink-0">
+        <form id="barcode-supplier-search-form" class="relative">
+          <div class="absolute top-0 right-0 flex items-center gap-2">
+            <button type="button" id="barcode-supplier-search-expand"
+              class="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700">
+              收起
+              <svg class="w-3 h-3 transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <button type="submit"
+              class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+            <button type="button" onclick="Common.resetForm('barcode-supplier-search-form')"
+              class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+          </div>
+          <div class="grid grid-cols-3 gap-4 pr-72">
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">供应商代码</label>
+              <input type="text" placeholder="请输入"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">供应商名称</label>
+              <input type="text" placeholder="请输入"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">创建日期</label>
+              <div class="flex flex-1 items-center gap-2">
+                <input type="date"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <span class="text-gray-400 text-sm">~</span>
+                <input type="date"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+            </div>
+          </div>
+          <div id="barcode-supplier-search-extra" class="grid grid-cols-3 gap-4 mt-3 pr-72">
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">条码号代码</label>
+              <input type="text" placeholder="请输入"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">状态</label>
+              <select class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <option>全部</option>
+                <option>使用中</option>
+                <option>已停用</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">创建人</label>
+              <input type="text" placeholder="请输入"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="flex items-center gap-2 mb-4 shrink-0">
+        <button type="button" id="barcode-supplier-add-btn" data-modal-open="barcode-supplier-add-modal"
+          class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">新增</button>
+      </div>
+
+      <!-- 数据表格 -->
+      <div class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="barcode-supplier-table-scroll table-scroll">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+              <tr>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">条码号类型</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">供应商代码</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap min-w-[160px]">供应商名称</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">条码号代码</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">备注</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">创建人</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">
+                  <span class="inline-flex items-center gap-1">
+                    创建日期
+                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                    </svg>
+                  </span>
+                </th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-0 bg-gray-50">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100" id="barcode-supplier-table-body"></tbody>
+          </table>
+        </div>
+        <!-- 分页 -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white">
+          <span class="text-sm text-gray-500">共 9 条记录</span>
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-gray-500">第 1/1 页</span>
+            <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <input type="text" value="1" readonly
+              class="w-10 border border-gray-300 rounded px-2 py-1 text-sm text-center text-gray-600 bg-white">
+            <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+            <select class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+              <option selected>20 条/页</option>
+              <option>50 条/页</option>
+              <option>10 条/页</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 提交结果提示 -->
+    <div id="barcode-supplier-toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 z-[60] min-w-[240px]">
+      <div id="barcode-supplier-toast-inner"
+        class="flex items-center gap-2 px-4 py-2.5 rounded shadow-lg text-sm text-white bg-green-500">
+        <svg id="barcode-supplier-toast-icon" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span id="barcode-supplier-toast-text">提交成功</span>
+      </div>
+    </div>
+
+    <!-- 新增弹窗 -->
+    <div id="barcode-supplier-add-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-xl flex flex-col max-h-[90vh]"
+        onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+          <h2 class="text-base font-medium text-gray-800">新建</h2>
+          <button type="button" data-modal-close
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="barcode-supplier-add-form" class="px-6 py-5 space-y-4 overflow-y-auto">
+          <!-- 条码号类型 -->
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 条码号类型
+            </label>
+            <div class="flex-1">
+              <div class="relative" data-search-select="barcodeType">
+                <input type="text" autocomplete="off" placeholder="请选择"
+                  data-search-select-input
+                  class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <input type="hidden" name="barcodeType" data-search-select-value>
+                <ul data-search-select-list
+                  class="search-select-panel hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded shadow-lg z-10 py-1"></ul>
+              </div>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="barcodeType">请选择</p>
+            </div>
+          </div>
+          <!-- 供应商名称 -->
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 供应商名称
+            </label>
+            <div class="flex-1">
+              <div class="relative" data-search-select="supplierName">
+                <input type="text" autocomplete="off" placeholder="请选择"
+                  data-search-select-input
+                  class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <input type="hidden" name="supplierName" data-search-select-value>
+                <ul data-search-select-list
+                  class="search-select-panel hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded shadow-lg z-10 py-1"></ul>
+              </div>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="supplierName">请选择</p>
+            </div>
+          </div>
+          <!-- 条码号代码 -->
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 条码号代码
+            </label>
+            <div class="flex-1 flex items-start gap-2">
+              <div class="flex-1 min-w-0">
+                <input type="text" name="barcodeCode" placeholder="请输入" autocomplete="off"
+                  class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <p class="text-red-500 text-xs mt-1 hidden" data-error="barcodeCode">请输入</p>
+              </div>
+              <span class="text-orange-500 text-xs pt-2.5 shrink-0 whitespace-nowrap">多个用英文分号;隔开</span>
+            </div>
+          </div>
+          <!-- 状态 -->
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 状态
+            </label>
+            <div class="flex-1 pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="status" checked class="sr-only" id="barcode-supplier-status-toggle">
+                <span id="barcode-supplier-status-track"
+                  class="relative w-11 h-6 bg-sky-600 rounded-full transition-colors">
+                  <span id="barcode-supplier-status-thumb"
+                    class="absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
+                </span>
+                <span id="barcode-supplier-status-label" class="text-sm text-gray-700">开启</span>
+              </label>
+            </div>
+          </div>
+          <!-- 备注 -->
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
+            <div class="flex-1">
+              <textarea name="remark" rows="4" placeholder="请输入"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-none"></textarea>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="remark">已超字符限制</p>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+          <button type="button" data-modal-close
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="barcode-supplier-add-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑弹窗 -->
+    <div id="barcode-supplier-edit-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-xl flex flex-col max-h-[90vh]"
+        onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+          <h2 class="text-base font-medium text-gray-800">编辑</h2>
+          <button type="button" data-modal-close
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="barcode-supplier-edit-form" class="px-6 py-5 space-y-4 overflow-y-auto">
+          <input type="hidden" name="rowIndex">
+          <!-- 条码号类型（不可编辑） -->
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 条码号类型
+            </label>
+            <div class="flex-1">
+              <input type="text" name="barcodeType" readonly
+                class="w-full border border-gray-200 rounded px-3 py-2 text-sm bg-gray-50 text-gray-600 cursor-not-allowed">
+            </div>
+          </div>
+          <!-- 供应商名称（不可编辑） -->
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 供应商名称
+            </label>
+            <div class="flex-1">
+              <input type="text" name="supplierName" readonly
+                class="w-full border border-gray-200 rounded px-3 py-2 text-sm bg-gray-50 text-gray-600 cursor-not-allowed">
+            </div>
+          </div>
+          <!-- 条码号代码 -->
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 条码号代码
+            </label>
+            <div class="flex-1 flex items-start gap-2">
+              <div class="flex-1 min-w-0">
+                <input type="text" name="barcodeCode" placeholder="请输入" autocomplete="off"
+                  class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <p class="text-red-500 text-xs mt-1 hidden" data-error="barcodeCode">请输入</p>
+              </div>
+              <span class="text-orange-500 text-xs pt-2.5 shrink-0 whitespace-nowrap">多个用英文分号;隔开</span>
+            </div>
+          </div>
+          <!-- 状态 -->
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 状态
+            </label>
+            <div class="flex-1 pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="status" class="sr-only" id="barcode-supplier-edit-status-toggle">
+                <span id="barcode-supplier-edit-status-track"
+                  class="relative w-11 h-6 bg-sky-600 rounded-full transition-colors">
+                  <span id="barcode-supplier-edit-status-thumb"
+                    class="absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
+                </span>
+                <span id="barcode-supplier-edit-status-label" class="text-sm text-gray-700">开启</span>
+              </label>
+            </div>
+          </div>
+          <!-- 备注 -->
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
+            <div class="flex-1">
+              <textarea name="remark" rows="4" placeholder="请输入"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-none"></textarea>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="remark">已超字符限制</p>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+          <button type="button" data-modal-close
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="barcode-supplier-edit-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    /** 条码号类型字典（数据字典） */
+    const barcodeTypeOptions = [
+      '中文成人普通',
+      '中文港台图书',
+      '成人视听',
+      '少儿视听',
+      '小语种成人图书',
+      '成人外文图书'
+    ];
+
+    /** 供应商名称示例（书商/拍卖行/资源商/出版社，状态使用中） */
+    const supplierNameOptions = [
+      { name: '湖南长沙', code: 'hncs', source: '书商' },
+      { name: '北京百万庄图书大厦有限公司', code: 'BWZ', source: '书商' },
+      { name: '中国书店', code: 'ZGSD', source: '书商' },
+      { name: '湖北三新', code: 'hbsx', source: '书商' },
+      { name: '北京人天', code: 'bjrt', source: '书商' },
+      { name: '教图', code: 'CNPIEC', source: '书商' },
+      { name: '北京新华', code: 'bjxh', source: '书商' },
+      { name: '中国嘉德', code: 'zgjd', source: '拍卖行' },
+      { name: '北京图书大厦', code: 'bjtsds', source: '书商' },
+      { name: '国家图书馆出版社', code: 'nlcpress', source: '出版社' },
+      { name: '某团体捐赠单位', code: 'ttjz001', source: '团体捐赠' }
+    ];
+
+    /** 条码号供应商代码列表示例数据 */
+    const barcodeSupplierRows = [
+      { barcodeType: '中文成人普通', supplierCode: 'hncs', supplierName: '湖南长沙', barcodeCode: '93', status: 'active', hasRemark: true, remark: '湖南长沙图书供应商', creator: '杨晓婉', created: '2024-05-28' },
+      { barcodeType: '中文港台图书', supplierCode: 'BWZ', supplierName: '北京百万庄图书大厦有限公司', barcodeCode: '15', status: 'active', hasRemark: true, remark: '百万庄图书大厦', creator: '杨晓婉', created: '2024-05-27' },
+      { barcodeType: '成人视听', supplierCode: 'ZGSD', supplierName: '中国书店', barcodeCode: '18', status: 'active', hasRemark: true, remark: '中国书店有限公司', creator: '杨晓婉', created: '2024-05-26' },
+      { barcodeType: '少儿视听', supplierCode: 'hbsx', supplierName: '湖北三新', barcodeCode: '06', status: 'active', hasRemark: true, remark: '湖北三新传媒', creator: '杨晓婉', created: '2024-05-25' },
+      { barcodeType: '中文成人普通', supplierCode: 'bjrt', supplierName: '北京人天', barcodeCode: '01', status: 'active', hasRemark: true, remark: '北京人天书店有限公司', creator: '杨晓婉', created: '2024-05-24' },
+      { barcodeType: '中文港台图书', supplierCode: 'CNPIEC', supplierName: '教图', barcodeCode: '02', status: 'active', hasRemark: false, remark: '', creator: '杨晓婉', created: '2024-05-23' },
+      { barcodeType: '成人视听', supplierCode: 'bjxh', supplierName: '北京新华', barcodeCode: '03', status: 'active', hasRemark: true, remark: '北京新华图书', creator: '杨晓婉', created: '2024-05-22' },
+      { barcodeType: '少儿视听', supplierCode: 'zgjd', supplierName: '中国嘉德', barcodeCode: '05', status: 'active', hasRemark: true, remark: '中国嘉德国际拍卖', creator: '杨晓婉', created: '2024-05-21' },
+      { barcodeType: '中文成人普通', supplierCode: 'bjtsds', supplierName: '北京图书大厦', barcodeCode: '07', status: 'active', hasRemark: false, remark: '', creator: '杨晓婉', created: '2024-05-20' }
+    ];
+
+    /**
+     * 渲染状态
+     * @param {string} status - 状态标识
+     * @returns {string}
+     */
+    function renderBarcodeStatus(status) {
+      if (status === 'active') {
+        return '<span class="text-green-600">使用中</span>';
+      }
+      return '<span class="text-red-500">已停用</span>';
+    }
+
+    /**
+     * 渲染备注列
+     * @param {Object} row - 行数据
+     * @returns {string}
+     */
+    function renderRemarkCell(row) {
+      if (row.hasRemark) {
+        return `<a href="#" class="text-sky-600 hover:underline" title="${row.remark}">查看</a>`;
+      }
+      return '<span class="text-gray-400">查看</span>';
+    }
+
+    /**
+     * 渲染操作列
+     * @param {Object} row - 行数据
+     * @param {number} rowIndex - 行索引（0-based）
+     * @returns {string}
+     */
+    function renderBarcodeOps(row, rowIndex) {
+      const editBtn = `<button type="button" class="text-sky-600 hover:underline mr-3 barcode-supplier-edit-btn" data-row-index="${rowIndex}">编辑</button>`;
+      if (row.status === 'active') {
+        return `
+          ${editBtn}
+          <a href="07_03_03_停用_删除.html" class="text-sky-600 hover:underline mr-3">停用</a>
+          <a href="07_03_03_停用_删除.html" class="text-red-500 hover:underline">删除</a>`;
+      }
+      return `
+        ${editBtn}
+        <a href="07_03_03_停用_删除.html" class="text-sky-600 hover:underline mr-3">启用</a>
+        <a href="07_03_03_停用_删除.html" class="text-red-500 hover:underline">删除</a>`;
+    }
+
+    /**
+     * 渲染表格行
+     * @param {Object} row - 行数据
+     * @param {number} index - 显示序号
+     * @param {number} rowIndex - 数据索引（0-based）
+     * @returns {string}
+     */
+    function renderBarcodeSupplierRow(row, index, rowIndex) {
+      return `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 text-gray-600">${index}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.barcodeType}</td>
+          <td class="px-3 py-2">${row.supplierCode}</td>
+          <td class="px-3 py-2">${row.supplierName}</td>
+          <td class="px-3 py-2">${row.barcodeCode}</td>
+          <td class="px-3 py-2">${renderBarcodeStatus(row.status)}</td>
+          <td class="px-3 py-2">${renderRemarkCell(row)}</td>
+          <td class="px-3 py-2">${row.creator}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.created}</td>
+          <td class="px-3 py-2 whitespace-nowrap sticky right-0 bg-white">${renderBarcodeOps(row, rowIndex)}</td>
+        </tr>`;
+    }
+
+    /**
+     * 刷新列表表格
+     */
+    function refreshBarcodeTable() {
+      const tbody = document.getElementById('barcode-supplier-table-body');
+      if (tbody) {
+        tbody.innerHTML = barcodeSupplierRows
+          .map((row, i) => renderBarcodeSupplierRow(row, i + 1, i))
+          .join('');
+      }
+    }
+
+    /**
+     * 显示字段校验错误
+     * @param {string} field - 字段名
+     * @param {string} message - 错误提示
+     * @param {boolean} [show=true] - 是否显示
+     * @param {string} [formId='barcode-supplier-add-form'] - 表单 ID
+     */
+    function showFieldError(field, message, show = true, formId = 'barcode-supplier-add-form') {
+      const el = document.querySelector(`#${formId} [data-error="${field}"]`);
+      if (!el) return;
+      el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 清除表单全部校验提示
+     * @param {string} formId - 表单 ID
+     */
+    function clearFormErrors(formId) {
+      document.querySelectorAll(`#${formId} [data-error]`).forEach(el => {
+        el.classList.add('hidden');
+      });
+    }
+
+    /**
+     * 清除新增表单全部校验提示
+     */
+    function clearAddFormErrors() {
+      clearFormErrors('barcode-supplier-add-form');
+    }
+
+    /**
+     * 清除编辑表单全部校验提示
+     */
+    function clearEditFormErrors() {
+      clearFormErrors('barcode-supplier-edit-form');
+    }
+
+    /**
+     * 显示提交结果提示
+     * @param {boolean} success - 是否成功
+     * @param {string} [message] - 自定义提示文案
+     */
+    function showBarcodeToast(success, message) {
+      const toast = document.getElementById('barcode-supplier-toast');
+      const inner = document.getElementById('barcode-supplier-toast-inner');
+      const text = document.getElementById('barcode-supplier-toast-text');
+      const icon = document.getElementById('barcode-supplier-toast-icon');
+      if (!toast || !inner || !text || !icon) return;
+
+      text.textContent = message || (success ? '提交成功' : '提交失败');
+      inner.className = success
+        ? 'flex items-center gap-2 px-4 py-2.5 rounded shadow-lg text-sm text-white bg-green-500'
+        : 'flex items-center gap-2 px-4 py-2.5 rounded shadow-lg text-sm text-white bg-red-500';
+      icon.innerHTML = success
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+
+      toast.classList.remove('hidden');
+      clearTimeout(showBarcodeToast._timer);
+      showBarcodeToast._timer = setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    /**
+     * 解析条码号代码为数组（英文分号分隔）
+     * @param {string} raw - 原始输入
+     * @returns {string[]}
+     */
+    function parseBarcodeCodes(raw) {
+      return raw.split(';').map(s => s.trim()).filter(Boolean);
+    }
+
+    /**
+     * 校验条码号代码格式（每位为2位数字）
+     * @param {string[]} codes - 代码数组
+     * @returns {boolean}
+     */
+    function isValidBarcodeCodeFormat(codes) {
+      return codes.length > 0 && codes.every(code => /^\d{2}$/.test(code));
+    }
+
+    /**
+     * 校验输入中是否存在重复代码
+     * @param {string[]} codes - 代码数组
+     * @returns {boolean}
+     */
+    function hasDuplicateInCodes(codes) {
+      return new Set(codes).size !== codes.length;
+    }
+
+    /**
+     * 校验条码号代码字段
+     * @param {string} raw - 原始输入
+     * @param {string} barcodeType - 条码号类型
+     * @param {string} formId - 表单 ID
+     * @param {number} [excludeIndex=-1] - 编辑时排除的行索引
+     * @returns {boolean}
+     */
+    function validateBarcodeCodeField(raw, barcodeType, formId, excludeIndex = -1) {
+      if (!raw) {
+        showFieldError('barcodeCode', '请输入', true, formId);
+        return false;
+      }
+      const codes = parseBarcodeCodes(raw);
+      if (!isValidBarcodeCodeFormat(codes)) {
+        showFieldError('barcodeCode', '每个代码须为2位数字，多个用英文分号;隔开', true, formId);
+        return false;
+      }
+      if (hasDuplicateInCodes(codes)) {
+        showFieldError('barcodeCode', '已存在（相同条码号类型的代码不能重复）', true, formId);
+        return false;
+      }
+      if (barcodeType && hasDuplicateBarcodeCode(barcodeType, codes, excludeIndex)) {
+        showFieldError('barcodeCode', '已存在（相同条码号类型的代码不能重复）', true, formId);
+        return false;
+      }
+      return true;
+    }
+
+    /**
+     * 校验同类型条码号代码是否重复
+     * @param {string} barcodeType - 条码号类型
+     * @param {string[]} codes - 待校验代码
+     * @param {number} [excludeIndex=-1] - 编辑时排除的行索引
+     * @returns {boolean}
+     */
+    function hasDuplicateBarcodeCode(barcodeType, codes, excludeIndex = -1) {
+      const existing = barcodeSupplierRows
+        .filter((row, i) => i !== excludeIndex && row.barcodeType === barcodeType)
+        .map(row => row.barcodeCode);
+      return codes.some(code => existing.includes(code));
+    }
+
+    /**
+     * 更新状态开关视觉
+     * @param {boolean} enabled - 是否开启
+     * @param {'add'|'edit'} [mode='add'] - 表单模式
+     */
+    function updateStatusToggle(enabled, mode = 'add') {
+      const prefix = mode === 'edit' ? 'barcode-supplier-edit-status' : 'barcode-supplier-status';
+      const track = document.getElementById(`${prefix}-track`);
+      const thumb = document.getElementById(`${prefix}-thumb`);
+      const label = document.getElementById(`${prefix}-label`);
+      if (track) track.classList.toggle('bg-sky-600', enabled);
+      if (track) track.classList.toggle('bg-gray-200', !enabled);
+      if (thumb) thumb.style.left = enabled ? '22px' : '2px';
+      if (label) label.textContent = enabled ? '开启' : '关闭';
+    }
+
+    /**
+     * 重置新增表单
+     */
+    function resetAddForm() {
+      const form = document.getElementById('barcode-supplier-add-form');
+      if (!form) return;
+      form.reset();
+      clearAddFormErrors();
+      document.querySelectorAll('#barcode-supplier-add-form [data-search-select-input]').forEach(input => {
+        input.value = '';
+      });
+      document.querySelectorAll('#barcode-supplier-add-form [data-search-select-value]').forEach(input => {
+        input.value = '';
+      });
+      const statusToggle = document.getElementById('barcode-supplier-status-toggle');
+      if (statusToggle) {
+        statusToggle.checked = true;
+        updateStatusToggle(true, 'add');
+      }
+    }
+
+    /**
+     * 初始化可搜索下拉框
+     * @param {HTMLElement} container - 下拉容器
+     * @param {Array<string|Object>} options - 选项列表
+     * @param {(item: string|Object) => string} getLabel - 取显示文本
+     * @param {(item: string|Object) => string} getValue - 取值
+     */
+    function initSearchSelect(container, options, getLabel, getValue) {
+      const input = container.querySelector('[data-search-select-input]');
+      const hidden = container.querySelector('[data-search-select-value]');
+      const list = container.querySelector('[data-search-select-list]');
+      if (!input || !hidden || !list) return;
+
+      /**
+       * 渲染下拉选项
+       * @param {string} keyword - 检索关键字
+       */
+      function renderOptions(keyword = '') {
+        const kw = keyword.trim().toLowerCase();
+        const filtered = options.filter(item => getLabel(item).toLowerCase().includes(kw));
+        list.innerHTML = filtered.length
+          ? filtered.map(item => {
+              const label = getLabel(item);
+              const value = getValue(item);
+              return `<li class="search-select-option px-3 py-2 text-sm text-gray-700 cursor-pointer" data-value="${value}">${label}</li>`;
+            }).join('')
+          : '<li class="px-3 py-2 text-sm text-gray-400">无匹配项</li>';
+      }
+
+      input.addEventListener('focus', () => {
+        renderOptions(input.value);
+        list.classList.remove('hidden');
+      });
+
+      input.addEventListener('input', () => {
+        hidden.value = '';
+        renderOptions(input.value);
+        list.classList.remove('hidden');
+        const field = container.dataset.searchSelect;
+        const formId = container.closest('form')?.id;
+        if (field && formId) showFieldError(field, '', false, formId);
+      });
+
+      list.addEventListener('click', e => {
+        const option = e.target.closest('[data-value]');
+        if (!option) return;
+        input.value = option.textContent.trim();
+        hidden.value = option.dataset.value;
+        list.classList.add('hidden');
+        const field = container.dataset.searchSelect;
+        const formId = container.closest('form')?.id;
+        if (field && formId) showFieldError(field, '', false, formId);
+      });
+
+      document.addEventListener('click', e => {
+        if (!container.contains(e.target)) list.classList.add('hidden');
+      });
+    }
+
+    /**
+     * 校验并提交新增表单
+     * @returns {boolean}
+     */
+    function submitAddForm() {
+      clearAddFormErrors();
+      const form = document.getElementById('barcode-supplier-add-form');
+      if (!form) return false;
+
+      const barcodeType = form.querySelector('[name="barcodeType"]').value.trim();
+      const supplierName = form.querySelector('[name="supplierName"]').value.trim();
+      const barcodeCodeRaw = form.querySelector('[name="barcodeCode"]').value.trim();
+      const remark = form.querySelector('[name="remark"]').value;
+      const statusEnabled = document.getElementById('barcode-supplier-status-toggle')?.checked ?? true;
+
+      let valid = true;
+
+      if (!barcodeType) {
+        showFieldError('barcodeType', '请选择');
+        valid = false;
+      }
+      if (!supplierName) {
+        showFieldError('supplierName', '请选择');
+        valid = false;
+      }
+      if (!validateBarcodeCodeField(barcodeCodeRaw, barcodeType, 'barcode-supplier-add-form')) {
+        valid = false;
+      }
+      if (remark.length > 500) {
+        showFieldError('remark', '已超字符限制');
+        valid = false;
+      }
+
+      if (!valid) {
+        showBarcodeToast(false, '提交失败');
+        return false;
+      }
+
+      const supplier = supplierNameOptions.find(s => s.name === supplierName);
+      const codes = parseBarcodeCodes(barcodeCodeRaw);
+      codes.forEach(code => {
+        barcodeSupplierRows.unshift({
+          barcodeType,
+          supplierCode: supplier?.code || '',
+          supplierName,
+          barcodeCode: code,
+          status: statusEnabled ? 'active' : 'inactive',
+          hasRemark: !!remark.trim(),
+          remark: remark.trim(),
+          creator: '杨晓婉',
+          created: new Date().toISOString().slice(0, 10)
+        });
+      });
+
+      refreshBarcodeTable();
+
+      document.getElementById('barcode-supplier-add-modal')?.classList.add('hidden');
+      resetAddForm();
+      showBarcodeToast(true);
+      return true;
+    }
+
+    /**
+     * 打开编辑弹窗并带入原数据
+     * @param {number} rowIndex - 行索引（0-based）
+     */
+    function openEditModal(rowIndex) {
+      const row = barcodeSupplierRows[rowIndex];
+      if (!row) return;
+
+      const form = document.getElementById('barcode-supplier-edit-form');
+      if (!form) return;
+
+      clearEditFormErrors();
+      form.querySelector('[name="rowIndex"]').value = String(rowIndex);
+      form.querySelector('[name="barcodeType"]').value = row.barcodeType;
+      form.querySelector('[name="supplierName"]').value = row.supplierName;
+      form.querySelector('[name="barcodeCode"]').value = row.barcodeCode;
+      form.querySelector('[name="remark"]').value = row.remark || '';
+
+      const statusEnabled = row.status === 'active';
+      const statusToggle = document.getElementById('barcode-supplier-edit-status-toggle');
+      if (statusToggle) {
+        statusToggle.checked = statusEnabled;
+        updateStatusToggle(statusEnabled, 'edit');
+      }
+
+      document.getElementById('barcode-supplier-edit-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 校验并提交编辑表单
+     * @returns {boolean}
+     */
+    function submitEditForm() {
+      clearEditFormErrors();
+      const form = document.getElementById('barcode-supplier-edit-form');
+      if (!form) return false;
+
+      const rowIndex = Number(form.querySelector('[name="rowIndex"]').value);
+      const row = barcodeSupplierRows[rowIndex];
+      if (!row) return false;
+
+      const barcodeType = form.querySelector('[name="barcodeType"]').value.trim();
+      const barcodeCodeRaw = form.querySelector('[name="barcodeCode"]').value.trim();
+      const remark = form.querySelector('[name="remark"]').value;
+      const statusEnabled = document.getElementById('barcode-supplier-edit-status-toggle')?.checked ?? true;
+
+      let valid = true;
+
+      if (!validateBarcodeCodeField(barcodeCodeRaw, barcodeType, 'barcode-supplier-edit-form', rowIndex)) {
+        valid = false;
+      }
+      if (remark.length > 500) {
+        showFieldError('remark', '已超字符限制', true, 'barcode-supplier-edit-form');
+        valid = false;
+      }
+
+      if (!valid) {
+        showBarcodeToast(false, '提交失败');
+        return false;
+      }
+
+      const codes = parseBarcodeCodes(barcodeCodeRaw);
+      const status = statusEnabled ? 'active' : 'inactive';
+      const remarkText = remark.trim();
+
+      row.barcodeCode = codes[0];
+      row.status = status;
+      row.remark = remarkText;
+      row.hasRemark = !!remarkText;
+
+      if (codes.length > 1) {
+        const extraRows = codes.slice(1).map(code => ({
+          barcodeType: row.barcodeType,
+          supplierCode: row.supplierCode,
+          supplierName: row.supplierName,
+          barcodeCode: code,
+          status,
+          hasRemark: !!remarkText,
+          remark: remarkText,
+          creator: row.creator,
+          created: row.created
+        }));
+        barcodeSupplierRows.splice(rowIndex + 1, 0, ...extraRows);
+      }
+
+      refreshBarcodeTable();
+      document.getElementById('barcode-supplier-edit-modal')?.classList.add('hidden');
+      showBarcodeToast(true);
+      return true;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshBarcodeTable();
+
+      const expandBtn = document.getElementById('barcode-supplier-search-expand');
+      const extra = document.getElementById('barcode-supplier-search-extra');
+      if (expandBtn && extra) {
+        let expanded = true;
+        expandBtn.addEventListener('click', () => {
+          expanded = !expanded;
+          extra.classList.toggle('hidden', !expanded);
+          expandBtn.childNodes[0].textContent = expanded ? '收起 ' : '展开 ';
+          expandBtn.querySelector('svg').classList.toggle('rotate-180', expanded);
+        });
+      }
+
+      document.querySelectorAll('#barcode-supplier-add-form [data-search-select]').forEach(container => {
+        const key = container.dataset.searchSelect;
+        if (key === 'barcodeType') {
+          initSearchSelect(container, barcodeTypeOptions, item => item, item => item);
+        } else if (key === 'supplierName') {
+          initSearchSelect(container, supplierNameOptions, item => item.name, item => item.name);
+        }
+      });
+
+      const statusToggle = document.getElementById('barcode-supplier-status-toggle');
+      if (statusToggle) {
+        statusToggle.addEventListener('change', () => updateStatusToggle(statusToggle.checked, 'add'));
+      }
+
+      const editStatusToggle = document.getElementById('barcode-supplier-edit-status-toggle');
+      if (editStatusToggle) {
+        editStatusToggle.addEventListener('change', () => updateStatusToggle(editStatusToggle.checked, 'edit'));
+      }
+
+      const addBtn = document.getElementById('barcode-supplier-add-btn');
+      if (addBtn) {
+        addBtn.addEventListener('click', () => resetAddForm());
+      }
+
+      const submitBtn = document.getElementById('barcode-supplier-add-submit');
+      if (submitBtn) {
+        submitBtn.addEventListener('click', () => submitAddForm());
+      }
+
+      const editSubmitBtn = document.getElementById('barcode-supplier-edit-submit');
+      if (editSubmitBtn) {
+        editSubmitBtn.addEventListener('click', () => submitEditForm());
+      }
+
+      document.querySelectorAll('#barcode-supplier-add-modal [data-modal-close]').forEach(btn => {
+        btn.addEventListener('click', () => resetAddForm());
+      });
+
+      document.querySelectorAll('#barcode-supplier-edit-modal [data-modal-close]').forEach(btn => {
+        btn.addEventListener('click', () => clearEditFormErrors());
+      });
+
+      const tbody = document.getElementById('barcode-supplier-table-body');
+      if (tbody) {
+        tbody.addEventListener('click', e => {
+          const editBtn = e.target.closest('.barcode-supplier-edit-btn');
+          if (editBtn) {
+            e.preventDefault();
+            openEditModal(Number(editBtn.dataset.rowIndex));
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

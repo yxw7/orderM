@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>结算清单</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="结算清单"
+  data-active-page="03_02_已结算.html"
+  data-page-tabs='[{"label":"已结算","page":"03_02_已结算.html"},{"label":"结算清单","active":true}]'>
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden">
+    <!-- 面包屑 -->
+    <div class="flex items-center gap-2 mb-4 text-sm">
+      <a href="03_02_已结算.html" class="flex items-center gap-1 text-gray-500 hover:text-sky-600">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        已结算
+      </a>
+      <span class="text-gray-400">/</span>
+      <span class="text-gray-800">结算清单</span>
+      <span id="settlement-list-settle-id" class="text-gray-800 font-medium"></span>
+    </div>
+
+    <!-- 检索区 -->
+    <div class="bg-white rounded border border-gray-200 p-4 mb-4">
+      <form id="settlement-list-search-form">
+        <div class="grid grid-cols-4 gap-4 items-center">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap shrink-0">订单行号</label>
+            <input type="text" name="orderLineNo" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap shrink-0">资源标识</label>
+            <input type="text" name="resourceId" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2 col-span-1">
+            <label class="text-sm text-gray-600 whitespace-nowrap shrink-0">正题名</label>
+            <input type="text" name="title" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2 justify-end">
+            <button type="submit"
+              class="flex items-center gap-1 px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              查询
+            </button>
+            <button type="button" onclick="Common.resetForm('settlement-list-search-form'); SettlementListPage.resetSearch()"
+              class="flex items-center gap-1 px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              重置
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="flex items-center gap-2 mb-4">
+      <div class="relative">
+        <button type="button" data-dropdown
+          class="flex items-center gap-1 px-4 py-1.5 bg-amber-500 text-white text-sm rounded hover:bg-amber-600">
+          导出结算清单
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div data-dropdown-menu
+          class="hidden absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-10 min-w-[140px]">
+          <a href="#" id="settlement-list-export-config"
+            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">导出配置</a>
+          <a href="#" id="settlement-list-export-list"
+            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">导出清单</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="bg-white rounded border border-gray-200">
+      <div class="overflow-x-auto table-scroll">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">序号</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">
+                <span class="inline-flex items-center gap-1">
+                  订单行号
+                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </span>
+              </th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap min-w-[160px]">正题名</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">资源标识</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">作者</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap min-w-[120px]">出版社</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">定价</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">币种</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">实洋</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">套内册数</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">结算套数</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">结算册数</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">结算金额</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="settlement-list-table-body"></tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+        <span class="text-sm text-gray-500" id="settlement-list-total">共 0 条</span>
+        <div class="flex items-center gap-2">
+          <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <button type="button" class="px-3 py-1 bg-sky-600 text-white rounded text-sm">1</button>
+          <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+          <select class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+            <option>10 条/页</option>
+            <option>20 条/页</option>
+            <option>50 条/页</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导出配置弹窗 -->
+  <div id="settlement-list-export-config-modal" data-modal
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+        <h2 class="text-base font-medium text-gray-800">导出配置</h2>
+        <button type="button" data-modal-close
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      </div>
+      <div class="flex flex-1 min-h-0 overflow-hidden">
+        <aside class="w-28 shrink-0 border-r border-gray-200 bg-gray-50 py-4">
+          <button type="button" id="settlement-list-export-type-book"
+            class="w-full text-left px-4 py-2 text-sm text-sky-600 font-medium border-l-2 border-sky-600 bg-white">
+            纸质书
+          </button>
+          <button type="button" id="settlement-list-export-type-av"
+            class="hidden w-full text-left px-4 py-2 text-sm text-sky-600 font-medium border-l-2 border-sky-600 bg-white">
+            视听资料
+          </button>
+        </aside>
+        <div class="flex-1 overflow-y-auto px-6 py-5">
+          <label class="inline-flex items-center gap-2 cursor-pointer select-none text-sm text-gray-700 mb-4">
+            <input type="checkbox" checked class="rounded text-sky-600" id="settlement-list-export-select-all">
+            全选
+          </label>
+          <div class="grid grid-cols-6 gap-x-4 gap-y-3 text-sm text-gray-700 mb-5">
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-header-field" data-field-key="settleId">结算单号</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-header-field" data-field-key="settleTime">结算时间</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-header-field" data-field-key="settleOperator">结算操作人</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-header-field" data-field-key="supplier">供应商</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-header-field" data-field-key="totalSpecies">实收总种数</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-header-field" data-field-key="totalSets">实收总套数</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-header-field" data-field-key="totalVolumes">实收总册数</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-header-field" data-field-key="totalListPrice">实收总码洋</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-header-field" data-field-key="totalActualPrice">实收总实洋</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-header-field" data-field-key="settleRemark">结算备注</label>
+          </div>
+          <div class="border-t border-gray-200 mb-5"></div>
+          <div id="settlement-list-export-book-line-fields" class="grid grid-cols-6 gap-x-4 gap-y-3 text-sm text-gray-700">
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="orderLineNo">订单行号</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="isbn">ISBN</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="title">正题名</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="subtitle">副题名</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="author">作者</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="publisher">出版社</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="publishYear">出版年</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="series">丛编</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="classificationNo">分类号</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="textLanguage">正文语种</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="price">定价</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="currency">币种</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="actualPrice">实洋</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="binding">装帧</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="size">尺寸</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="subjectHeadings">主题词</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="edition">版本</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="targetAudience">读者对象</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="notes">附注</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="bookIntro">图书简介</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="volumesInSet">套内册数</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="settledSets">结算套数</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="settledVolumes">结算册数</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="settlementAmount">结算金额</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="remark">备注</label>
+          </div>
+          <div id="settlement-list-export-av-line-fields" class="hidden grid grid-cols-6 gap-x-4 gap-y-3 text-sm text-gray-700">
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="orderLineNo">订单行号</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="isbn">ISBN</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="isrc">ISRC</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="productBarcode">商品条码</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="catalogNo">目录号</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="carrier">载体</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="versionFormat">版本/格式</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="title">题名</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="author">作者</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="listPrice">码洋</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="currency">币种</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="actualPrice">实洋</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="piecesInSet">套内件数</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="settledSets">结算套数</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="settledVolumes">结算册数</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="vinylColor">彩胶颜色</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="label">厂牌</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="limitedNo">限量编号</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="isOldRecord">是否老唱片</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="settlementAmount">结算金额</label>
+            <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600 settlement-list-export-line-field" data-field-key="remark">备注</label>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+        <button type="button" data-modal-close
+          class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+        <button type="button" id="settlement-list-export-config-save"
+          class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/settlement-list.js"></script>
+  <script src="../js/common.js"></script>
+</body>
+</html>

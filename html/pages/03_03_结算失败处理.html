@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>结算失败处理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="结算失败处理"
+  data-active-page="03_03_结算失败处理.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden">
+    <!-- 检索区 -->
+    <div class="bg-white rounded border border-gray-200 p-4 mb-4">
+      <form id="fail-settlement-search-form" class="relative">
+        <div class="absolute top-0 right-0 flex items-center gap-2">
+          <button type="button" id="fail-settlement-search-expand"
+            class="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700">
+            展开
+            <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <button type="submit"
+            class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+          <button type="button" onclick="Common.resetForm('fail-settlement-search-form')"
+            class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+        </div>
+        <div class="grid grid-cols-3 gap-4 pr-72">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">验收单号</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">验收单名称</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">资源类型</label>
+            <select class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              <option>全部</option>
+              <option>纸质书</option>
+              <option>视听资料</option>
+            </select>
+          </div>
+        </div>
+        <div id="fail-settlement-search-extra" class="hidden grid grid-cols-3 gap-4 mt-3 pr-72">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">供应商</label>
+            <select class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              <option>全部</option>
+              <option>北京万经</option>
+              <option>北京人艺</option>
+              <option>教图</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">发货单号</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">申请结算人</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2 col-span-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">申请结算时间</label>
+            <div class="flex flex-1 items-center gap-2 max-w-md">
+              <input type="date"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              <span class="text-gray-400 text-sm">~</span>
+              <input type="date"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="flex items-center gap-2 mb-4">
+      <button type="button" disabled
+        class="px-4 py-1.5 text-sm rounded border border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed">重新结算</button>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="bg-white rounded border border-gray-200">
+      <div class="overflow-x-auto table-scroll">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-3 py-2.5 text-left w-10"><input type="checkbox" class="rounded"></th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">序号</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">验收单号</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">供应商</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">发货单号</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap min-w-[140px]">验收单名称</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">资源类型</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">实收种数</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">实收套数</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">实收册数</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">实收总码洋(元)</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">实收总实洋(元)</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">
+                <span class="inline-flex items-center gap-1">
+                  申请结算时间
+                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </span>
+              </th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">申请结算人</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="fail-settlement-table-body"></tbody>
+        </table>
+      </div>
+      <!-- 分页 -->
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+        <span class="text-sm text-gray-500" id="fail-settlement-total">共 4 条</span>
+        <div class="flex items-center gap-2">
+          <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <button type="button" class="px-3 py-1 bg-sky-600 text-white rounded text-sm">1</button>
+          <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+          <select class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+            <option>10 条/页</option>
+            <option>20 条/页</option>
+            <option>50 条/页</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    /** 结算失败处理列表示例数据 */
+    const failSettlementRows = [
+      {
+        no: 1,
+        acceptId: 'ys00120250223001',
+        supplier: '北京万经',
+        deliveryId: 'fhPG09120250223001',
+        acceptName: '纸质书20250223001',
+        resourceType: '纸质书',
+        species: 3,
+        sets: 2,
+        volumes: 15,
+        listPrice: '1280.00',
+        netPrice: '960.00',
+        applyTime: '2025-02-23 09:00:00',
+        applicant: '李佳'
+      },
+      {
+        no: 2,
+        acceptId: 'ys00120250121012',
+        supplier: '北京人艺',
+        deliveryId: '',
+        acceptName: '视听资料20250121012',
+        resourceType: '视听资料',
+        species: 2,
+        sets: 1,
+        volumes: 8,
+        listPrice: '560.00',
+        netPrice: '420.00',
+        applyTime: '2025-01-21 11:00:00',
+        applicant: '张苏白鸥'
+      },
+      {
+        no: 3,
+        acceptId: 'ys00120250108045',
+        supplier: '教图',
+        deliveryId: 'fhPG09120250108045',
+        acceptName: '纸质书20250108045',
+        resourceType: '纸质书',
+        species: 5,
+        sets: 3,
+        volumes: 22,
+        listPrice: '3450.00',
+        netPrice: '2890.50',
+        applyTime: '2025-01-08 13:00:00',
+        applicant: '李想'
+      },
+      {
+        no: 4,
+        acceptId: 'ys00120250104008',
+        supplier: '北京新华',
+        deliveryId: 'fhPG09120250104008',
+        acceptName: '纸质书20250104008',
+        resourceType: '纸质书',
+        species: 1,
+        sets: 0,
+        volumes: 6,
+        listPrice: '320.00',
+        netPrice: '256.00',
+        applyTime: '2025-01-04 14:00:00',
+        applicant: '张曼'
+      }
+    ];
+
+    /**
+     * 渲染结算失败处理表格行
+     * @param {Object} row - 行数据
+     * @returns {string}
+     */
+    function renderFailSettlementRow(row) {
+      const delivery = row.deliveryId || '—';
+      return `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2"><input type="checkbox" class="rounded"></td>
+          <td class="px-3 py-2 text-gray-600">${row.no}</td>
+          <td class="px-3 py-2 whitespace-nowrap">
+            <a href="02_01_02_验收详情按种_纸质书.html" class="text-sky-600 hover:underline">${row.acceptId}</a>
+          </td>
+          <td class="px-3 py-2">${row.supplier}</td>
+          <td class="px-3 py-2 text-gray-500">${delivery}</td>
+          <td class="px-3 py-2">${row.acceptName}</td>
+          <td class="px-3 py-2">${row.resourceType}</td>
+          <td class="px-3 py-2">${row.species}</td>
+          <td class="px-3 py-2">${row.sets}</td>
+          <td class="px-3 py-2">${row.volumes}</td>
+          <td class="px-3 py-2">${row.listPrice}</td>
+          <td class="px-3 py-2">${row.netPrice}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.applyTime}</td>
+          <td class="px-3 py-2">${row.applicant}</td>
+        </tr>`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const tbody = document.getElementById('fail-settlement-table-body');
+      if (tbody) tbody.innerHTML = failSettlementRows.map(renderFailSettlementRow).join('');
+
+      const expandBtn = document.getElementById('fail-settlement-search-expand');
+      const extra = document.getElementById('fail-settlement-search-extra');
+      if (expandBtn && extra) {
+        let expanded = false;
+        expandBtn.addEventListener('click', () => {
+          expanded = !expanded;
+          extra.classList.toggle('hidden', !expanded);
+          expandBtn.childNodes[0].textContent = expanded ? '收起 ' : '展开 ';
+          expandBtn.querySelector('svg').classList.toggle('rotate-180', expanded);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

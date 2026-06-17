@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>逐条验收</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="逐条验收"
+  data-active-page="02_02_逐条收货_纸质书.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+  <div id="main-content" class="hidden">
+    <div class="bg-white rounded border border-gray-200 p-4 mb-4">
+      <form id="search-form">
+        <div class="grid grid-cols-3 gap-4">
+          
+          <div class="flex items-center gap-2 ">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">收货备注</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2 ">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">&nbsp; ，已收货复本数</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2 ">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">，待收货复本数</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2 search-extra-field hidden">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">ISBN</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2 search-extra-field hidden">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">题名</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2 search-extra-field hidden">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-24 text-right">定价</label>
+            <input type="text" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2 justify-end col-span-3">
+            <button type="submit" class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+            <button type="button" onclick="Common.resetForm('search-form')"
+              class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="bg-white rounded border border-gray-200">
+      <div class="overflow-x-auto table-scroll">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-3 py-2.5 text-left w-10"><input type="checkbox" class="rounded"></th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">馆址</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">发订人</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">发订时间</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">备注</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">币种</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr class="hover:bg-gray-50">
+              <td class="px-3 py-2"><input type="checkbox" class="rounded"></td>
+              <td class="px-3 py-2 text-gray-600">—</td>
+              <td class="px-3 py-2 text-gray-600">—</td>
+              <td class="px-3 py-2 text-gray-600">—</td>
+              <td class="px-3 py-2 text-gray-600">—</td>
+              <td class="px-3 py-2 text-gray-600">—</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-3 py-2"><input type="checkbox" class="rounded"></td>
+              <td class="px-3 py-2 text-gray-600">—</td>
+              <td class="px-3 py-2 text-gray-600">—</td>
+              <td class="px-3 py-2 text-gray-600">—</td>
+              <td class="px-3 py-2 text-gray-600">—</td>
+              <td class="px-3 py-2 text-gray-600">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+        <span class="text-sm text-gray-500">共 0 条记录</span>
+        <div class="flex items-center gap-2">
+          <button type="button" class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>上一页</button>
+          <button type="button" class="px-3 py-1 bg-sky-600 text-white rounded text-sm">1</button>
+          <button type="button" class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-600">下一页</button>
+          <select class="border border-gray-300 rounded px-2 py-1 text-sm"><option>50 条/页</option></select>
+        </div>
+      </div>
+    </div></div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/common.js"></script>
+</body>
+</html>

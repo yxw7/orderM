@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>订单导入模板配置</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    /** 订单导入模板配置：固定页面高度，表格区域独立滚动 */
+    body[data-active-page="07_05_订单导入模板配置.html"] #page-content {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] #import-template-page {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] .import-template-table-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] .import-template-table-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] .import-template-table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] .field-config-table-scroll {
+      max-height: 380px;
+      overflow: auto;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] .field-config-table-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] .field-config-table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] .field-pool-table-scroll {
+      max-height: 320px;
+      overflow: auto;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] .field-pool-table-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] .field-pool-table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    body[data-active-page="07_05_订单导入模板配置.html"] .dedup-field-option:hover,
+    body[data-active-page="07_05_订单导入模板配置.html"] .dedup-field-option.is-active {
+      background: #f3f4f6;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="订单导入模板配置"
+  data-active-page="07_05_订单导入模板配置.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden">
+    <div id="import-template-page">
+      <!-- 检索区 -->
+      <div class="bg-white rounded border border-gray-200 p-4 mb-4 shrink-0">
+        <form id="import-template-search-form" class="relative">
+          <div class="absolute top-0 right-0 flex items-center gap-2">
+            <button type="submit"
+              class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+            <button type="button" onclick="Common.resetForm('import-template-search-form')"
+              class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+          </div>
+          <div class="grid grid-cols-4 gap-4 pr-40">
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-28 text-right">关联订户</label>
+              <select name="subscriber"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">全部</option>
+                <option value="订户一">订户一</option>
+                <option value="订户二">订户二</option>
+                <option value="订户三">订户三</option>
+                <option value="订户四">订户四</option>
+                <option value="订户五">订户五</option>
+                <option value="订户六">订户六</option>
+                <option value="订户七">订户七</option>
+                <option value="订户八">订户八</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-28 text-right">采访资源类型</label>
+              <select name="resourceType"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">全部</option>
+                <option value="纸质图书">纸质图书</option>
+                <option value="视听资料">视听资料</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-28 text-right">语种</label>
+              <select name="language"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">全部</option>
+                <option value="中文">中文</option>
+                <option value="外文">外文</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-28 text-right">状态</label>
+              <select name="status"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">全部</option>
+                <option value="active">使用中</option>
+                <option value="inactive">已停用</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="flex items-center gap-2 mb-4 shrink-0">
+        <button type="button" id="import-template-add-btn" data-modal-open="import-template-add-modal"
+          class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">新增</button>
+      </div>
+
+      <!-- 数据表格 -->
+      <div class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="import-template-table-scroll table-scroll">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+              <tr>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">采访资源类型</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">语种</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap min-w-[200px]">模板名称</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">关联订户</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-0 bg-gray-50 min-w-[320px]">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100" id="import-template-table-body"></tbody>
+          </table>
+        </div>
+        <!-- 分页 -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white">
+          <span class="text-sm text-gray-500" id="import-template-total">总共 85 个项目</span>
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-gray-500">第 1/2 页</span>
+            <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <input type="text" value="1" readonly
+              class="w-10 border border-gray-300 rounded px-2 py-1 text-sm text-center text-gray-600 bg-white">
+            <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-600">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+            <select class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+              <option selected>50 条/页</option>
+              <option>20 条/页</option>
+              <option>10 条/页</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 提交结果提示 -->
+    <div id="import-template-toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 z-[60] min-w-[240px]">
+      <div id="import-template-toast-inner"
+        class="flex items-center gap-2 px-4 py-2.5 rounded shadow-lg text-sm text-white bg-green-500">
+        <svg id="import-template-toast-icon" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span id="import-template-toast-text">提交成功</span>
+      </div>
+    </div>
+
+    <!-- 新增弹窗 -->
+    <div id="import-template-add-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-xl flex flex-col max-h-[90vh]"
+        onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+          <h2 class="text-base font-medium text-gray-800">新增</h2>
+          <button type="button" data-modal-close
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="import-template-add-form" class="px-6 py-5 space-y-4 overflow-y-auto">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 采访资源类型
+            </label>
+            <div class="flex-1">
+              <select name="resourceType"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">请选择</option>
+                <option value="纸质图书">纸质图书</option>
+                <option value="视听资料">视听资料</option>
+              </select>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="resourceType">请选择</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 语种
+            </label>
+            <div class="flex-1">
+              <select name="language"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">请选择</option>
+                <option value="中文">中文</option>
+                <option value="外文">外文</option>
+              </select>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="language">请选择</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 模板名称
+            </label>
+            <div class="flex-1">
+              <input type="text" name="templateName" placeholder="请输入" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="templateName">请输入</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">关联订户</label>
+            <div class="flex-1">
+              <div id="import-template-add-subscribers" data-multi-select data-multi-select-id="import-template-add-subscribers" class="relative"></div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 状态
+            </label>
+            <div class="flex-1 pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="status" checked class="sr-only" id="import-template-add-status-toggle">
+                <span id="import-template-add-status-track"
+                  class="relative w-11 h-6 bg-sky-600 rounded-full transition-colors">
+                  <span id="import-template-add-status-thumb"
+                    class="absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
+                </span>
+                <span id="import-template-add-status-label" class="text-sm text-gray-700">开启</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
+            <div class="flex-1">
+              <textarea name="remark" rows="4" placeholder="请输入"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-none"></textarea>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="remark">已超字符限制</p>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+          <button type="button" data-modal-close
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="import-template-add-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑弹窗 -->
+    <div id="import-template-edit-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-xl flex flex-col max-h-[90vh]"
+        onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+          <h2 class="text-base font-medium text-gray-800">编辑</h2>
+          <button type="button" data-modal-close
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="import-template-edit-form" class="px-6 py-5 space-y-4 overflow-y-auto">
+          <input type="hidden" name="rowIndex">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 采访资源类型
+            </label>
+            <div class="flex-1">
+              <select name="resourceType"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">请选择</option>
+                <option value="纸质图书">纸质图书</option>
+                <option value="视听资料">视听资料</option>
+              </select>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="resourceType">请选择</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 语种
+            </label>
+            <div class="flex-1">
+              <select name="language"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">请选择</option>
+                <option value="中文">中文</option>
+                <option value="外文">外文</option>
+              </select>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="language">请选择</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 模板名称
+            </label>
+            <div class="flex-1">
+              <input type="text" name="templateName" placeholder="请输入" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="templateName">请输入</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">关联订户</label>
+            <div class="flex-1">
+              <div id="import-template-edit-subscribers" data-multi-select data-multi-select-id="import-template-edit-subscribers" class="relative"></div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 状态
+            </label>
+            <div class="flex-1 pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="status" class="sr-only" id="import-template-edit-status-toggle">
+                <span id="import-template-edit-status-track"
+                  class="relative w-11 h-6 bg-sky-600 rounded-full transition-colors">
+                  <span id="import-template-edit-status-thumb"
+                    class="absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
+                </span>
+                <span id="import-template-edit-status-label" class="text-sm text-gray-700">开启</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
+            <div class="flex-1">
+              <textarea name="remark" rows="4" placeholder="请输入"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-none"></textarea>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="remark">已超字符限制</p>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+          <button type="button" data-modal-close
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="import-template-edit-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 复制弹窗 -->
+    <div id="import-template-copy-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-xl flex flex-col max-h-[90vh]"
+        onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+          <h2 class="text-base font-medium text-gray-800">复制</h2>
+          <button type="button" data-modal-close
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="import-template-copy-form" class="px-6 py-5 space-y-4 overflow-y-auto">
+          <input type="hidden" name="sourceRowIndex">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 订户
+            </label>
+            <div class="flex-1">
+              <select name="subscriber"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">请选择</option>
+              </select>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="subscriber">请选择</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 采访资源类型
+            </label>
+            <div class="flex-1">
+              <select name="resourceType"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">请选择</option>
+                <option value="纸质图书">纸质图书</option>
+                <option value="视听资料">视听资料</option>
+              </select>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="resourceType">请选择</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 语种
+            </label>
+            <div class="flex-1">
+              <select name="language"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">请选择</option>
+                <option value="中文">中文</option>
+                <option value="外文">外文</option>
+              </select>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="language">请选择</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 模板名称
+            </label>
+            <div class="flex-1">
+              <input type="text" name="templateName" placeholder="请输入" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="templateName">请输入</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 状态
+            </label>
+            <div class="flex-1 pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="status" checked class="sr-only" id="import-template-copy-status-toggle">
+                <span id="import-template-copy-status-track"
+                  class="relative w-11 h-6 bg-sky-600 rounded-full transition-colors">
+                  <span id="import-template-copy-status-thumb"
+                    class="absolute top-0.5 left-[22px] w-5 h-5 bg-white rounded-full shadow transition-all"></span>
+                </span>
+                <span id="import-template-copy-status-label" class="text-sm text-gray-700">开启</span>
+              </label>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
+            <div class="flex-1">
+              <textarea name="remark" rows="4" placeholder="请输入"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-none"></textarea>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="remark">已超字符限制</p>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+          <button type="button" data-modal-close
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="import-template-copy-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 字段配置弹窗 -->
+    <div id="import-template-field-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-6xl flex flex-col max-h-[92vh]"
+        onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+          <h2 class="text-base font-medium text-gray-800">字段配置</h2>
+          <button type="button" id="import-template-field-modal-close"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <div class="px-6 py-4 flex flex-col flex-1 min-h-0 overflow-hidden">
+          <!-- 检索区 -->
+          <form id="field-config-search-form" class="relative mb-4 shrink-0">
+            <div class="absolute top-0 right-0 flex items-center gap-2">
+              <button type="submit"
+                class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+              <button type="button" id="field-config-search-reset"
+                class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+            </div>
+            <div class="grid grid-cols-4 gap-4 pr-40">
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">字段代码</label>
+                <input type="text" name="fieldCode" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">字段名</label>
+                <input type="text" name="fieldName" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">显示名</label>
+                <input type="text" name="displayName" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">是否必填</label>
+                <select name="required"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                  <option value="">全部</option>
+                  <option value="yes">是</option>
+                  <option value="no">否</option>
+                </select>
+              </div>
+            </div>
+          </form>
+          <div class="mb-3 shrink-0">
+            <button type="button" id="field-config-add-btn"
+              class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">添加字段</button>
+          </div>
+          <!-- 字段列表 -->
+          <div class="border border-gray-200 rounded flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div class="field-config-table-scroll table-scroll">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">字段代码</th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">字段名</th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">显示名</th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">是否必填</th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">默认值</th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">排序值</th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">操作</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100" id="field-config-table-body"></tbody>
+              </table>
+            </div>
+            <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white">
+              <span class="text-sm text-gray-500" id="field-config-total">总共 0 个项目</span>
+              <div class="flex items-center gap-2">
+                <button type="button" id="field-config-prev-page"
+                  class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                  </svg>
+                </button>
+                <span class="text-sm text-gray-500" id="field-config-page-info">第 1/1 页</span>
+                <button type="button" id="field-config-next-page"
+                  class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-600">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+                <select id="field-config-page-size" class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+                  <option value="5" selected>5 条/页</option>
+                  <option value="10">10 条/页</option>
+                  <option value="20">20 条/页</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+          <button type="button" id="import-template-field-cancel"
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="import-template-field-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 添加字段弹窗（从系统预设字段池选择） -->
+    <div id="field-config-add-modal" data-modal
+      class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl flex flex-col max-h-[85vh]"
+        onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+          <h2 class="text-base font-medium text-gray-800">添加字段</h2>
+          <button type="button" data-modal-close class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <div class="px-6 py-4 flex flex-col flex-1 min-h-0 overflow-hidden">
+          <form id="field-pool-search-form" class="relative mb-4 shrink-0">
+            <div class="absolute top-0 right-0 flex items-center gap-2">
+              <button type="submit"
+                class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+              <button type="button" id="field-pool-search-reset"
+                class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4 pr-40">
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">字段代码</label>
+                <input type="text" name="fieldCode" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">字段名</label>
+                <input type="text" name="fieldName" placeholder="请输入"
+                  class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+            </div>
+          </form>
+          <div class="border border-gray-200 rounded flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div class="field-pool-table-scroll table-scroll">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th class="px-3 py-2.5 text-left w-10">
+                      <input type="checkbox" id="field-pool-select-all"
+                        class="rounded border-gray-300 text-sky-600 focus:ring-sky-500">
+                    </th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">字段代码</th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">字段名</th>
+                    <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">字段说明</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100" id="field-pool-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+          <button type="button" data-modal-close
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="field-config-add-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑字段弹窗 -->
+    <div id="field-config-edit-modal" data-modal
+      class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 class="text-base font-medium text-gray-800">编辑字段</h2>
+          <button type="button" data-modal-close class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="field-config-edit-form" class="px-6 py-5 space-y-4">
+          <input type="hidden" name="fieldIndex">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-2 shrink-0">字段代码</label>
+            <input type="text" name="fieldCode" readonly
+              class="flex-1 border border-gray-200 rounded px-3 py-2 text-sm bg-gray-50 text-gray-600 cursor-not-allowed">
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-2 shrink-0">字段名</label>
+            <input type="text" name="fieldName" readonly
+              class="flex-1 border border-gray-200 rounded px-3 py-2 text-sm bg-gray-50 text-gray-600 cursor-not-allowed">
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-2 shrink-0"><span class="text-red-500">*</span> 显示名</label>
+            <div class="flex-1">
+              <input type="text" name="displayName" placeholder="请输入"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="displayName">请输入</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-2 shrink-0">是否必填</label>
+            <select name="required"
+              class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <option value="yes">是</option>
+              <option value="no">否</option>
+            </select>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-2 shrink-0">默认值</label>
+            <input type="text" name="defaultValue" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-24 text-right pt-2 shrink-0"><span class="text-red-500">*</span> 排序值</label>
+            <div class="flex-1">
+              <input type="number" name="sortValue" placeholder="请输入" min="1"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="sortValue">请输入</p>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button type="button" data-modal-close
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="field-config-edit-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 删除字段确认弹窗 -->
+    <div id="field-config-delete-modal" data-modal
+      class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 class="text-base font-medium text-gray-800">删除字段</h2>
+          <button type="button" data-modal-close class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <div class="px-6 py-5">
+          <p id="field-config-delete-message" class="text-sm text-gray-700">确定删除该字段吗？</p>
+          <p id="field-config-delete-error" class="text-red-500 text-sm mt-2 hidden">请先在查重规则中删除该字段</p>
+        </div>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button type="button" data-modal-close
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="field-config-delete-confirm"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 查重规则弹窗 -->
+    <div id="import-template-dedup-modal" data-modal
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 class="text-base font-medium text-gray-800">查重规则</h2>
+          <button type="button" id="import-template-dedup-modal-close"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <form id="import-template-dedup-form" class="px-6 py-5 space-y-4">
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 规则名称
+            </label>
+            <div class="flex-1">
+              <input type="text" name="ruleName" placeholder="请输入" maxlength="30" autocomplete="off"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="ruleName">请输入</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 字段组合
+            </label>
+            <div class="flex-1 relative">
+              <div id="dedup-field-combo-trigger"
+                class="min-h-[38px] border border-gray-300 rounded px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-text focus-within:border-sky-500">
+                <div id="dedup-field-tags" class="flex flex-wrap gap-1.5"></div>
+                <span id="dedup-field-placeholder" class="text-sm text-gray-400 px-1">请选择</span>
+              </div>
+              <div id="dedup-field-dropdown"
+                class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded shadow-lg z-10 max-h-48 overflow-auto">
+                <ul id="dedup-field-options" class="py-1 text-sm"></ul>
+              </div>
+              <p class="text-red-500 text-xs mt-1 hidden" data-error="fieldCombo">请选择</p>
+            </div>
+          </div>
+        </form>
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button type="button" id="import-template-dedup-cancel"
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="import-template-dedup-submit"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/import-template-data.js"></script>
+  <script src="../js/multi-select.js"></script>
+  <script>
+    /** 订户选项（来自订户列表） */
+    const subscriberOptions = ImportTemplateData.subscriberOptions;
+
+    /** 订单导入模板配置数据（与订单导入页共享） */
+    const importTemplateRows = ImportTemplateData.rows;
+
+    /** 新增/编辑弹窗关联订户多选实例 ID */
+    const TEMPLATE_ADD_SUBSCRIBERS_MS_ID = 'import-template-add-subscribers';
+    const TEMPLATE_EDIT_SUBSCRIBERS_MS_ID = 'import-template-edit-subscribers';
+
+    /** 当前展示的列表数据 */
+    let importTemplateDisplayRows = [...importTemplateRows];
+
+    /** 默认字段配置示例数据 */
+    const defaultTemplateFields = [
+      { fieldCode: 'bookId', fieldName: '书目记录号', displayName: '书目记录号', required: true, defaultValue: '', sortValue: 1, usedInDedupRule: false },
+      { fieldCode: 'isbn', fieldName: 'ISBN', displayName: 'ISBN', required: true, defaultValue: '', sortValue: 2, usedInDedupRule: true },
+      { fieldCode: 'zTitle', fieldName: '正题名', displayName: '正题名', required: true, defaultValue: '', sortValue: 3, usedInDedupRule: false },
+      { fieldCode: 'fTitle', fieldName: '副题名', displayName: '副题名', required: false, defaultValue: '', sortValue: 4, usedInDedupRule: false },
+      { fieldCode: 'fenJuan', fieldName: '分卷号', displayName: '分卷号', required: false, defaultValue: '', sortValue: 5, usedInDedupRule: false },
+      { fieldCode: 'fenJuanNam', fieldName: '分卷名', displayName: '分卷名', required: false, defaultValue: '', sortValue: 6, usedInDedupRule: false },
+      { fieldCode: 'author', fieldName: '作者', displayName: '作者', required: false, defaultValue: '', sortValue: 7, usedInDedupRule: false },
+      { fieldCode: 'setnumber', fieldName: '套数', displayName: '套数', required: false, defaultValue: '', sortValue: 8, usedInDedupRule: false }
+    ];
+
+    /** 系统预设书目字段池 */
+    const systemPresetFieldPool = [
+      { fieldCode: 'bookId', fieldName: '书目记录号', description: '书目记录号', required: true },
+      { fieldCode: 'isbn', fieldName: 'ISBN', description: 'ISBN', required: true },
+      { fieldCode: 'zTitle', fieldName: '正题名', description: '正题名', required: true },
+      { fieldCode: 'fTitle', fieldName: '副题名', description: '副题名', required: false },
+      { fieldCode: 'fenJuan', fieldName: '分卷号', description: '分卷号', required: false },
+      { fieldCode: 'fenJuanNam', fieldName: '分卷名', description: '分卷名', required: false },
+      { fieldCode: 'author', fieldName: '作者', description: '作者', required: false },
+      { fieldCode: 'publication', fieldName: '出版社', description: '出版社', required: false },
+      { fieldCode: 'setnumber', fieldName: '套数', description: '套数', required: false },
+      { fieldCode: 'pubYear', fieldName: '出版年', description: '出版年', required: false },
+      { fieldCode: 'price', fieldName: '价格', description: '价格', required: false },
+      { fieldCode: 'classNo', fieldName: '分类号', description: '分类号', required: false },
+      { fieldCode: 'subject', fieldName: '主题词', description: '主题词', required: false },
+      { fieldCode: 'language', fieldName: '语种', description: '语种', required: false },
+      { fieldCode: 'edition', fieldName: '版次', description: '版次', required: false }
+    ];
+
+    /** 字段配置上下文 */
+    let currentFieldTemplateIndex = -1;
+    /** @type {Array<Object>} */
+    let templateFieldRows = [];
+    /** @type {Array<Object>} */
+    let templateFieldDisplayRows = [];
+    let fieldConfigPage = 1;
+    let fieldConfigPageSize = 5;
+    let pendingDeleteFieldIndex = -1;
+    /** @type {Array<Object>} */
+    let presetFieldDisplayRows = [];
+    /** @type {Set<string>} */
+    let selectedPresetFieldCodes = new Set();
+
+    /** 查重规则上下文 */
+    let currentDedupTemplateIndex = -1;
+    /** @type {string[]} */
+    let selectedDedupFieldCodes = [];
+    /** 规则名称最大长度 */
+    const DEDUP_RULE_NAME_MAX = 30;
+    /** 规则名称允许字符 */
+    const DEDUP_RULE_NAME_PATTERN = /^[\u4e00-\u9fa5a-zA-Z0-9+\-/&*]+$/;
+
+    /**
+     * 渲染状态列
+     * @param {string} status - 状态标识
+     * @returns {string}
+     */
+    function renderImportTemplateStatus(status) {
+      if (status === 'active') {
+        return '<span class="text-green-600">使用中</span>';
+      }
+      return '<span class="text-red-500">已停用</span>';
+    }
+
+    /**
+     * 渲染操作列
+     * @param {Object} row - 行数据
+     * @param {number} rowIndex - 数据索引
+     * @returns {string}
+     */
+    function renderImportTemplateOps(row, rowIndex) {
+      const toggleLabel = row.status === 'active' ? '停用' : '启用';
+      return `
+        <button type="button" class="text-sky-600 hover:underline mr-2 import-template-edit-btn" data-row-index="${rowIndex}">编辑</button>
+        <button type="button" class="text-sky-600 hover:underline mr-2 import-template-field-btn" data-row-index="${rowIndex}">字段配置</button>
+        <button type="button" class="text-sky-600 hover:underline mr-2 import-template-dedup-btn" data-row-index="${rowIndex}">查重规则</button>
+        <a href="07_05_04_停用_删除.html" class="text-sky-600 hover:underline mr-2">${toggleLabel}</a>
+        <a href="07_05_04_停用_删除.html" class="text-red-500 hover:underline">删除</a>`;
+    }
+
+    /**
+     * 渲染表格行
+     * @param {Object} row - 行数据
+     * @param {number} index - 序号
+     * @param {number} rowIndex - 数据索引
+     * @returns {string}
+     */
+    function renderImportTemplateRow(row, index, rowIndex) {
+      const subscribersText = ImportTemplateData.formatSubscribers(row.subscribers);
+      return `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 text-gray-600">${index}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.resourceType}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.language}</td>
+          <td class="px-3 py-2 max-w-[240px]">
+            <span class="block truncate" title="${row.templateName}">${row.templateName}</span>
+          </td>
+          <td class="px-3 py-2 max-w-[180px]">
+            <span class="block truncate" title="${subscribersText}">${subscribersText}</span>
+          </td>
+          <td class="px-3 py-2">${renderImportTemplateStatus(row.status)}</td>
+          <td class="px-3 py-2 whitespace-nowrap sticky right-0 bg-white">${renderImportTemplateOps(row, rowIndex)}</td>
+        </tr>`;
+    }
+
+    /**
+     * 渲染空结果提示
+     * @returns {string}
+     */
+    function renderImportTemplateEmpty() {
+      return `
+        <tr>
+          <td colspan="7" class="px-3 py-16 text-center text-sm text-gray-400">未检索到结果</td>
+        </tr>`;
+    }
+
+    /**
+     * 刷新列表
+     */
+    function refreshImportTemplateTable() {
+      const tbody = document.getElementById('import-template-table-body');
+      if (!tbody) return;
+
+      if (importTemplateDisplayRows.length === 0) {
+        tbody.innerHTML = renderImportTemplateEmpty();
+      } else {
+        tbody.innerHTML = importTemplateDisplayRows
+          .map((row, i) => {
+            const rowIndex = importTemplateRows.indexOf(row);
+            return renderImportTemplateRow(row, i + 1, rowIndex);
+          })
+          .join('');
+      }
+    }
+
+    /**
+     * 显示字段校验错误
+     * @param {string} field - 字段名
+     * @param {string} message - 错误提示
+     * @param {boolean} [show=true] - 是否显示
+     * @param {string} formId - 表单 ID
+     */
+    function showTemplateFieldError(field, message, show, formId) {
+      const el = document.querySelector(`#${formId} [data-error="${field}"]`);
+      if (!el) return;
+      el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 清除表单校验提示
+     * @param {string} formId - 表单 ID
+     */
+    function clearTemplateFormErrors(formId) {
+      document.querySelectorAll(`#${formId} [data-error]`).forEach(el => {
+        el.classList.add('hidden');
+      });
+    }
+
+    /**
+     * 显示提交结果提示
+     * @param {boolean} success - 是否成功
+     * @param {string} [message] - 自定义提示文案
+     */
+    function showImportTemplateToast(success, message) {
+      const toast = document.getElementById('import-template-toast');
+      const inner = document.getElementById('import-template-toast-inner');
+      const text = document.getElementById('import-template-toast-text');
+      const icon = document.getElementById('import-template-toast-icon');
+      if (!toast || !inner || !text || !icon) return;
+
+      text.textContent = message || (success ? '提交成功' : '提交失败');
+      inner.className = success
+        ? 'flex items-center gap-2 px-4 py-2.5 rounded shadow-lg text-sm text-white bg-green-500'
+        : 'flex items-center gap-2 px-4 py-2.5 rounded shadow-lg text-sm text-white bg-red-500';
+      icon.innerHTML = success
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+
+      toast.classList.remove('hidden');
+      clearTimeout(showImportTemplateToast._timer);
+      showImportTemplateToast._timer = setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    /**
+     * 更新状态开关视觉
+     * @param {boolean} enabled - 是否开启
+     * @param {'add'|'edit'|'copy'} mode - 表单模式
+     */
+    function updateTemplateStatusToggle(enabled, mode) {
+      const prefixMap = {
+        add: 'import-template-add-status',
+        edit: 'import-template-edit-status',
+        copy: 'import-template-copy-status'
+      };
+      const prefix = prefixMap[mode] || prefixMap.add;
+      const track = document.getElementById(`${prefix}-track`);
+      const thumb = document.getElementById(`${prefix}-thumb`);
+      const label = document.getElementById(`${prefix}-label`);
+      if (track) track.classList.toggle('bg-sky-600', enabled);
+      if (track) track.classList.toggle('bg-gray-200', !enabled);
+      if (thumb) thumb.style.left = enabled ? '22px' : '2px';
+      if (label) label.textContent = enabled ? '开启' : '关闭';
+    }
+
+    /**
+     * 初始化复制弹窗订户下拉选项
+     * @param {HTMLSelectElement} select - 下拉框
+     */
+    function initSubscriberSelect(select) {
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = '<option value="">请选择</option>' +
+        subscriberOptions.map(name => `<option value="${name}">${name}</option>`).join('');
+      if (current) select.value = current;
+    }
+
+    /**
+     * 初始化新增/编辑弹窗关联订户多选
+     */
+    function initTemplateSubscriberMultiSelects() {
+      const addRoot = document.getElementById(TEMPLATE_ADD_SUBSCRIBERS_MS_ID);
+      const editRoot = document.getElementById(TEMPLATE_EDIT_SUBSCRIBERS_MS_ID);
+      if (addRoot && !MultiSelect.instances.has(TEMPLATE_ADD_SUBSCRIBERS_MS_ID)) {
+        MultiSelect.init(addRoot, { options: subscriberOptions, placeholder: '请选择' });
+      }
+      if (editRoot && !MultiSelect.instances.has(TEMPLATE_EDIT_SUBSCRIBERS_MS_ID)) {
+        MultiSelect.init(editRoot, { options: subscriberOptions, placeholder: '请选择' });
+      }
+    }
+
+    /**
+     * 获取表单模式对应的关联订户多选实例 ID
+     * @param {'add'|'edit'} mode - 表单模式
+     * @returns {string}
+     */
+    function getTemplateSubscribersMsId(mode) {
+      return mode === 'edit' ? TEMPLATE_EDIT_SUBSCRIBERS_MS_ID : TEMPLATE_ADD_SUBSCRIBERS_MS_ID;
+    }
+
+    /**
+     * 读取表单关联订户
+     * @param {'add'|'edit'|'copy'} mode - 表单模式
+     * @param {HTMLFormElement} form - 表单
+     * @returns {string[]}
+     */
+    function getTemplateFormSubscribers(mode, form) {
+      if (mode === 'copy') {
+        const value = form.subscriber?.value;
+        return value ? [value] : [];
+      }
+      return MultiSelect.getValue(getTemplateSubscribersMsId(mode));
+    }
+
+    /**
+     * 设置表单关联订户
+     * @param {'add'|'edit'} mode - 表单模式
+     * @param {string[]} subscribers - 关联订户列表
+     */
+    function setTemplateFormSubscribers(mode, subscribers) {
+      MultiSelect.setValue(getTemplateSubscribersMsId(mode), subscribers || []);
+    }
+
+    /**
+     * 重置关联订户多选
+     * @param {'add'|'edit'} mode - 表单模式
+     */
+    function resetTemplateFormSubscribers(mode) {
+      MultiSelect.reset(getTemplateSubscribersMsId(mode));
+    }
+
+    /**
+     * 行数据转为表单采访资源类型
+     * @param {Object} row - 行数据
+     * @returns {string}
+     */
+    function toFormResourceType(row) {
+      return row.resourceTypeFilter || (row.resourceType === '视听资料' ? '视听资料' : '纸质图书');
+    }
+
+    /**
+     * 表单采访资源类型转为行数据字段
+     * @param {string} value - 表单值
+     * @returns {{ resourceType: string, resourceTypeFilter: string }}
+     */
+    function fromFormResourceType(value) {
+      if (value === '视听资料') {
+        return { resourceType: '视听资料', resourceTypeFilter: '视听资料' };
+      }
+      return { resourceType: '图书', resourceTypeFilter: '纸质图书' };
+    }
+
+    /**
+     * 校验模板名称是否重复
+     * @param {string} name - 模板名称
+     * @param {number} [excludeIndex=-1] - 编辑时排除的行索引
+     * @returns {boolean}
+     */
+    function isDuplicateTemplateName(name, excludeIndex = -1) {
+      return importTemplateRows.some((row, i) => i !== excludeIndex && row.templateName === name);
+    }
+
+    /**
+     * 校验表单
+     * @param {HTMLFormElement} form - 表单
+     * @param {string} formId - 表单 ID
+     * @param {number} [excludeIndex=-1] - 编辑时排除的行索引
+     * @returns {boolean}
+     */
+    function validateTemplateForm(form, formId, excludeIndex = -1) {
+      clearTemplateFormErrors(formId);
+      const mode = formId.includes('copy') ? 'copy' : (formId.includes('edit') ? 'edit' : 'add');
+      const resourceType = form.resourceType.value;
+      const language = form.language.value;
+      const templateName = form.templateName.value.trim();
+      const remark = form.remark.value;
+      let valid = true;
+
+      if (!resourceType) {
+        showTemplateFieldError('resourceType', '请选择', true, formId);
+        valid = false;
+      }
+      if (!language) {
+        showTemplateFieldError('language', '请选择', true, formId);
+        valid = false;
+      }
+      if (!templateName) {
+        showTemplateFieldError('templateName', '请输入', true, formId);
+        valid = false;
+      } else if (templateName.length > 64) {
+        showTemplateFieldError('templateName', '已超字符限制', true, formId);
+        valid = false;
+      } else if (isDuplicateTemplateName(templateName, excludeIndex)) {
+        showTemplateFieldError('templateName', '模板名称已存在', true, formId);
+        valid = false;
+      }
+      if (remark.length > 500) {
+        showTemplateFieldError('remark', '已超字符限制', true, formId);
+        valid = false;
+      }
+
+      return valid;
+    }
+
+    /**
+     * 从表单读取提交数据
+     * @param {HTMLFormElement} form - 表单
+     * @param {'add'|'edit'|'copy'} mode - 表单模式
+     * @returns {Object}
+     */
+    function getTemplateFormData(form, mode) {
+      const resource = fromFormResourceType(form.resourceType.value);
+      const toggleIdMap = {
+        add: 'import-template-add-status-toggle',
+        edit: 'import-template-edit-status-toggle',
+        copy: 'import-template-copy-status-toggle'
+      };
+      const statusEnabled = document.getElementById(toggleIdMap[mode] || toggleIdMap.add)?.checked ?? true;
+      return {
+        subscribers: getTemplateFormSubscribers(mode, form),
+        resourceType: resource.resourceType,
+        resourceTypeFilter: resource.resourceTypeFilter,
+        language: form.language.value,
+        templateName: form.templateName.value.trim(),
+        status: statusEnabled ? 'active' : 'inactive',
+        remark: form.remark.value.trim()
+      };
+    }
+
+    /**
+     * 重置新增表单
+     */
+    function resetAddTemplateForm() {
+      const form = document.getElementById('import-template-add-form');
+      if (!form) return;
+      form.reset();
+      clearTemplateFormErrors('import-template-add-form');
+      resetTemplateFormSubscribers('add');
+      const toggle = document.getElementById('import-template-add-status-toggle');
+      if (toggle) {
+        toggle.checked = true;
+        updateTemplateStatusToggle(true, 'add');
+      }
+    }
+
+    /**
+     * 打开编辑弹窗
+     * @param {number} rowIndex - 行索引
+     */
+    function openEditTemplateModal(rowIndex) {
+      const row = importTemplateRows[rowIndex];
+      if (!row) return;
+
+      const form = document.getElementById('import-template-edit-form');
+      if (!form) return;
+
+      clearTemplateFormErrors('import-template-edit-form');
+      form.querySelector('[name="rowIndex"]').value = String(rowIndex);
+      setTemplateFormSubscribers('edit', row.subscribers || []);
+      form.resourceType.value = toFormResourceType(row);
+      form.language.value = row.language;
+      form.templateName.value = row.templateName;
+      form.remark.value = row.remark || '';
+
+      const statusEnabled = row.status === 'active';
+      const toggle = document.getElementById('import-template-edit-status-toggle');
+      if (toggle) {
+        toggle.checked = statusEnabled;
+        updateTemplateStatusToggle(statusEnabled, 'edit');
+      }
+
+      document.getElementById('import-template-edit-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 深拷贝模板字段与查重规则配置
+     * @param {number} sourceIndex - 源模板索引
+     * @returns {{ fields: Array<Object>, dedupRule: { ruleName: string, fieldCodes: string[] } }}
+     */
+    function cloneTemplateConfig(sourceIndex) {
+      const fields = getTemplateFields(sourceIndex).map(field => ({ ...field }));
+      const dedup = getTemplateDedupRule(sourceIndex);
+      return {
+        fields,
+        dedupRule: {
+          ruleName: dedup.ruleName,
+          fieldCodes: [...dedup.fieldCodes]
+        }
+      };
+    }
+
+    /**
+     * 打开复制弹窗
+     * @param {number} rowIndex - 源行索引
+     */
+    function openCopyTemplateModal(rowIndex) {
+      const row = importTemplateRows[rowIndex];
+      if (!row) return;
+
+      const form = document.getElementById('import-template-copy-form');
+      if (!form) return;
+
+      clearTemplateFormErrors('import-template-copy-form');
+      initSubscriberSelect(form.subscriber);
+      form.querySelector('[name="sourceRowIndex"]').value = String(rowIndex);
+      form.subscriber.value = (row.subscribers && row.subscribers[0]) || '';
+      form.resourceType.value = toFormResourceType(row);
+      form.language.value = row.language;
+      form.templateName.value = row.templateName;
+      form.remark.value = row.remark || '';
+
+      const statusEnabled = row.status === 'active';
+      const toggle = document.getElementById('import-template-copy-status-toggle');
+      if (toggle) {
+        toggle.checked = statusEnabled;
+        updateTemplateStatusToggle(statusEnabled, 'copy');
+      }
+
+      document.getElementById('import-template-copy-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 提交复制表单
+     * @returns {boolean}
+     */
+    function submitCopyTemplateForm() {
+      const form = document.getElementById('import-template-copy-form');
+      if (!form) return false;
+
+      const sourceIndex = Number(form.querySelector('[name="sourceRowIndex"]').value);
+      if (!importTemplateRows[sourceIndex]) return false;
+
+      if (!validateTemplateForm(form, 'import-template-copy-form')) {
+        showImportTemplateToast(false);
+        return false;
+      }
+
+      const data = getTemplateFormData(form, 'copy');
+      const config = cloneTemplateConfig(sourceIndex);
+      importTemplateRows.unshift({
+        ...data,
+        created: new Date().toISOString().slice(0, 10),
+        fields: config.fields,
+        dedupRule: config.dedupRule
+      });
+      importTemplateDisplayRows = [...importTemplateRows];
+      refreshImportTemplateTable();
+
+      document.getElementById('import-template-copy-modal')?.classList.add('hidden');
+      showImportTemplateToast(true);
+      return true;
+    }
+
+    /**
+     * 提交新增表单
+     * @returns {boolean}
+     */
+    function submitAddTemplateForm() {
+      const form = document.getElementById('import-template-add-form');
+      if (!form) return false;
+
+      if (!validateTemplateForm(form, 'import-template-add-form')) {
+        showImportTemplateToast(false);
+        return false;
+      }
+
+      const data = getTemplateFormData(form, 'add');
+      importTemplateRows.unshift({
+        ...data,
+        created: new Date().toISOString().slice(0, 10)
+      });
+      importTemplateDisplayRows = [...importTemplateRows];
+      refreshImportTemplateTable();
+
+      document.getElementById('import-template-add-modal')?.classList.add('hidden');
+      resetAddTemplateForm();
+      showImportTemplateToast(true);
+      return true;
+    }
+
+    /**
+     * 提交编辑表单
+     * @returns {boolean}
+     */
+    function submitEditTemplateForm() {
+      const form = document.getElementById('import-template-edit-form');
+      if (!form) return false;
+
+      const rowIndex = Number(form.querySelector('[name="rowIndex"]').value);
+      const row = importTemplateRows[rowIndex];
+      if (!row) return false;
+
+      if (!validateTemplateForm(form, 'import-template-edit-form', rowIndex)) {
+        showImportTemplateToast(false);
+        return false;
+      }
+
+      Object.assign(row, getTemplateFormData(form, 'edit'));
+      importTemplateDisplayRows = importTemplateDisplayRows.map(r =>
+        importTemplateRows.indexOf(r) === rowIndex ? row : r
+      );
+      refreshImportTemplateTable();
+
+      document.getElementById('import-template-edit-modal')?.classList.add('hidden');
+      showImportTemplateToast(true);
+      return true;
+    }
+
+    /**
+     * 模糊匹配
+     * @param {string} source - 源字符串
+     * @param {string} keyword - 关键字
+     * @returns {boolean}
+     */
+    function fuzzyMatch(source, keyword) {
+      if (!keyword) return true;
+      return source.toLowerCase().includes(keyword.toLowerCase());
+    }
+
+    /**
+     * 获取模板字段列表（深拷贝初始化）
+     * @param {number} templateIndex - 模板索引
+     * @returns {Array<Object>}
+     */
+    function getTemplateFields(templateIndex) {
+      const template = importTemplateRows[templateIndex];
+      if (!template.fields) {
+        template.fields = defaultTemplateFields.map(item => ({ ...item }));
+      }
+      return template.fields;
+    }
+
+    /**
+     * 获取模板查重规则
+     * @param {number} templateIndex - 模板索引
+     * @returns {{ ruleName: string, fieldCodes: string[] }}
+     */
+    function getTemplateDedupRule(templateIndex) {
+      const template = importTemplateRows[templateIndex];
+      getTemplateFields(templateIndex);
+      if (!template.dedupRule) {
+        template.dedupRule = { ruleName: 'ISBN&正题名', fieldCodes: ['isbn', 'zTitle'] };
+      }
+      return template.dedupRule;
+    }
+
+    /**
+     * 同步字段是否被查重规则引用
+     * @param {number} templateIndex - 模板索引
+     */
+    function syncTemplateFieldDedupFlags(templateIndex) {
+      const dedupCodes = new Set(getTemplateDedupRule(templateIndex).fieldCodes);
+      getTemplateFields(templateIndex).forEach(field => {
+        field.usedInDedupRule = dedupCodes.has(field.fieldCode);
+      });
+    }
+
+    /**
+     * 清理查重规则中已不存在的字段引用
+     * @param {number} templateIndex - 模板索引
+     */
+    function cleanupDedupRuleFields(templateIndex) {
+      const validCodes = new Set(getTemplateFields(templateIndex).map(field => field.fieldCode));
+      const dedupRule = getTemplateDedupRule(templateIndex);
+      dedupRule.fieldCodes = dedupRule.fieldCodes.filter(code => validCodes.has(code));
+      syncTemplateFieldDedupFlags(templateIndex);
+    }
+
+    /**
+     * 获取查重规则可选字段（来自模板字段配置）
+     * @param {number} templateIndex - 模板索引
+     * @returns {Array<Object>}
+     */
+    function getDedupAvailableFields(templateIndex) {
+      return [...getTemplateFields(templateIndex)].sort((a, b) => a.sortValue - b.sortValue);
+    }
+
+    /**
+     * 显示查重规则表单错误
+     * @param {string} field - 字段名
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showDedupFormError(field, message, show) {
+      const el = document.querySelector(`#import-template-dedup-form [data-error="${field}"]`);
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 清除查重规则表单错误
+     */
+    function clearDedupFormErrors() {
+      document.querySelectorAll('#import-template-dedup-form [data-error]').forEach(el => {
+        el.classList.add('hidden');
+      });
+    }
+
+    /**
+     * 关闭字段组合下拉
+     */
+    function closeDedupFieldDropdown() {
+      document.getElementById('dedup-field-dropdown')?.classList.add('hidden');
+    }
+
+    /**
+     * 打开字段组合下拉
+     */
+    function openDedupFieldDropdown() {
+      renderDedupFieldOptions();
+      document.getElementById('dedup-field-dropdown')?.classList.remove('hidden');
+    }
+
+    /**
+     * 渲染字段组合标签
+     */
+    function renderDedupFieldTags() {
+      const tagsEl = document.getElementById('dedup-field-tags');
+      const placeholderEl = document.getElementById('dedup-field-placeholder');
+      if (!tagsEl || !placeholderEl) return;
+
+      const fields = getDedupAvailableFields(currentDedupTemplateIndex);
+      const fieldMap = new Map(fields.map(field => [field.fieldCode, field]));
+
+      tagsEl.innerHTML = selectedDedupFieldCodes.map(code => {
+        const field = fieldMap.get(code);
+        const label = field ? field.fieldName : code;
+        return `
+          <span class="inline-flex items-center gap-1 bg-white border border-gray-200 rounded px-2 py-0.5 text-sm text-gray-700">
+            ${label}
+            <button type="button" class="dedup-field-tag-remove text-gray-400 hover:text-gray-600 leading-none"
+              data-field-code="${code}">&times;</button>
+          </span>`;
+      }).join('');
+
+      placeholderEl.classList.toggle('hidden', selectedDedupFieldCodes.length > 0);
+    }
+
+    /**
+     * 渲染字段组合下拉选项
+     */
+    function renderDedupFieldOptions() {
+      const optionsEl = document.getElementById('dedup-field-options');
+      if (!optionsEl) return;
+
+      const selectedSet = new Set(selectedDedupFieldCodes);
+      const availableFields = getDedupAvailableFields(currentDedupTemplateIndex)
+        .filter(field => !selectedSet.has(field.fieldCode));
+
+      if (availableFields.length === 0) {
+        optionsEl.innerHTML = `<li class="px-3 py-2 text-gray-400">无可选字段</li>`;
+        return;
+      }
+
+      optionsEl.innerHTML = availableFields.map(field => `
+        <li>
+          <button type="button"
+            class="dedup-field-option w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50"
+            data-field-code="${field.fieldCode}">${field.fieldName}</button>
+        </li>`).join('');
+    }
+
+    /**
+     * 校验查重规则表单
+     * @param {HTMLFormElement} form - 表单
+     * @returns {boolean}
+     */
+    function validateDedupRuleForm(form) {
+      clearDedupFormErrors();
+      let valid = true;
+      const ruleName = form.ruleName.value.trim();
+
+      if (!ruleName) {
+        showDedupFormError('ruleName', '请输入', true);
+        valid = false;
+      } else if (ruleName.length > DEDUP_RULE_NAME_MAX) {
+        showDedupFormError('ruleName', '已超字符限制', true);
+        valid = false;
+      } else if (!DEDUP_RULE_NAME_PATTERN.test(ruleName)) {
+        showDedupFormError('ruleName', '格式不正确', true);
+        valid = false;
+      }
+
+      if (selectedDedupFieldCodes.length === 0) {
+        showDedupFormError('fieldCombo', '请选择', true);
+        valid = false;
+      }
+
+      return valid;
+    }
+
+    /**
+     * 打开查重规则弹窗
+     * @param {number} templateIndex - 模板索引
+     */
+    function openDedupRuleModal(templateIndex) {
+      currentDedupTemplateIndex = templateIndex;
+      syncTemplateFieldDedupFlags(templateIndex);
+
+      const dedupRule = getTemplateDedupRule(templateIndex);
+      const validCodes = new Set(getDedupAvailableFields(templateIndex).map(field => field.fieldCode));
+      selectedDedupFieldCodes = dedupRule.fieldCodes.filter(code => validCodes.has(code));
+
+      const form = document.getElementById('import-template-dedup-form');
+      if (form) {
+        form.ruleName.value = dedupRule.ruleName || '';
+      }
+
+      clearDedupFormErrors();
+      renderDedupFieldTags();
+      renderDedupFieldOptions();
+      closeDedupFieldDropdown();
+      document.getElementById('import-template-dedup-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭查重规则弹窗
+     */
+    function closeDedupRuleModal() {
+      document.getElementById('import-template-dedup-modal')?.classList.add('hidden');
+      closeDedupFieldDropdown();
+      currentDedupTemplateIndex = -1;
+    }
+
+    /**
+     * 提交查重规则
+     */
+    function submitDedupRule() {
+      const form = document.getElementById('import-template-dedup-form');
+      if (!form || !validateDedupRuleForm(form)) return;
+
+      const template = importTemplateRows[currentDedupTemplateIndex];
+      if (!template) return;
+
+      template.dedupRule = {
+        ruleName: form.ruleName.value.trim(),
+        fieldCodes: [...selectedDedupFieldCodes]
+      };
+      syncTemplateFieldDedupFlags(currentDedupTemplateIndex);
+
+      closeDedupRuleModal();
+      showImportTemplateToast(true);
+    }
+
+    /**
+     * 渲染是否必填
+     * @param {boolean} required - 是否必填
+     * @returns {string}
+     */
+    function renderFieldRequired(required) {
+      return required ? '是' : '否';
+    }
+
+    /**
+     * 渲染字段配置表格行
+     * @param {Object} row - 字段数据
+     * @param {number} index - 序号
+     * @param {number} fieldIndex - 数据索引
+     * @returns {string}
+     */
+    function renderFieldConfigRow(row, index, fieldIndex) {
+      const defaultValue = row.defaultValue ? row.defaultValue : '-';
+      return `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 text-gray-600">${index}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.fieldCode}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.fieldName}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.displayName}</td>
+          <td class="px-3 py-2">${renderFieldRequired(row.required)}</td>
+          <td class="px-3 py-2 text-gray-500">${defaultValue}</td>
+          <td class="px-3 py-2">${row.sortValue}</td>
+          <td class="px-3 py-2 whitespace-nowrap">
+            <button type="button" class="text-sky-600 hover:underline mr-2 field-config-edit-btn" data-field-index="${fieldIndex}">编辑</button>
+            <button type="button" class="text-sky-600 hover:underline field-config-delete-btn" data-field-index="${fieldIndex}">删除</button>
+          </td>
+        </tr>`;
+    }
+
+    /**
+     * 渲染字段配置空结果
+     * @returns {string}
+     */
+    function renderFieldConfigEmpty() {
+      return `<tr><td colspan="8" class="px-3 py-12 text-center text-sm text-gray-400">未检索到结果</td></tr>`;
+    }
+
+    /**
+     * 刷新字段配置列表与分页
+     */
+    function refreshFieldConfigTable() {
+      const tbody = document.getElementById('field-config-table-body');
+      const totalEl = document.getElementById('field-config-total');
+      const pageInfoEl = document.getElementById('field-config-page-info');
+      const prevBtn = document.getElementById('field-config-prev-page');
+      const nextBtn = document.getElementById('field-config-next-page');
+      if (!tbody) return;
+
+      const sorted = [...templateFieldDisplayRows].sort((a, b) => a.sortValue - b.sortValue);
+      const total = sorted.length;
+      const totalPages = Math.max(1, Math.ceil(total / fieldConfigPageSize));
+      if (fieldConfigPage > totalPages) fieldConfigPage = totalPages;
+
+      const start = (fieldConfigPage - 1) * fieldConfigPageSize;
+      const pageRows = sorted.slice(start, start + fieldConfigPageSize);
+
+      if (total === 0) {
+        tbody.innerHTML = renderFieldConfigEmpty();
+      } else {
+        tbody.innerHTML = pageRows.map((row, i) => {
+          const fieldIndex = templateFieldRows.indexOf(row);
+          return renderFieldConfigRow(row, start + i + 1, fieldIndex);
+        }).join('');
+      }
+
+      if (totalEl) totalEl.textContent = `总共 ${total} 个项目`;
+      if (pageInfoEl) pageInfoEl.textContent = `第 ${fieldConfigPage}/${totalPages} 页`;
+      if (prevBtn) {
+        prevBtn.disabled = fieldConfigPage <= 1;
+        prevBtn.classList.toggle('text-gray-400', fieldConfigPage <= 1);
+        prevBtn.classList.toggle('text-gray-600', fieldConfigPage > 1);
+      }
+      if (nextBtn) {
+        nextBtn.disabled = fieldConfigPage >= totalPages;
+        nextBtn.classList.toggle('text-gray-400', fieldConfigPage >= totalPages);
+        nextBtn.classList.toggle('text-gray-600', fieldConfigPage < totalPages);
+      }
+    }
+
+    /**
+     * 检索字段配置
+     * @param {HTMLFormElement} form - 检索表单
+     */
+    function searchFieldConfig(form) {
+      const fieldCode = form.fieldCode.value.trim();
+      const fieldName = form.fieldName.value.trim();
+      const displayName = form.displayName.value.trim();
+      const required = form.required.value;
+
+      templateFieldDisplayRows = templateFieldRows.filter(row => {
+        if (!fuzzyMatch(row.fieldCode, fieldCode)) return false;
+        if (!fuzzyMatch(row.fieldName, fieldName)) return false;
+        if (!fuzzyMatch(row.displayName, displayName)) return false;
+        if (required === 'yes' && !row.required) return false;
+        if (required === 'no' && row.required) return false;
+        return true;
+      });
+
+      fieldConfigPage = 1;
+      refreshFieldConfigTable();
+    }
+
+    /**
+     * 打开字段配置弹窗
+     * @param {number} templateIndex - 模板索引
+     */
+    function openFieldConfigModal(templateIndex) {
+      currentFieldTemplateIndex = templateIndex;
+      syncTemplateFieldDedupFlags(templateIndex);
+      const savedFields = getTemplateFields(templateIndex);
+      templateFieldRows = savedFields.map(item => ({ ...item }));
+      templateFieldDisplayRows = [...templateFieldRows];
+      fieldConfigPage = 1;
+
+      const searchForm = document.getElementById('field-config-search-form');
+      if (searchForm) searchForm.reset();
+
+      refreshFieldConfigTable();
+      document.getElementById('import-template-field-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭字段配置弹窗
+     */
+    function closeFieldConfigModal() {
+      document.getElementById('import-template-field-modal')?.classList.add('hidden');
+      currentFieldTemplateIndex = -1;
+    }
+
+    /**
+     * 显示字段表单错误
+     * @param {string} formId - 表单 ID
+     * @param {string} field - 字段名
+     * @param {string} message - 提示
+     * @param {boolean} show - 是否显示
+     */
+    function showFieldConfigFormError(formId, field, message, show) {
+      const el = document.querySelector(`#${formId} [data-error="${field}"]`);
+      if (!el) return;
+      if (message) el.textContent = message;
+      el.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * 清除字段表单错误
+     * @param {string} formId - 表单 ID
+     */
+    function clearFieldConfigFormErrors(formId) {
+      document.querySelectorAll(`#${formId} [data-error]`).forEach(el => el.classList.add('hidden'));
+    }
+
+    /**
+     * 校验编辑字段表单
+     * @param {HTMLFormElement} form - 表单
+     * @param {string} formId - 表单 ID
+     * @returns {boolean}
+     */
+    function validateFieldConfigForm(form, formId) {
+      clearFieldConfigFormErrors(formId);
+      let valid = true;
+
+      if (!form.displayName.value.trim()) {
+        showFieldConfigFormError(formId, 'displayName', '请输入', true);
+        valid = false;
+      }
+      const sortValue = Number(form.sortValue.value);
+      if (!form.sortValue.value || Number.isNaN(sortValue) || sortValue < 1) {
+        showFieldConfigFormError(formId, 'sortValue', '请输入', true);
+        valid = false;
+      }
+
+      return valid;
+    }
+
+    /**
+     * 渲染预设字段池表格行
+     * @param {Object} row - 预设字段
+     * @param {number} index - 序号
+     * @returns {string}
+     */
+    function renderFieldPoolRow(row, index) {
+      const checked = selectedPresetFieldCodes.has(row.fieldCode) ? 'checked' : '';
+      return `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2">
+            <input type="checkbox" class="field-pool-row-check rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+              data-field-code="${row.fieldCode}" ${checked}>
+          </td>
+          <td class="px-3 py-2 text-gray-600">${index}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.fieldCode}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.fieldName}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.description}</td>
+        </tr>`;
+    }
+
+    /**
+     * 渲染预设字段池空结果
+     * @returns {string}
+     */
+    function renderFieldPoolEmpty() {
+      return `<tr><td colspan="5" class="px-3 py-12 text-center text-sm text-gray-400">未检索到结果</td></tr>`;
+    }
+
+    /**
+     * 更新预设字段池全选状态
+     */
+    function updateFieldPoolSelectAllState() {
+      const selectAll = document.getElementById('field-pool-select-all');
+      if (!selectAll || presetFieldDisplayRows.length === 0) {
+        if (selectAll) {
+          selectAll.checked = false;
+          selectAll.indeterminate = false;
+        }
+        return;
+      }
+
+      const visibleCodes = presetFieldDisplayRows.map(row => row.fieldCode);
+      const selectedVisibleCount = visibleCodes.filter(code => selectedPresetFieldCodes.has(code)).length;
+
+      selectAll.checked = selectedVisibleCount === visibleCodes.length;
+      selectAll.indeterminate = selectedVisibleCount > 0 && selectedVisibleCount < visibleCodes.length;
+    }
+
+    /**
+     * 刷新预设字段池列表
+     */
+    function refreshFieldPoolTable() {
+      const tbody = document.getElementById('field-pool-table-body');
+      if (!tbody) return;
+
+      if (presetFieldDisplayRows.length === 0) {
+        tbody.innerHTML = renderFieldPoolEmpty();
+      } else {
+        tbody.innerHTML = presetFieldDisplayRows
+          .map((row, i) => renderFieldPoolRow(row, i + 1))
+          .join('');
+      }
+
+      updateFieldPoolSelectAllState();
+    }
+
+    /**
+     * 检索预设字段池
+     * @param {HTMLFormElement} form - 检索表单
+     */
+    function searchFieldPool(form) {
+      const fieldCode = form.fieldCode.value.trim();
+      const fieldName = form.fieldName.value.trim();
+
+      presetFieldDisplayRows = systemPresetFieldPool.filter(row => {
+        if (!fuzzyMatch(row.fieldCode, fieldCode)) return false;
+        if (!fuzzyMatch(row.fieldName, fieldName)) return false;
+        return true;
+      });
+
+      refreshFieldPoolTable();
+    }
+
+    /**
+     * 打开添加字段弹窗
+     */
+    function openAddFieldModal() {
+      selectedPresetFieldCodes = new Set();
+      presetFieldDisplayRows = [...systemPresetFieldPool];
+
+      const searchForm = document.getElementById('field-pool-search-form');
+      if (searchForm) searchForm.reset();
+
+      refreshFieldPoolTable();
+      document.getElementById('field-config-add-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 提交添加字段（从预设池勾选）
+     */
+    function submitAddField() {
+      if (selectedPresetFieldCodes.size === 0) {
+        showImportTemplateToast(false, '请勾选至少一条数据');
+        return;
+      }
+
+      const existingCodes = new Set(templateFieldRows.map(row => row.fieldCode));
+      const selectedPresets = systemPresetFieldPool.filter(row => selectedPresetFieldCodes.has(row.fieldCode));
+      const toAdd = selectedPresets.filter(row => !existingCodes.has(row.fieldCode));
+
+      let nextSort = templateFieldRows.reduce((max, row) => Math.max(max, row.sortValue), 0);
+      toAdd.forEach(preset => {
+        nextSort += 1;
+        templateFieldRows.push({
+          fieldCode: preset.fieldCode,
+          fieldName: preset.fieldName,
+          displayName: preset.fieldName,
+          required: preset.required,
+          defaultValue: '',
+          sortValue: nextSort,
+          usedInDedupRule: false
+        });
+      });
+
+      templateFieldDisplayRows = [...templateFieldRows];
+      document.getElementById('field-config-add-modal')?.classList.add('hidden');
+      refreshFieldConfigTable();
+      showImportTemplateToast(true);
+    }
+
+    /**
+     * 打开编辑字段弹窗
+     * @param {number} fieldIndex - 字段索引
+     */
+    function openEditFieldModal(fieldIndex) {
+      const row = templateFieldRows[fieldIndex];
+      if (!row) return;
+
+      const form = document.getElementById('field-config-edit-form');
+      if (!form) return;
+
+      clearFieldConfigFormErrors('field-config-edit-form');
+      form.querySelector('[name="fieldIndex"]').value = String(fieldIndex);
+      form.fieldCode.value = row.fieldCode;
+      form.fieldName.value = row.fieldName;
+      form.displayName.value = row.displayName;
+      form.required.value = row.required ? 'yes' : 'no';
+      form.defaultValue.value = row.defaultValue || '';
+      form.sortValue.value = String(row.sortValue);
+
+      document.getElementById('field-config-edit-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 提交编辑字段
+     */
+    function submitEditField() {
+      const form = document.getElementById('field-config-edit-form');
+      if (!form || !validateFieldConfigForm(form, 'field-config-edit-form')) return;
+
+      const fieldIndex = Number(form.querySelector('[name="fieldIndex"]').value);
+      const row = templateFieldRows[fieldIndex];
+      if (!row) return;
+
+      row.displayName = form.displayName.value.trim();
+      row.required = form.required.value === 'yes';
+      row.defaultValue = form.defaultValue.value.trim();
+      row.sortValue = Number(form.sortValue.value);
+
+      templateFieldDisplayRows = templateFieldDisplayRows.map(r =>
+        templateFieldRows.indexOf(r) === fieldIndex ? row : r
+      );
+
+      document.getElementById('field-config-edit-modal')?.classList.add('hidden');
+      refreshFieldConfigTable();
+    }
+
+    /**
+     * 打开删除字段确认
+     * @param {number} fieldIndex - 字段索引
+     */
+    function openDeleteFieldModal(fieldIndex) {
+      pendingDeleteFieldIndex = fieldIndex;
+      const row = templateFieldRows[fieldIndex];
+      const errorEl = document.getElementById('field-config-delete-error');
+      const confirmBtn = document.getElementById('field-config-delete-confirm');
+      const messageEl = document.getElementById('field-config-delete-message');
+
+      if (row && row.usedInDedupRule) {
+        if (messageEl) messageEl.textContent = `确定删除字段「${row.displayName}」吗？`;
+        errorEl?.classList.remove('hidden');
+        confirmBtn?.setAttribute('disabled', 'disabled');
+        confirmBtn?.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        if (messageEl) messageEl.textContent = row ? `确定删除字段「${row.displayName}」吗？` : '确定删除该字段吗？';
+        errorEl?.classList.add('hidden');
+        confirmBtn?.removeAttribute('disabled');
+        confirmBtn?.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+
+      document.getElementById('field-config-delete-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 确认删除字段
+     */
+    function confirmDeleteField() {
+      const row = templateFieldRows[pendingDeleteFieldIndex];
+      if (!row || row.usedInDedupRule) {
+        showImportTemplateToast(false);
+        return;
+      }
+
+      templateFieldRows.splice(pendingDeleteFieldIndex, 1);
+      templateFieldDisplayRows = templateFieldDisplayRows.filter(r => templateFieldRows.includes(r));
+      pendingDeleteFieldIndex = -1;
+
+      document.getElementById('field-config-delete-modal')?.classList.add('hidden');
+      refreshFieldConfigTable();
+    }
+
+    /**
+     * 执行检索过滤
+     * @param {HTMLFormElement} form - 检索表单
+     */
+    function searchImportTemplate(form) {
+      const subscriber = form.subscriber.value;
+      const resourceType = form.resourceType.value;
+      const language = form.language.value;
+      const status = form.status.value;
+
+      importTemplateDisplayRows = importTemplateRows.filter(row => {
+        if (subscriber) {
+          const subs = row.subscribers || [];
+          if (subs.length === 0 || !subs.includes(subscriber)) return false;
+        }
+        if (resourceType && row.resourceTypeFilter !== resourceType) return false;
+        if (language && row.language !== language) return false;
+        if (status && row.status !== status) return false;
+        return true;
+      });
+
+      refreshImportTemplateTable();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initTemplateSubscriberMultiSelects();
+      refreshImportTemplateTable();
+
+      const addForm = document.getElementById('import-template-add-form');
+      const editForm = document.getElementById('import-template-edit-form');
+      const copyForm = document.getElementById('import-template-copy-form');
+      if (copyForm) initSubscriberSelect(copyForm.subscriber);
+
+      const addToggle = document.getElementById('import-template-add-status-toggle');
+      if (addToggle) {
+        addToggle.addEventListener('change', () => updateTemplateStatusToggle(addToggle.checked, 'add'));
+      }
+      const editToggle = document.getElementById('import-template-edit-status-toggle');
+      if (editToggle) {
+        editToggle.addEventListener('change', () => updateTemplateStatusToggle(editToggle.checked, 'edit'));
+      }
+      const copyToggle = document.getElementById('import-template-copy-status-toggle');
+      if (copyToggle) {
+        copyToggle.addEventListener('change', () => updateTemplateStatusToggle(copyToggle.checked, 'copy'));
+      }
+
+      document.getElementById('import-template-add-btn')?.addEventListener('click', () => resetAddTemplateForm());
+      document.getElementById('import-template-add-submit')?.addEventListener('click', () => submitAddTemplateForm());
+      document.getElementById('import-template-edit-submit')?.addEventListener('click', () => submitEditTemplateForm());
+      document.getElementById('import-template-copy-submit')?.addEventListener('click', () => submitCopyTemplateForm());
+
+      document.querySelectorAll('#import-template-add-modal [data-modal-close]').forEach(btn => {
+        btn.addEventListener('click', () => resetAddTemplateForm());
+      });
+      document.querySelectorAll('#import-template-edit-modal [data-modal-close]').forEach(btn => {
+        btn.addEventListener('click', () => clearTemplateFormErrors('import-template-edit-form'));
+      });
+      document.querySelectorAll('#import-template-copy-modal [data-modal-close]').forEach(btn => {
+        btn.addEventListener('click', () => clearTemplateFormErrors('import-template-copy-form'));
+      });
+
+      const tbody = document.getElementById('import-template-table-body');
+      if (tbody) {
+        tbody.addEventListener('click', e => {
+          const editBtn = e.target.closest('.import-template-edit-btn');
+          if (editBtn) {
+            e.preventDefault();
+            openEditTemplateModal(Number(editBtn.dataset.rowIndex));
+            return;
+          }
+          const fieldBtn = e.target.closest('.import-template-field-btn');
+          if (fieldBtn) {
+            e.preventDefault();
+            openFieldConfigModal(Number(fieldBtn.dataset.rowIndex));
+            return;
+          }
+          const dedupBtn = e.target.closest('.import-template-dedup-btn');
+          if (dedupBtn) {
+            e.preventDefault();
+            openDedupRuleModal(Number(dedupBtn.dataset.rowIndex));
+            return;
+          }
+          const copyBtn = e.target.closest('.import-template-copy-btn');
+          if (copyBtn) {
+            e.preventDefault();
+            openCopyTemplateModal(Number(copyBtn.dataset.rowIndex));
+          }
+        });
+      }
+
+      document.getElementById('import-template-dedup-modal-close')?.addEventListener('click', closeDedupRuleModal);
+      document.getElementById('import-template-dedup-cancel')?.addEventListener('click', closeDedupRuleModal);
+      document.getElementById('import-template-dedup-submit')?.addEventListener('click', submitDedupRule);
+
+      document.getElementById('dedup-field-combo-trigger')?.addEventListener('click', e => {
+        if (e.target.closest('.dedup-field-tag-remove')) return;
+        openDedupFieldDropdown();
+      });
+      document.getElementById('dedup-field-tags')?.addEventListener('click', e => {
+        const removeBtn = e.target.closest('.dedup-field-tag-remove');
+        if (!removeBtn) return;
+        e.stopPropagation();
+        const fieldCode = removeBtn.dataset.fieldCode;
+        selectedDedupFieldCodes = selectedDedupFieldCodes.filter(code => code !== fieldCode);
+        renderDedupFieldTags();
+        renderDedupFieldOptions();
+        showDedupFormError('fieldCombo', '请选择', selectedDedupFieldCodes.length === 0);
+      });
+      document.getElementById('dedup-field-options')?.addEventListener('click', e => {
+        const optionBtn = e.target.closest('.dedup-field-option');
+        if (!optionBtn || !optionBtn.dataset.fieldCode) return;
+        const fieldCode = optionBtn.dataset.fieldCode;
+        if (!selectedDedupFieldCodes.includes(fieldCode)) {
+          selectedDedupFieldCodes.push(fieldCode);
+        }
+        renderDedupFieldTags();
+        renderDedupFieldOptions();
+        showDedupFormError('fieldCombo', '请选择', false);
+      });
+      document.addEventListener('click', e => {
+        const combo = document.getElementById('dedup-field-combo-trigger');
+        const dropdown = document.getElementById('dedup-field-dropdown');
+        if (!combo || !dropdown || dropdown.classList.contains('hidden')) return;
+        if (!combo.contains(e.target) && !dropdown.contains(e.target)) {
+          closeDedupFieldDropdown();
+        }
+      });
+
+      document.getElementById('import-template-field-modal-close')?.addEventListener('click', closeFieldConfigModal);
+      document.getElementById('import-template-field-cancel')?.addEventListener('click', closeFieldConfigModal);
+      document.getElementById('import-template-field-submit')?.addEventListener('click', () => {
+        if (currentFieldTemplateIndex >= 0) {
+          importTemplateRows[currentFieldTemplateIndex].fields = templateFieldRows.map(item => ({ ...item }));
+          cleanupDedupRuleFields(currentFieldTemplateIndex);
+        }
+        closeFieldConfigModal();
+        showImportTemplateToast(true);
+      });
+
+      document.getElementById('field-config-add-btn')?.addEventListener('click', openAddFieldModal);
+      document.getElementById('field-config-add-submit')?.addEventListener('click', submitAddField);
+      document.getElementById('field-config-edit-submit')?.addEventListener('click', submitEditField);
+      document.getElementById('field-config-delete-confirm')?.addEventListener('click', confirmDeleteField);
+
+      document.getElementById('field-pool-search-form')?.addEventListener('submit', e => {
+        e.preventDefault();
+        searchFieldPool(e.target);
+      });
+      document.getElementById('field-pool-search-reset')?.addEventListener('click', () => {
+        const searchForm = document.getElementById('field-pool-search-form');
+        if (searchForm) {
+          searchForm.reset();
+          presetFieldDisplayRows = [...systemPresetFieldPool];
+          refreshFieldPoolTable();
+        }
+      });
+      document.getElementById('field-pool-select-all')?.addEventListener('change', e => {
+        const checked = e.target.checked;
+        presetFieldDisplayRows.forEach(row => {
+          if (checked) {
+            selectedPresetFieldCodes.add(row.fieldCode);
+          } else {
+            selectedPresetFieldCodes.delete(row.fieldCode);
+          }
+        });
+        refreshFieldPoolTable();
+      });
+      document.getElementById('field-pool-table-body')?.addEventListener('change', e => {
+        const checkbox = e.target.closest('.field-pool-row-check');
+        if (!checkbox) return;
+        const fieldCode = checkbox.dataset.fieldCode;
+        if (checkbox.checked) {
+          selectedPresetFieldCodes.add(fieldCode);
+        } else {
+          selectedPresetFieldCodes.delete(fieldCode);
+        }
+        updateFieldPoolSelectAllState();
+      });
+
+      document.getElementById('field-config-search-form')?.addEventListener('submit', e => {
+        e.preventDefault();
+        searchFieldConfig(e.target);
+      });
+      document.getElementById('field-config-search-reset')?.addEventListener('click', () => {
+        const searchForm = document.getElementById('field-config-search-form');
+        if (searchForm) {
+          searchForm.reset();
+          templateFieldDisplayRows = [...templateFieldRows];
+          fieldConfigPage = 1;
+          refreshFieldConfigTable();
+        }
+      });
+
+      document.getElementById('field-config-prev-page')?.addEventListener('click', () => {
+        if (fieldConfigPage > 1) {
+          fieldConfigPage -= 1;
+          refreshFieldConfigTable();
+        }
+      });
+      document.getElementById('field-config-next-page')?.addEventListener('click', () => {
+        const totalPages = Math.max(1, Math.ceil(templateFieldDisplayRows.length / fieldConfigPageSize));
+        if (fieldConfigPage < totalPages) {
+          fieldConfigPage += 1;
+          refreshFieldConfigTable();
+        }
+      });
+      document.getElementById('field-config-page-size')?.addEventListener('change', e => {
+        fieldConfigPageSize = Number(e.target.value) || 5;
+        fieldConfigPage = 1;
+        refreshFieldConfigTable();
+      });
+
+      document.getElementById('field-config-table-body')?.addEventListener('click', e => {
+        const editBtn = e.target.closest('.field-config-edit-btn');
+        if (editBtn) {
+          e.preventDefault();
+          openEditFieldModal(Number(editBtn.dataset.fieldIndex));
+          return;
+        }
+        const deleteBtn = e.target.closest('.field-config-delete-btn');
+        if (deleteBtn) {
+          e.preventDefault();
+          openDeleteFieldModal(Number(deleteBtn.dataset.fieldIndex));
+        }
+      });
+
+      const form = document.getElementById('import-template-search-form');
+      if (form) {
+        form.addEventListener('submit', e => {
+          e.preventDefault();
+          searchImportTemplate(form);
+        });
+        form.addEventListener('reset', () => {
+          setTimeout(() => {
+            importTemplateDisplayRows = [...importTemplateRows];
+            refreshImportTemplateTable();
+          }, 0);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

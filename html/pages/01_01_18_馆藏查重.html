@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>书目查询</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    /** 书目查询：固定页面高度，表格区域独立滚动 */
+    body[data-active-page="01_01_非连续出版物订单-订单列表.html"] #tab-panel-host,
+    body[data-active-page="01_01_18_馆藏查重.html"] #tab-panel-host,
+    body[data-active-page="01_01_非连续出版物订单-订单列表.html"] #main-content,
+    body[data-active-page="01_01_18_馆藏查重.html"] #main-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    body[data-active-page="01_01_非连续出版物订单-订单列表.html"] #collection-dedup-page,
+    body[data-active-page="01_01_18_馆藏查重.html"] #collection-dedup-page {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    body[data-active-page="01_01_非连续出版物订单-订单列表.html"] .collection-dedup-table-scroll,
+    body[data-active-page="01_01_18_馆藏查重.html"] .collection-dedup-table-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    body[data-active-page="01_01_非连续出版物订单-订单列表.html"] .collection-dedup-table-scroll::-webkit-scrollbar,
+    body[data-active-page="01_01_18_馆藏查重.html"] .collection-dedup-table-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    body[data-active-page="01_01_非连续出版物订单-订单列表.html"] .collection-dedup-table-scroll::-webkit-scrollbar-thumb,
+    body[data-active-page="01_01_18_馆藏查重.html"] .collection-dedup-table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    body[data-active-page="01_01_非连续出版物订单-订单列表.html"] .bib-column-settings-popover,
+    body[data-active-page="01_01_18_馆藏查重.html"] .bib-column-settings-popover {
+      position: fixed;
+      z-index: 9999;
+      width: 220px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    body[data-active-page="01_01_非连续出版物订单-订单列表.html"] .bib-column-settings-popover::after,
+    body[data-active-page="01_01_18_馆藏查重.html"] .bib-column-settings-popover::after {
+      content: '';
+      position: absolute;
+      top: -6px;
+      right: 12px;
+      width: 10px;
+      height: 10px;
+      background: #fff;
+      border-left: 1px solid #e5e7eb;
+      border-top: 1px solid #e5e7eb;
+      transform: rotate(45deg);
+    }
+
+    body[data-active-page="01_01_非连续出版物订单-订单列表.html"] .bib-column-item.is-dragging,
+    body[data-active-page="01_01_18_馆藏查重.html"] .bib-column-item.is-dragging {
+      opacity: 0.5;
+    }
+
+    body[data-active-page="01_01_18_馆藏查重.html"] #bib-detail-drawer-marc-body td {
+      vertical-align: top;
+    }
+
+    body.bib-detail-drawer-open {
+      overflow: hidden;
+    }
+
+    .bib-detail-drawer {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+    }
+
+    .bib-detail-drawer.hidden {
+      pointer-events: none;
+    }
+
+    .bib-detail-drawer-mask {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .bib-detail-drawer.is-open .bib-detail-drawer-mask {
+      opacity: 1;
+    }
+
+    .bib-detail-drawer-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 50%;
+      background: #fff;
+      box-shadow: -8px 0 24px rgba(15, 23, 42, 0.12);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bib-detail-drawer.is-open .bib-detail-drawer-panel {
+      transform: translateX(0);
+    }
+
+    .bib-detail-drawer.is-open {
+      pointer-events: auto;
+    }
+
+    .bib-detail-drawer-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    .bib-detail-drawer-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .bib-detail-drawer-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="书目查询"
+  data-active-page="01_01_18_馆藏查重.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+    <div id="collection-dedup-page" class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
+      <!-- 检索区 -->
+      <div class="px-6 py-4 border-b border-gray-200 shrink-0">
+        <form id="collection-dedup-search-form" class="relative">
+          <div class="absolute top-0 right-0 flex items-center gap-2">
+            <button type="button" id="collection-dedup-search-expand-btn"
+              class="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700">
+              收起
+              <svg class="w-3 h-3 transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <button type="submit"
+              class="flex items-center gap-1 px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              检索
+            </button>
+            <button type="button" id="collection-dedup-reset-btn"
+              class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+          </div>
+          <div class="grid grid-cols-2 gap-x-8 gap-y-3 pr-72">
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right shrink-0">书目库</label>
+              <select name="bibDatabase"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <option value="CPP01">CPP01-中文文献库</option>
+                <option value="CPP02">CPP02-外文文献库</option>
+                <option value="CPP03">CPP03-视听资料库</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right shrink-0">MARC类型</label>
+              <select name="marcType"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <option value="CNMARC|中文图书">CNMARC | 中文图书</option>
+                <option value="CNMARC|外文图书">CNMARC | 外文图书</option>
+                <option value="MARC21|外文图书">MARC21 | 外文图书</option>
+              </select>
+            </div>
+          </div>
+          <div id="collection-dedup-search-extra" class="grid grid-cols-2 gap-x-8 gap-y-3 mt-3 pr-72">
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right shrink-0">&nbsp;</label>
+              <select name="field1Type"
+                class="border border-gray-300 rounded-l px-2 py-1.5 text-sm text-gray-700 border-r-0 focus:outline-none w-36 shrink-0">
+                <option value="isbn" selected>ISBN/ISSN</option>
+                <option value="title">题名</option>
+                <option value="exactTitle">正题名(精确)</option>
+                <option value="author">责任者</option>
+                <option value="publisher">出版社</option>
+                <option value="barcode">条码号</option>
+                <option value="callNo">索书号</option>
+                <option value="classNo">分类号</option>
+                <option value="subject">主题</option>
+                <option value="series">丛书名</option>
+              </select>
+              <input type="text" name="field1Value" value="文城" placeholder="请输入"
+                class="flex-1 border border-gray-300 rounded-r px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500 -ml-px">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right shrink-0">&nbsp;</label>
+              <select name="field2Type"
+                class="border border-gray-300 rounded-l px-2 py-1.5 text-sm text-gray-700 border-r-0 focus:outline-none w-36 shrink-0">
+                <option value="isbn">ISBN/ISSN</option>
+                <option value="title">题名</option>
+                <option value="exactTitle">正题名(精确)</option>
+                <option value="author">责任者</option>
+                <option value="publisher">出版社</option>
+                <option value="barcode">条码号</option>
+                <option value="callNo">索书号</option>
+                <option value="classNo">分类号</option>
+                <option value="subject">主题</option>
+                <option value="series" selected>丛书名</option>
+              </select>
+              <input type="text" name="field2Value" value="新经典文库" placeholder="请输入"
+                class="flex-1 border border-gray-300 rounded-r px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500 -ml-px">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right shrink-0">&nbsp;</label>
+              <select name="field3Type"
+                class="border border-gray-300 rounded-l px-2 py-1.5 text-sm text-gray-700 border-r-0 focus:outline-none w-36 shrink-0">
+                <option value="isbn">ISBN/ISSN</option>
+                <option value="title">题名</option>
+                <option value="exactTitle">正题名(精确)</option>
+                <option value="author">责任者</option>
+                <option value="publisher" selected>出版社</option>
+                <option value="barcode">条码号</option>
+                <option value="callNo">索书号</option>
+                <option value="classNo">分类号</option>
+                <option value="subject">主题</option>
+                <option value="series">丛书名</option>
+              </select>
+              <input type="text" name="field3Value" placeholder="请输入"
+                class="flex-1 border border-gray-300 rounded-r px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500 -ml-px">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right shrink-0">审校状态</label>
+              <select name="reviewStatus"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">全部</option>
+                <option value="unreviewed">未审校</option>
+                <option value="approved">审校通过</option>
+                <option value="rejected">审校驳回</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right shrink-0">书目状态</label>
+              <select name="bibStatus"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                <option value="">全部</option>
+                <option value="initial">初编</option>
+                <option value="detailed">详编</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- 操作区 -->
+      <div class="flex items-center justify-between px-6 py-2 border-b border-gray-200 shrink-0">
+        <div class="flex items-center gap-2">
+          <button type="button" id="new-bib-btn"
+            class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">新建书目</button>
+          <button type="button" id="bib-z3950-btn"
+            class="px-4 py-1.5 bg-teal-500 text-white text-sm rounded hover:bg-teal-600">查Z3950</button>
+        </div>
+        <button type="button" id="collection-dedup-settings-btn"
+          class="p-1.5 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-50" title="列设置">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- 书目库列表 -->
+      <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="collection-dedup-table-scroll table-scroll">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+              <tr id="bib-database-table-head"></tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100" id="bib-database-table-body"></tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0" data-pagination="bib-database">
+          <span class="text-sm text-gray-500" id="bib-database-total">共 0 条记录</span>
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <button type="button" id="bib-database-prev"
+              class="px-2 py-1 border border-gray-300 rounded text-gray-400" disabled>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <div id="bib-database-page-btns" class="flex items-center gap-1"></div>
+            <button type="button" id="bib-database-next"
+              class="px-2 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+            <select id="bib-database-page-size"
+              class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+              <option value="5" selected>5条/页</option>
+              <option value="10">10条/页</option>
+              <option value="20">20条/页</option>
+              <option value="50">50条/页</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 列设置弹层（fixed 顶层展示，避免被表格滚动区域裁剪） -->
+  <div id="bib-column-settings-popover"
+    class="bib-column-settings-popover hidden bg-white border border-gray-200 rounded text-sm">
+    <div class="flex items-center justify-between px-3 py-2.5 border-b border-gray-100">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" id="bib-column-select-all" class="rounded text-sky-600" checked>
+        <span class="text-gray-700 font-medium">列展示</span>
+      </label>
+      <button type="button" id="bib-column-reset-btn"
+        class="text-sky-600 hover:text-sky-700 text-sm">重置</button>
+    </div>
+    <div class="px-3 py-2 text-xs text-gray-400 border-b border-gray-100">不固定</div>
+    <div id="bib-column-list" class="max-h-56 overflow-y-auto py-1"></div>
+    <div class="px-3 py-2 text-xs text-gray-400 border-t border-b border-gray-100">固定在右侧</div>
+    <div class="px-3 py-2">
+      <label class="flex items-center gap-2 text-gray-700 cursor-default">
+        <input type="checkbox" checked disabled class="rounded text-sky-600">
+        <span>操作</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- 详细信息侧滑面板 -->
+  <div id="bib-detail-drawer" class="bib-detail-drawer hidden" aria-hidden="true">
+    <div id="bib-detail-drawer-mask" class="bib-detail-drawer-mask"></div>
+    <aside id="bib-detail-drawer-panel" class="bib-detail-drawer-panel" role="dialog"
+      aria-modal="true" aria-labelledby="bib-detail-drawer-title">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+        <h2 id="bib-detail-drawer-title" class="text-base font-medium text-gray-800">详细信息</h2>
+        <button type="button" id="bib-detail-drawer-close" aria-label="关闭"
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      </div>
+      <div class="px-6 py-3 border-b border-gray-100 shrink-0 bg-white">
+        <span id="bib-detail-drawer-label" class="text-sm text-gray-700">书目记录号【—】</span>
+      </div>
+      <div class="bib-detail-drawer-scroll">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+            <tr>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-20">字段名</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-16">指示符</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">字段内容</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="bib-detail-drawer-marc-body"></tbody>
+        </table>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 新建订单弹窗 -->
+  <div id="new-order-modal" data-modal
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <h2 class="text-base font-medium text-gray-800">新建订单</h2>
+        <button type="button" data-modal-close
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      </div>
+      <form id="new-order-form" class="px-6 py-5 space-y-4">
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 订户
+          </label>
+          <select name="subscriber"
+            class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+            <option value="">请选择</option>
+            <option value="ceshi">ceshi</option>
+            <option value="捐赠订户">捐赠订户</option>
+          </select>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 资源类型
+          </label>
+          <select name="resourceType"
+            class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+            <option value="">请选择</option>
+            <option value="纸质书">纸质书</option>
+            <option value="视听资料">视听资料</option>
+          </select>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 采选方式
+          </label>
+          <select name="method"
+            class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+            <option value="">请选择</option>
+            <option value="征订目录">征订目录</option>
+            <option value="现采">现采</option>
+            <option value="交存">交存</option>
+            <option value="捐赠">捐赠</option>
+          </select>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 预算名称
+          </label>
+          <select name="budget"
+            class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+            <option value="">请选择</option>
+            <option value="2024年首都图书馆图书购置费中文普通图书(一)">2024年首都图书馆图书购置费中文普通图书(一)</option>
+            <option value="2024年首都图书馆图书购置费中文普通图书(二)">2024年首都图书馆图书购置费中文普通图书(二)</option>
+            <option value="2024年首都图书馆图书购置费中文普通图书(三)">2024年首都图书馆图书购置费中文普通图书(三)</option>
+            <option value="2024年首都图书馆视听资料购置费">2024年首都图书馆视听资料购置费</option>
+          </select>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 语种
+          </label>
+          <select name="language"
+            class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+            <option value="">请选择</option>
+            <option value="中文">中文</option>
+            <option value="外文">外文</option>
+          </select>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 供应商
+          </label>
+          <select name="supplier"
+            class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+            <option value="">请选择</option>
+            <option value="湖南长沙">湖南长沙</option>
+            <option value="湖北三新">湖北三新</option>
+            <option value="北京新华">北京新华</option>
+            <option value="CNPIEC">CNPIEC</option>
+          </select>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">折扣</label>
+          <input type="text" name="discount" placeholder="请输入" autocomplete="off"
+            class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 发订套数
+          </label>
+          <input type="number" name="orderSets" min="1" step="1" value="1" placeholder="请输入" autocomplete="off"
+            class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 馆址
+          </label>
+          <select name="site"
+            class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+            <option value="">请选择</option>
+            <option value="华威桥馆">华威桥馆</option>
+            <option value="总馆">总馆</option>
+            <option value="东馆">东馆</option>
+          </select>
+        </div>
+      </form>
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+        <button type="button" data-modal-close
+          class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+        <button type="button" id="new-order-submit"
+          class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    /** 书目库查重示例数据 */
+    const BIB_DATABASE_ROWS = [
+      { isbn: '978-7-5505-0344-1', classNo: 'A20', title: '小王子', author: '蓝山主编', publisher: '大连出版社', pubYear: '2012', price: '28.00', bibRecordNo: 'BIB2024001001', review: '审校通过', marcType: 'CNMARC | 中文图书', series: '新经典文库' },
+      { isbn: '978-7-5325-5199-2', classNo: 'A20', title: '小王子的星际旅行', author: '蓝山主编', publisher: '江苏凤凰文艺出版社', pubYear: '2016', price: '32.00', bibRecordNo: 'BIB2024001002', review: '审校通过', marcType: 'CNMARC | 中文图书', series: '新经典文库' },
+      { isbn: '978-7-5505-0345-8', classNo: 'A20', title: '小王子', author: '蓝山主编', publisher: '大连出版社', pubYear: '2013', price: '29.00', bibRecordNo: 'BIB2024001003', review: '未审校', marcType: 'CNMARC | 中文图书', series: '新经典文库' },
+      { isbn: '978-7-5505-0346-5', classNo: 'A20', title: '小王子', author: '蓝山主编', publisher: '大连出版社', pubYear: '2014', price: '30.00', bibRecordNo: 'BIB2024001004', review: '审校通过', marcType: 'CNMARC | 中文图书', series: '新经典文库' },
+      { isbn: '978-7-5325-5191-4', classNo: 'A20', title: '小王子的星际旅行', author: '蓝山主编', publisher: '江苏凤凰文艺出版社', pubYear: '2017', price: '35.00', bibRecordNo: 'BIB2024001005', review: '审校驳回', marcType: 'CNMARC | 中文图书', series: '新经典文库' },
+      { isbn: '978-7-5505-0347-2', classNo: 'A20', title: '小王子', author: '蓝山主编', publisher: '大连出版社', pubYear: '2015', price: '31.00', bibRecordNo: 'BIB2024001006', review: '审校通过', marcType: 'CNMARC | 中文图书', series: '新经典文库' },
+      { isbn: '978-7-5325-5200-5', classNo: 'A20', title: '小王子的星际旅行', author: '蓝山主编', publisher: '江苏凤凰文艺出版社', pubYear: '2018', price: '36.00', bibRecordNo: 'BIB2024001007', review: '未审校', marcType: 'CNMARC | 中文图书', series: '新经典文库' },
+      { isbn: '978-7-5505-0348-9', classNo: 'A20', title: '小王子', author: '蓝山主编', publisher: '大连出版社', pubYear: '2016', price: '32.00', bibRecordNo: 'BIB2024001008', review: '审校通过', marcType: 'CNMARC | 中文图书', series: '新经典文库' },
+      { isbn: '978-7-5325-5201-2', classNo: 'A20', title: '小王子的星际旅行', author: '蓝山主编', publisher: '江苏凤凰文艺出版社', pubYear: '2019', price: '38.00', bibRecordNo: 'BIB2024001009', review: '审校通过', marcType: 'CNMARC | 中文图书', series: '新经典文库' },
+      { isbn: '978-7-5505-0349-6', classNo: 'A20', title: '小王子', author: '蓝山主编', publisher: '大连出版社', pubYear: '2017', price: '33.00', bibRecordNo: 'BIB2024001010', review: '审校通过', marcType: 'CNMARC | 中文图书', series: '新经典文库' }
+    ];
+
+    /** 书目库表格列默认配置 */
+    const DEFAULT_BIB_COLUMNS = [
+      { key: 'index', label: '序号', visible: true, fixed: false, width: 'w-14' },
+      { key: 'isbn', label: 'ISBN/ISSN', visible: true, fixed: false },
+      { key: 'classNo', label: '分类号', visible: true, fixed: false },
+      { key: 'title', label: '题名', visible: true, fixed: false, minWidth: 'min-w-[120px]' },
+      { key: 'author', label: '责任者', visible: true, fixed: false },
+      { key: 'publisher', label: '出版社', visible: true, fixed: false, minWidth: 'min-w-[120px]' },
+      { key: 'pubYear', label: '出版时间', visible: true, fixed: false },
+      { key: 'price', label: '价格', visible: true, fixed: false },
+      { key: 'bibRecordNo', label: '书目记录号', visible: true, fixed: false },
+      { key: 'review', label: '审校', visible: true, fixed: false },
+      { key: 'marcType', label: 'MARC类型', visible: true, fixed: false, minWidth: 'min-w-[140px]' },
+      { key: 'series', label: '丛书名', visible: false, fixed: false },
+      { key: 'actions', label: '操作', visible: true, fixed: true }
+    ];
+
+    /** @type {Object[]} 当前书目库列配置 */
+    let bibColumnConfig = DEFAULT_BIB_COLUMNS.map(col => ({ ...col }));
+
+    /** @type {string|null} 列拖拽源 key */
+    let draggingColumnKey = null;
+
+    /** 扩展至 85 条记录（原型演示） */
+    const ALL_BIB_ROWS = Array.from({ length: 85 }, (_, index) => {
+      const base = BIB_DATABASE_ROWS[index % BIB_DATABASE_ROWS.length];
+      return { ...base, id: index + 1 };
+    });
+
+    /** @type {Object|null} 当前查看的书目详情 */
+    let currentDetailRow = null;
+
+    /** @type {boolean} 详细信息侧滑面板是否打开 */
+    let bibDetailDrawerOpen = false;
+
+    /** @type {number|null} 侧滑面板关闭动画定时器 */
+    let bibDetailDrawerTimer = null;
+
+    /** @type {Object[]} 当前过滤后的书目库数据 */
+    let filteredBibRows = [...ALL_BIB_ROWS];
+
+    /** @type {number} 当前页码 */
+    let currentPage = 1;
+
+    /** @type {number} 每页条数 */
+    let pageSize = 5;
+
+    /**
+     * 深拷贝书目库列默认配置
+     * @returns {Object[]}
+     */
+    function cloneDefaultBibColumns() {
+      return DEFAULT_BIB_COLUMNS.map(col => ({ ...col }));
+    }
+
+    /**
+     * 获取当前可见的书目库列
+     * @returns {Object[]}
+     */
+    function getVisibleBibColumns() {
+      const unfixed = bibColumnConfig.filter(col => !col.fixed && col.visible);
+      const fixed = bibColumnConfig.filter(col => col.fixed && col.visible);
+      return [...unfixed, ...fixed];
+    }
+
+    /**
+     * 获取可配置的书目库列（不含固定列）
+     * @returns {Object[]}
+     */
+    function getConfigurableBibColumns() {
+      return bibColumnConfig.filter(col => !col.fixed);
+    }
+
+    /**
+     * 更新列展示全选状态
+     */
+    function updateBibColumnSelectAllState() {
+      const selectAll = document.getElementById('bib-column-select-all');
+      if (!selectAll) return;
+
+      const configurable = getConfigurableBibColumns();
+      const checkedCount = configurable.filter(col => col.visible).length;
+      selectAll.checked = checkedCount === configurable.length;
+      selectAll.indeterminate = checkedCount > 0 && checkedCount < configurable.length;
+    }
+
+    /**
+     * 渲染列设置列表
+     */
+    function renderBibColumnSettingsList() {
+      const container = document.getElementById('bib-column-list');
+      if (!container) return;
+
+      container.innerHTML = getConfigurableBibColumns().map(col => `
+        <div class="bib-column-item flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-move"
+          draggable="true" data-column-key="${col.key}">
+          <svg class="w-3 h-3 text-gray-300 shrink-0" viewBox="0 0 12 12" fill="currentColor">
+            <circle cx="3" cy="2" r="1"/><circle cx="9" cy="2" r="1"/>
+            <circle cx="3" cy="6" r="1"/><circle cx="9" cy="6" r="1"/>
+            <circle cx="3" cy="10" r="1"/><circle cx="9" cy="10" r="1"/>
+          </svg>
+          <label class="flex items-center gap-2 flex-1 cursor-pointer">
+            <input type="checkbox" class="bib-column-checkbox rounded text-sky-600"
+              data-column-key="${col.key}" ${col.visible ? 'checked' : ''}>
+            <span class="text-gray-700">${col.label}</span>
+          </label>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.bib-column-item').forEach(item => {
+        item.addEventListener('dragstart', e => {
+          draggingColumnKey = item.dataset.columnKey;
+          item.classList.add('is-dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        item.addEventListener('dragend', () => {
+          draggingColumnKey = null;
+          item.classList.remove('is-dragging');
+        });
+        item.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        });
+        item.addEventListener('drop', e => {
+          e.preventDefault();
+          if (!draggingColumnKey || item.dataset.columnKey === draggingColumnKey) return;
+
+          const fromIndex = bibColumnConfig.findIndex(col => col.key === draggingColumnKey);
+          const toIndex = bibColumnConfig.findIndex(col => col.key === item.dataset.columnKey);
+          if (fromIndex === -1 || toIndex === -1) return;
+
+          const [moved] = bibColumnConfig.splice(fromIndex, 1);
+          bibColumnConfig.splice(toIndex, 0, moved);
+          renderBibColumnSettingsList();
+          renderBibDatabaseTableHead();
+          refreshBibDatabaseTable();
+        });
+      });
+
+      container.querySelectorAll('.bib-column-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', e => {
+          e.stopPropagation();
+          const column = bibColumnConfig.find(col => col.key === checkbox.dataset.columnKey);
+          if (!column) return;
+          column.visible = checkbox.checked;
+          updateBibColumnSelectAllState();
+          renderBibDatabaseTableHead();
+          refreshBibDatabaseTable();
+        });
+      });
+
+      updateBibColumnSelectAllState();
+    }
+
+    /**
+     * 渲染书目库表头
+     */
+    function renderBibDatabaseTableHead() {
+      const headRow = document.getElementById('bib-database-table-head');
+      if (!headRow) return;
+
+      headRow.innerHTML = getVisibleBibColumns().map(col => {
+        const stickyCls = col.fixed ? ' sticky right-0 bg-gray-50' : '';
+        const widthCls = [col.width, col.minWidth].filter(Boolean).join(' ');
+        return `<th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap ${widthCls}${stickyCls}">${col.label}</th>`;
+      }).join('');
+    }
+
+    /**
+     * 获取书目库单元格内容
+     * @param {Object} row - 书目数据
+     * @param {Object} col - 列配置
+     * @param {number} index - 序号
+     * @returns {string}
+     */
+    function getBibCellContent(row, col, index) {
+      if (col.key === 'index') return String(index);
+      if (col.key === 'actions') {
+        return `<a href="#" class="text-sky-600 hover:underline bib-view-btn" data-bib-id="${row.id}">查看</a>`
+          + `<span class="text-gray-300 mx-1">|</span>`
+          + `<a href="#" class="text-sky-600 hover:underline bib-create-order-btn" data-bib-id="${row.id}">创建订单</a>`;
+      }
+      return row[col.key] ?? '—';
+    }
+
+    /**
+     * 定位列设置弹层到触发按钮下方
+     */
+    function positionBibColumnSettingsPopover() {
+      const popover = document.getElementById('bib-column-settings-popover');
+      const trigger = document.getElementById('collection-dedup-settings-btn');
+      if (!popover || !trigger || popover.classList.contains('hidden')) return;
+
+      const rect = trigger.getBoundingClientRect();
+      const gap = 8;
+      const popoverWidth = popover.offsetWidth || 220;
+
+      let top = rect.bottom + gap;
+      let left = rect.right - popoverWidth;
+
+      left = Math.max(8, Math.min(left, window.innerWidth - popoverWidth - 8));
+
+      const maxHeight = window.innerHeight - top - 16;
+      const list = document.getElementById('bib-column-list');
+      if (list && maxHeight < 280) {
+        list.style.maxHeight = `${Math.max(120, maxHeight - 140)}px`;
+      } else if (list) {
+        list.style.maxHeight = '224px';
+      }
+
+      if (top + popover.offsetHeight > window.innerHeight - 8) {
+        top = Math.max(8, rect.top - popover.offsetHeight - gap);
+      }
+
+      popover.style.top = `${top}px`;
+      popover.style.left = `${left}px`;
+    }
+
+    /**
+     * 切换列设置弹层
+     * @param {boolean} [show] - 是否显示
+     */
+    function toggleBibColumnSettingsPopover(show) {
+      const popover = document.getElementById('bib-column-settings-popover');
+      if (!popover) return;
+
+      const shouldShow = typeof show === 'boolean' ? show : popover.classList.contains('hidden');
+      if (shouldShow) {
+        renderBibColumnSettingsList();
+        popover.classList.remove('hidden');
+        positionBibColumnSettingsPopover();
+        return;
+      }
+      popover.classList.add('hidden');
+    }
+
+    /**
+     * 重置书目库列配置
+     */
+    function resetBibColumnSettings() {
+      bibColumnConfig = cloneDefaultBibColumns();
+      renderBibColumnSettingsList();
+      renderBibDatabaseTableHead();
+      refreshBibDatabaseTable();
+    }
+
+    /**
+     * 根据书目数据构建 MARC 字段详情
+     * @param {Object} row - 书目数据
+     * @returns {{field: string, indicator: string, content: string}[]}
+     */
+    function buildMarcDetailFields(row) {
+      const recordNo = row.bibRecordNo || `bjlib900120260583318${row.id}`;
+      const summary = row.title.includes('星际')
+        ? '▼a本书讲述小王子离开星球后在星际旅行中的所见所感，以童话形式探讨成长、责任与爱的主题。'
+        : '▼a本书以飞行员视角讲述小王子与玫瑰、狐狸的故事，探讨孤独、友谊与生命意义，是世界经典童话文学作品。';
+
+      return [
+        { field: 'LDR', indicator: '', content: '*****njm#22^^^^1a4500' },
+        { field: 'FMT', indicator: '', content: row.marcType || 'CNMARC | 中文图书' },
+        { field: '001', indicator: '', content: recordNo },
+        { field: '010', indicator: '', content: `▼a${row.isbn}▼dCNY${row.price || '0.00'}` },
+        { field: '101', indicator: '0', content: '▼a chi' },
+        { field: '200', indicator: '1', content: `▼a${row.title}▼b专著▼f${row.author}▼c${row.publisher}` },
+        { field: '210', indicator: '', content: `▼c${row.publisher}▼d${row.pubYear}` },
+        { field: '225', indicator: '', content: row.series ? `▼a${row.series}` : '' },
+        { field: '330', indicator: '', content: summary },
+        { field: '690', indicator: '', content: `▼a${row.classNo}` }
+      ];
+    }
+
+    /**
+     * 渲染 MARC 详细信息表格（侧滑面板）
+     * @param {Object} row - 书目数据
+     */
+    function renderMarcDetail(row) {
+      const labelEl = document.getElementById('bib-detail-drawer-label');
+      const tbody = document.getElementById('bib-detail-drawer-marc-body');
+      if (!labelEl || !tbody) return;
+
+      const recordNo = row.bibRecordNo || `bjlib900120260583318${row.id}`;
+      const fields = buildMarcDetailFields(row);
+
+      labelEl.textContent = `书目记录号【${recordNo}】`;
+
+      tbody.innerHTML = fields.map(item => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 text-gray-600 whitespace-nowrap">${item.field}</td>
+          <td class="px-3 py-2 text-gray-600 whitespace-nowrap">${item.indicator || ''}</td>
+          <td class="px-3 py-2 text-gray-700 break-all leading-relaxed">${item.content || ''}</td>
+        </tr>
+      `).join('');
+    }
+
+    /**
+     * 打开详细信息侧滑面板
+     */
+    function openBibDetailDrawerPanel() {
+      const drawer = document.getElementById('bib-detail-drawer');
+      if (!drawer) return;
+
+      toggleBibColumnSettingsPopover(false);
+
+      if (bibDetailDrawerTimer) {
+        clearTimeout(bibDetailDrawerTimer);
+        bibDetailDrawerTimer = null;
+      }
+
+      drawer.classList.remove('hidden');
+      drawer.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('bib-detail-drawer-open');
+
+      requestAnimationFrame(() => {
+        drawer.classList.add('is-open');
+      });
+
+      bibDetailDrawerOpen = true;
+    }
+
+    /**
+     * 关闭详细信息侧滑面板
+     */
+    function closeBibDetailDrawerPanel() {
+      const drawer = document.getElementById('bib-detail-drawer');
+      if (!drawer || !bibDetailDrawerOpen) return;
+
+      drawer.classList.remove('is-open');
+      drawer.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('bib-detail-drawer-open');
+      bibDetailDrawerOpen = false;
+
+      bibDetailDrawerTimer = window.setTimeout(() => {
+        drawer.classList.add('hidden');
+        bibDetailDrawerTimer = null;
+      }, 300);
+    }
+
+    /**
+     * 打开书目 MARC 详细信息侧滑面板
+     * @param {number|string} bibId - 书目 ID
+     */
+    function openBibDetail(bibId) {
+      const row = ALL_BIB_ROWS.find(item => String(item.id) === String(bibId));
+      if (!row) return;
+
+      currentDetailRow = row;
+      renderMarcDetail(row);
+      openBibDetailDrawerPanel();
+    }
+
+    /** 订单与 MARC 类型映射关系（同 07_04_订单与marc类型映射关系） */
+    const MARC_TYPE_MAPPING_ROWS = [
+      { resourceType: '视听资料', language: '中文', carrier: 'TD,DVD,VCD,CD', bibCode: 'STL01', marcFormat: 'CNMARC', marcResourceType: '电子资源', marcType: '中文电子资源' },
+      { resourceType: '视听资料', language: '中文', carrier: 'V', bibCode: 'STL01', marcFormat: 'CNMARC', marcResourceType: '影像资料', marcType: '中文影像资料' },
+      { resourceType: '视听资料', language: '中文', carrier: 'AH,AP', bibCode: 'STL01', marcFormat: 'CNMARC', marcResourceType: '录音资料', marcType: '中文录音资料' },
+      { resourceType: '图书', language: '中文', carrier: '', bibCode: 'STL01', marcFormat: 'CNMARC', marcResourceType: '图书', marcType: '中文图书' },
+      { resourceType: '图书', language: '外文', carrier: '', bibCode: 'STL01', marcFormat: 'MARC21', marcResourceType: '图书', marcType: '外文图书' },
+      { resourceType: '视听资料', language: '外文', carrier: 'TD', bibCode: 'STL01', marcFormat: 'MARC21', marcResourceType: '电子资源', marcType: '外文电子资源' },
+      { resourceType: '视听资料', language: '外文', carrier: 'AH,AP', bibCode: 'STL01', marcFormat: 'MARC21', marcResourceType: '录音资料', marcType: '外文录音资料' },
+      { resourceType: '视听资料', language: '外文', carrier: 'V,DVD,VCD,CD', bibCode: 'STL01', marcFormat: 'MARC21', marcResourceType: '影像资料', marcType: '外文影像资料' }
+    ];
+
+    /**
+     * 解析书目 MARC 类型标签
+     * @param {string} marcTypeLabel - 如 CNMARC | 中文图书
+     * @returns {{marcFormat: string, marcType: string}|null}
+     */
+    function parseMarcTypeLabel(marcTypeLabel) {
+      if (!marcTypeLabel) return null;
+      const parts = marcTypeLabel.split('|').map(part => part.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        return { marcFormat: parts[0], marcType: parts.slice(1).join(' | ') };
+      }
+      return { marcFormat: '', marcType: marcTypeLabel.trim() };
+    }
+
+    /**
+     * 根据 MARC 类型映射获取订单资源类型与语种
+     * @param {Object} bibRow - 书目数据
+     * @returns {{resourceType: string, language: string}|null}
+     */
+    function resolveOrderFieldsFromMarcMapping(bibRow) {
+      const parsed = parseMarcTypeLabel(bibRow?.marcType);
+      if (!parsed?.marcType) return null;
+
+      const mapping = MARC_TYPE_MAPPING_ROWS.find(row =>
+        row.marcFormat === parsed.marcFormat && row.marcType === parsed.marcType
+      );
+      if (!mapping) return null;
+
+      return {
+        resourceType: mapping.resourceType === '图书' ? '纸质书' : mapping.resourceType,
+        language: mapping.language
+      };
+    }
+
+    /**
+     * 将 MARC 映射结果写入新建订单表单
+     * @param {HTMLFormElement} form - 新建订单表单
+     * @param {Object} bibRow - 书目数据
+     */
+    function applyMarcMappingToNewOrderForm(form, bibRow) {
+      const mapped = resolveOrderFieldsFromMarcMapping(bibRow);
+      if (!mapped || !form) return;
+
+      if (form.elements.resourceType && [...form.elements.resourceType.options].some(opt => opt.value === mapped.resourceType)) {
+        form.elements.resourceType.value = mapped.resourceType;
+      }
+      if (form.elements.language && [...form.elements.language.options].some(opt => opt.value === mapped.language)) {
+        form.elements.language.value = mapped.language;
+      }
+    }
+
+    /**
+     * 从书目库列表打开新建订单弹窗
+     * @param {number|string} bibId - 书目 ID
+     */
+    function handleCreateOrderFromList(bibId) {
+      const row = ALL_BIB_ROWS.find(item => String(item.id) === String(bibId));
+      if (!row) return;
+
+      currentDetailRow = row;
+      openNewOrderModal(row);
+    }
+
+    /** 新建订单必填字段 */
+    const NEW_ORDER_REQUIRED_FIELDS = [
+      { name: 'subscriber', label: '订户' },
+      { name: 'resourceType', label: '资源类型' },
+      { name: 'method', label: '采选方式' },
+      { name: 'budget', label: '预算名称' },
+      { name: 'language', label: '语种' },
+      { name: 'supplier', label: '供应商' },
+      { name: 'orderSets', label: '发订套数' },
+      { name: 'site', label: '馆址' }
+    ];
+
+    /**
+     * 校验发订套数是否为有效正整数
+     * @param {string|number} value - 输入值
+     * @returns {number|null} 有效套数，无效时返回 null
+     */
+    function parseOrderSets(value) {
+      const raw = String(value ?? '').trim();
+      if (!raw) return null;
+      const sets = Number(raw);
+      if (!Number.isFinite(sets) || sets <= 0 || !Number.isInteger(sets)) return null;
+      return sets;
+    }
+
+    /**
+     * 打开新建订单弹窗
+     * @param {Object|null} [bibRow] - 书目数据，传入时按 MARC 映射带入资源类型与语种
+     */
+    function openNewOrderModal(bibRow = null) {
+      toggleBibColumnSettingsPopover(false);
+      const form = document.getElementById('new-order-form');
+      if (form) {
+        form.reset();
+        const orderSetsInput = form.elements.orderSets;
+        if (orderSetsInput) orderSetsInput.value = '1';
+      }
+      if (bibRow) {
+        applyMarcMappingToNewOrderForm(form, bibRow);
+      }
+      document.getElementById('new-order-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 格式化日期时间
+     * @param {Date} date - 日期对象
+     * @returns {string}
+     */
+    function formatDateTime(date) {
+      const pad = value => String(value).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} `
+        + `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
+    /**
+     * 提交新建订单并返回订单列表
+     */
+    function handleNewOrderSubmit() {
+      const form = document.getElementById('new-order-form');
+      if (!form) return;
+
+      const missing = NEW_ORDER_REQUIRED_FIELDS.find(field => {
+        const el = form.elements[field.name];
+        return !el || String(el.value ?? '').trim() === '';
+      });
+      if (missing) {
+        alert(missing.name === 'orderSets' ? `请输入${missing.label}` : `请选择${missing.label}`);
+        return;
+      }
+
+      const orderSets = parseOrderSets(form.elements.orderSets.value);
+      if (orderSets === null) {
+        alert('请输入有效的发订套数（正整数）');
+        return;
+      }
+
+      const now = new Date();
+      const datePart = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0')
+      ].join('');
+      const seq = String(now.getTime()).slice(-3);
+      const orderId = `PG001B${datePart}${seq}`;
+      const discount = form.elements.discount.value.trim();
+
+      const newOrder = {
+        subscriber: form.elements.subscriber.value,
+        site: form.elements.site.value,
+        orderId,
+        method: form.elements.method.value,
+        resourceType: form.elements.resourceType.value,
+        language: form.elements.language.value,
+        supplier: form.elements.supplier.value,
+        orderTime: formatDateTime(now),
+        issuer: '系统',
+        issueTime: '',
+        orderVolumes: 0,
+        orderSpecies: 0,
+        orderSets,
+        budget: form.elements.budget.value,
+        listPrice: currentDetailRow?.price || '0.00',
+        discount: discount || '—',
+        netPrice: currentDetailRow?.price || '0.00',
+        hasRemark: false,
+        orderStatus: 'pendingImport',
+        settlementStatus: 'unsettled',
+        bibRecordNo: currentDetailRow?.bibRecordNo || '',
+        bibTitle: currentDetailRow?.title || ''
+      };
+
+      sessionStorage.setItem('pendingNewOrder', JSON.stringify(newOrder));
+      document.getElementById('new-order-modal')?.classList.add('hidden');
+      location.href = '01_01_非连续出版物订单-订单列表.html';
+    }
+
+    /**
+     * 渲染书目库表格行
+     * @param {Object} row - 书目数据
+     * @param {number} index - 序号
+     * @returns {string} HTML 字符串
+     */
+    function renderBibDatabaseRow(row, index) {
+      const cells = getVisibleBibColumns().map(col => {
+        const stickyCls = col.fixed ? ' sticky right-0 bg-white' : '';
+        const emphasisCls = col.key === 'title' ? ' text-gray-800' : ' text-gray-600';
+        const nowrapCls = ['isbn', 'bibRecordNo'].includes(col.key) ? ' whitespace-nowrap' : '';
+        const content = getBibCellContent(row, col, index);
+        return `<td class="px-3 py-2${emphasisCls}${nowrapCls}${stickyCls}">${content}</td>`;
+      }).join('');
+
+      return `<tr class="hover:bg-sky-50/50">${cells}</tr>`;
+    }
+
+    /**
+     * 刷新书目库分页按钮
+     * @param {number} totalPages - 总页数
+     */
+    function renderBibPageButtons(totalPages) {
+      const container = document.getElementById('bib-database-page-btns');
+      if (!container) return;
+
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+      if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+
+      container.innerHTML = '';
+      for (let page = startPage; page <= endPage; page += 1) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.page = String(page);
+        btn.className = page === currentPage
+          ? 'px-2.5 py-1 bg-sky-600 text-white rounded'
+          : 'px-2.5 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50';
+        btn.textContent = String(page);
+        btn.addEventListener('click', () => {
+          currentPage = page;
+          refreshBibDatabaseTable();
+        });
+        container.appendChild(btn);
+      }
+    }
+
+    /**
+     * 刷新书目库列表与分页
+     */
+    function refreshBibDatabaseTable() {
+      const tbody = document.getElementById('bib-database-table-body');
+      const totalEl = document.getElementById('bib-database-total');
+      const prevBtn = document.getElementById('bib-database-prev');
+      const nextBtn = document.getElementById('bib-database-next');
+      if (!tbody || !totalEl) return;
+
+      const total = filteredBibRows.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      currentPage = Math.min(currentPage, totalPages);
+
+      const start = (currentPage - 1) * pageSize;
+      const pageRows = filteredBibRows.slice(start, start + pageSize);
+
+      tbody.innerHTML = pageRows
+        .map((row, idx) => renderBibDatabaseRow(row, start + idx + 1))
+        .join('');
+
+      totalEl.textContent = `共 ${total} 条记录`;
+      renderBibPageButtons(totalPages);
+
+      if (prevBtn) {
+        prevBtn.disabled = currentPage <= 1;
+        prevBtn.classList.toggle('text-gray-400', currentPage <= 1);
+        prevBtn.classList.toggle('text-gray-600', currentPage > 1);
+        prevBtn.classList.toggle('hover:bg-gray-50', currentPage > 1);
+      }
+      if (nextBtn) {
+        nextBtn.disabled = currentPage >= totalPages;
+        nextBtn.classList.toggle('text-gray-400', currentPage >= totalPages);
+        nextBtn.classList.toggle('text-gray-600', currentPage < totalPages);
+        nextBtn.classList.toggle('hover:bg-gray-50', currentPage < totalPages);
+      }
+    }
+
+    /**
+     * 按检索条件过滤书目库数据
+     */
+    function applyBibSearchFilter() {
+      const form = document.getElementById('collection-dedup-search-form');
+      if (!form) return;
+
+      const field1Value = (form.elements.field1Value?.value || '').trim();
+      const field2Value = (form.elements.field2Value?.value || '').trim();
+      const field3Value = (form.elements.field3Value?.value || '').trim();
+
+      filteredBibRows = ALL_BIB_ROWS.filter(row => {
+        const matchField1 = !field1Value || [
+          row.isbn, row.title, row.author, row.publisher
+        ].some(text => text.includes(field1Value));
+
+        const matchField2 = !field2Value || row.title.includes(field2Value);
+        const matchField3 = !field3Value || row.title.includes(field3Value);
+
+        return matchField1 && matchField2 && matchField3;
+      });
+
+      currentPage = 1;
+      refreshBibDatabaseTable();
+    }
+
+    /**
+     * 重置检索表单并显示全部数据
+     */
+    function resetBibSearch() {
+      const form = document.getElementById('collection-dedup-search-form');
+      if (form) form.reset();
+
+      filteredBibRows = [...ALL_BIB_ROWS];
+      currentPage = 1;
+      refreshBibDatabaseTable();
+    }
+
+    /**
+     * 应用订单行列表传入的查重上下文
+     * @returns {boolean} 是否已应用查重上下文
+     */
+    function applyPendingOrderLineDedup() {
+      const pendingRaw = sessionStorage.getItem('pendingOrderLineDedup');
+      if (!pendingRaw) return false;
+
+      try {
+        const lines = JSON.parse(pendingRaw);
+        const firstLine = Array.isArray(lines) ? lines[0] : null;
+        const form = document.getElementById('collection-dedup-search-form');
+        if (!firstLine || !form) return false;
+
+        if (firstLine.resourceId && form.elements.field1Type && form.elements.field1Value) {
+          form.elements.field1Type.value = 'isbn';
+          form.elements.field1Value.value = firstLine.resourceId;
+        }
+        if (firstLine.title && form.elements.field2Type && form.elements.field2Value) {
+          form.elements.field2Type.value = 'exactTitle';
+          form.elements.field2Value.value = firstLine.title;
+        }
+        applyBibSearchFilter();
+        return true;
+      } catch (error) {
+        console.warn('pendingOrderLineDedup 解析失败', error);
+        return false;
+      } finally {
+        sessionStorage.removeItem('pendingOrderLineDedup');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('collection-dedup-search-form')?.addEventListener('submit', e => {
+        e.preventDefault();
+        applyBibSearchFilter();
+      });
+
+      document.getElementById('collection-dedup-reset-btn')?.addEventListener('click', resetBibSearch);
+
+      const dedupSearchToggle = document.getElementById('collection-dedup-search-expand-btn');
+      const dedupSearchExtra = document.getElementById('collection-dedup-search-extra');
+      if (dedupSearchToggle && dedupSearchExtra) {
+        let dedupSearchExpanded = true;
+        dedupSearchToggle.addEventListener('click', () => {
+          dedupSearchExpanded = !dedupSearchExpanded;
+          dedupSearchExtra.classList.toggle('hidden', !dedupSearchExpanded);
+          dedupSearchToggle.childNodes[0].textContent = dedupSearchExpanded ? '收起 ' : '展开 ';
+          dedupSearchToggle.querySelector('svg').classList.toggle('rotate-180', dedupSearchExpanded);
+        });
+      }
+
+      document.getElementById('bib-database-prev')?.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage -= 1;
+          refreshBibDatabaseTable();
+        }
+      });
+
+      document.getElementById('bib-database-next')?.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredBibRows.length / pageSize);
+        if (currentPage < totalPages) {
+          currentPage += 1;
+          refreshBibDatabaseTable();
+        }
+      });
+
+      document.getElementById('bib-database-page-size')?.addEventListener('change', e => {
+        pageSize = Number(e.target.value) || 5;
+        currentPage = 1;
+        refreshBibDatabaseTable();
+      });
+
+      document.getElementById('bib-database-table-body')?.addEventListener('click', e => {
+        const createOrderBtn = e.target.closest('.bib-create-order-btn');
+        if (createOrderBtn) {
+          e.preventDefault();
+          handleCreateOrderFromList(createOrderBtn.dataset.bibId);
+          return;
+        }
+
+        const viewBtn = e.target.closest('.bib-view-btn');
+        if (!viewBtn) return;
+        e.preventDefault();
+        openBibDetail(viewBtn.dataset.bibId);
+      });
+
+      document.getElementById('bib-detail-drawer-close')?.addEventListener('click', closeBibDetailDrawerPanel);
+      document.getElementById('bib-detail-drawer-mask')?.addEventListener('click', closeBibDetailDrawerPanel);
+      document.getElementById('bib-detail-drawer-panel')?.addEventListener('click', event => {
+        event.stopPropagation();
+      });
+
+      document.getElementById('new-order-submit')?.addEventListener('click', handleNewOrderSubmit);
+
+      document.getElementById('bib-z3950-btn')?.addEventListener('click', () => {
+        if (!AppConfig.hasZ3950Config()) {
+          alert('当前系统未配置Z3950地址，请联系管理员');
+          return;
+        }
+        location.href = '01_01_19_查Z3950.html';
+      });
+
+      document.getElementById('collection-dedup-settings-btn')?.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleBibColumnSettingsPopover();
+      });
+
+      document.getElementById('bib-column-reset-btn')?.addEventListener('click', e => {
+        e.stopPropagation();
+        resetBibColumnSettings();
+      });
+
+      document.getElementById('bib-column-select-all')?.addEventListener('change', e => {
+        const checked = e.target.checked;
+        getConfigurableBibColumns().forEach(col => {
+          col.visible = checked;
+        });
+        renderBibColumnSettingsList();
+        renderBibDatabaseTableHead();
+        refreshBibDatabaseTable();
+      });
+
+      document.addEventListener('click', e => {
+        const popover = document.getElementById('bib-column-settings-popover');
+        const settingsBtn = document.getElementById('collection-dedup-settings-btn');
+        if (!popover || popover.classList.contains('hidden')) return;
+        if (popover.contains(e.target) || settingsBtn?.contains(e.target)) return;
+        toggleBibColumnSettingsPopover(false);
+      });
+
+      window.addEventListener('resize', () => positionBibColumnSettingsPopover());
+      document.addEventListener('scroll', () => positionBibColumnSettingsPopover(), true);
+
+      renderBibDatabaseTableHead();
+      if (!applyPendingOrderLineDedup()) {
+        refreshBibDatabaseTable();
+      }
+    });
+  </script>
+</body>
+</html>

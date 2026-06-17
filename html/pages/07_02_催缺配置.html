@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>催缺配置</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="催缺配置"
+  data-active-page="07_02_催缺配置.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden">
+    <!-- 检索区 -->
+    <div class="bg-white rounded border border-gray-200 p-4 mb-4">
+      <form id="shortage-config-search-form" class="relative">
+        <div class="absolute top-0 right-0 flex items-center gap-2">
+          <button type="submit"
+            class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+          <button type="button" onclick="Common.resetForm('shortage-config-search-form')"
+            class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+        </div>
+        <div class="grid grid-cols-3 gap-4 pr-40">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">订户</label>
+            <input type="text" placeholder="请输入，模糊匹配"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">催缺状态</label>
+            <select class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              <option>全部</option>
+              <option>使用中</option>
+              <option>已停用</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-16 text-right">创建日期</label>
+            <div class="flex flex-1 items-center gap-2">
+              <input type="date"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              <span class="text-gray-400 text-sm">~</span>
+              <input type="date"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="flex items-center gap-2 mb-4">
+      <a href="07_02_01_新增配置.html"
+        class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">新增配置</a>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="bg-white rounded border border-gray-200">
+      <div class="overflow-x-auto table-scroll">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">订户</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">催缺状态</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">触发条件</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">
+                <span class="inline-flex items-center gap-1">
+                  创建日期
+                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </span>
+              </th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-8 bg-gray-50">操作</th>
+              <th class="px-2 py-2.5 w-16 sticky right-0 bg-gray-50"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="shortage-config-table-body"></tbody>
+        </table>
+      </div>
+      <!-- 分页 -->
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+        <span class="text-sm text-gray-500">共 1 条记录</span>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-gray-500">第 1/1 页</span>
+          <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <input type="text" value="1" readonly
+            class="w-10 border border-gray-300 rounded px-2 py-1 text-sm text-center text-gray-600 bg-white">
+          <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+          <select class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+            <option>50 条/页</option>
+            <option>20 条/页</option>
+            <option>10 条/页</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    /** 催缺配置列表示例数据 */
+    const shortageConfigRows = [
+      {
+        subscriber: 'ceshi',
+        status: 'active',
+        trigger: '1，1天',
+        created: '2026-05-22 08:56:09'
+      }
+    ];
+
+    /**
+     * 渲染催缺状态
+     * @param {string} status - 状态标识
+     * @returns {string}
+     */
+    function renderShortageConfigStatus(status) {
+      if (status === 'active') {
+        return '<span class="text-green-600">使用中</span>';
+      }
+      return '<span class="text-red-500">已停用</span>';
+    }
+
+    /**
+     * 渲染操作列
+     * @param {Object} row - 行数据
+     * @returns {string}
+     */
+    function renderShortageConfigOps(row) {
+      if (row.status === 'active') {
+        return `<a href="07_02_02_编辑配置.html" class="text-sky-600 hover:underline">编辑</a>`;
+      }
+      return `
+        <a href="07_02_02_编辑配置.html" class="text-sky-600 hover:underline mr-3">编辑</a>
+        <a href="07_02_03_删除配置.html" class="text-sky-600 hover:underline">删除</a>`;
+    }
+
+    /**
+     * 渲染排序按钮列
+     * @returns {string}
+     */
+    function renderSortButtons() {
+      return `
+        <td class="px-2 py-2 sticky right-0 bg-white">
+          <div class="flex flex-col items-center gap-0.5">
+            <button type="button" class="text-gray-400 hover:text-sky-600 leading-none" title="上移">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+              </svg>
+            </button>
+            <button type="button" class="text-gray-400 hover:text-sky-600 leading-none" title="下移">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+          </div>
+        </td>`;
+    }
+
+    /**
+     * 渲染催缺配置表格行
+     * @param {Object} row - 行数据
+     * @param {number} index - 行序号
+     * @returns {string}
+     */
+    function renderShortageConfigRow(row, index) {
+      return `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 text-gray-600">${index}</td>
+          <td class="px-3 py-2">
+            <a href="07_02_04_查看配置.html" class="text-sky-600 hover:underline">${row.subscriber}</a>
+          </td>
+          <td class="px-3 py-2">${renderShortageConfigStatus(row.status)}</td>
+          <td class="px-3 py-2">${row.trigger}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.created}</td>
+          <td class="px-3 py-2 whitespace-nowrap sticky right-8 bg-white">${renderShortageConfigOps(row)}</td>
+          ${renderSortButtons()}
+        </tr>`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const tbody = document.getElementById('shortage-config-table-body');
+      if (tbody) {
+        tbody.innerHTML = shortageConfigRows.map((row, i) => renderShortageConfigRow(row, i + 1)).join('');
+      }
+    });
+  </script>
+</body>
+</html>

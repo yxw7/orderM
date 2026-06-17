@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>订户列表</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    /** 订户列表：固定页面高度，表格区域独立滚动 */
+    body[data-active-page="04_01订户列表.html"] #page-content {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body[data-active-page="04_01订户列表.html"] #subscriber-page {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    body[data-active-page="04_01订户列表.html"] .subscriber-table-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    body[data-active-page="04_01订户列表.html"] .subscriber-table-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    body[data-active-page="04_01订户列表.html"] .subscriber-table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    body[data-active-page="04_01订户列表.html"] .subscriber-librarian-table-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    body[data-active-page="04_01订户列表.html"] .subscriber-librarian-table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="订户列表"
+  data-active-page="04_01订户列表.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden">
+    <div id="subscriber-page">
+    <!-- 检索区 -->
+    <div class="bg-white rounded border border-gray-200 p-4 mb-4 shrink-0">
+      <form id="subscriber-search-form" class="relative">
+        <div class="absolute top-0 right-0 flex items-center gap-2">
+          <button type="button" id="subscriber-search-expand"
+            class="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700">
+            <span id="subscriber-search-expand-text">展开</span>
+            <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <button type="submit"
+            class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
+          <button type="button" id="subscriber-search-reset"
+            class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
+        </div>
+        <div class="grid grid-cols-3 gap-4 pr-56">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">订户名称</label>
+            <input type="text" name="name" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">资源类型</label>
+            <select name="resourceType"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              <option value="">全部</option>
+              <option value="纸质书">纸质书</option>
+              <option value="视听资料">视听资料</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">预算名称</label>
+            <input type="text" name="budget" placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          </div>
+        </div>
+        <div id="subscriber-search-extra" class="hidden grid grid-cols-3 gap-4 mt-3 pr-56">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">订户状态</label>
+            <select name="status"
+              class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              <option value="">全部</option>
+              <option value="active">使用中</option>
+              <option value="disabled">已停用</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">创建日期</label>
+            <div class="flex flex-1 items-center gap-2">
+              <input type="date" name="startDate" placeholder="开始日期"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              <span class="text-gray-400 text-sm">~</span>
+              <input type="date" name="endDate" placeholder="结束日期"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="flex items-center gap-2 mb-4 shrink-0">
+      <button type="button" id="subscriber-add-btn"
+        class="inline-flex items-center gap-1 px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">
+        <span class="text-base leading-none">+</span>
+        新增订户
+      </button>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
+      <div class="subscriber-table-scroll table-scroll">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+            <tr>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">订户名称</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">所属馆</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">资源类型</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap min-w-[180px]">预算名称</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">订户状态</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">馆员列表</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">
+                <button type="button" id="subscriber-created-sort"
+                  class="inline-flex items-center gap-1 hover:text-sky-600">
+                  创建日期
+                  <span class="inline-flex flex-col text-[10px] leading-none text-gray-400">
+                    <span id="subscriber-sort-up" class="text-sky-600">▲</span>
+                    <span id="subscriber-sort-down">▼</span>
+                  </span>
+                </button>
+              </th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap sticky right-0 bg-gray-50">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="subscriber-table-body"></tbody>
+        </table>
+      </div>
+      <!-- 分页 -->
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white">
+        <span id="subscriber-record-count" class="text-sm text-gray-500">共 18 条记录</span>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-gray-500">第 1 / 1 页</span>
+          <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <input type="text" value="1" readonly
+            class="w-10 border border-gray-300 rounded px-2 py-1 text-sm text-center text-gray-600 bg-white">
+          <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+          <select class="border border-gray-300 rounded px-2 py-1 text-sm text-gray-600">
+            <option>50 条/页</option>
+            <option>20 条/页</option>
+            <option>10 条/页</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- 新增订户弹窗 -->
+  <div id="subscriber-add-modal" data-modal
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh]"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+        <h2 class="text-base font-medium text-gray-800">新增订户</h2>
+        <button type="button" data-modal-close
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      </div>
+      <form id="subscriber-add-form" class="px-6 py-5 space-y-4 overflow-y-auto">
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 订户名称
+          </label>
+          <div class="flex-1">
+            <input type="text" name="name" placeholder="请输入" maxlength="50" autocomplete="off"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+            <p class="text-red-500 text-xs mt-1 hidden" data-error="name"></p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 所属馆
+          </label>
+          <div class="flex-1">
+            <select name="siteId"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500">
+              <option value="">请选择</option>
+            </select>
+            <p class="text-red-500 text-xs mt-1 hidden" data-error="siteId"></p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 资源类型
+          </label>
+          <div class="flex-1">
+            <div id="subscriber-add-resource-type" data-multi-select class="relative"></div>
+            <p class="text-red-500 text-xs mt-1 hidden" data-multi-select-error>请选择</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 预算名称
+          </label>
+          <div class="flex-1">
+            <div id="subscriber-add-budget" data-multi-select class="relative"></div>
+            <p class="text-red-500 text-xs mt-1 hidden" data-multi-select-error>请选择</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 条码号类型
+          </label>
+          <div class="flex-1">
+            <div id="subscriber-add-barcode-type" data-multi-select class="relative"></div>
+            <p class="text-red-500 text-xs mt-1 hidden" data-multi-select-error>请选择</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
+          <div class="flex-1">
+            <textarea name="remark" rows="4" placeholder="请输入" maxlength="500"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-y"></textarea>
+            <p class="text-red-500 text-xs mt-1 hidden" data-error="remark"></p>
+          </div>
+        </div>
+      </form>
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+        <button type="button" data-modal-close
+          class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+        <button type="button" id="subscriber-add-submit"
+          class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 查看馆员弹窗 -->
+  <div id="subscriber-librarian-modal" data-modal
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col max-h-[85vh]"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+        <h2 class="text-base font-medium text-gray-800">查看馆员</h2>
+        <button type="button" data-modal-close
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      </div>
+      <div class="px-6 py-4 border-b border-gray-100 shrink-0">
+        <form id="subscriber-librarian-search-form" class="flex items-center gap-3">
+          <label class="text-sm text-gray-600 whitespace-nowrap">馆员姓名</label>
+          <input type="text" name="name" placeholder="请输入" autocomplete="off"
+            class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          <button type="submit"
+            class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700 shrink-0">检索</button>
+          <button type="button" id="subscriber-librarian-search-reset"
+            class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50 shrink-0">重置</button>
+        </form>
+      </div>
+      <div class="subscriber-librarian-table-scroll flex-1 min-h-0 overflow-auto px-6 py-4">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+            <tr>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-16">序号</th>
+              <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">姓名</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="subscriber-librarian-table-body"></tbody>
+        </table>
+      </div>
+      <div class="flex justify-end px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+        <button type="button" data-modal-close
+          class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑订户弹窗 -->
+  <div id="subscriber-edit-modal" data-modal
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh]"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+        <h2 class="text-base font-medium text-gray-800">编辑订户</h2>
+        <button type="button" data-modal-close
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      </div>
+      <form id="subscriber-edit-form" class="px-6 py-5 space-y-4 overflow-y-auto">
+        <input type="hidden" name="rowIndex">
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 订户名称
+          </label>
+          <div class="flex-1">
+            <input type="text" name="name" placeholder="请输入" maxlength="50" autocomplete="off"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
+            <p class="text-red-500 text-xs mt-1 hidden" data-error="name"></p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 所属馆
+          </label>
+          <div class="flex-1">
+            <select name="siteId"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500">
+              <option value="">请选择</option>
+            </select>
+            <p class="text-red-500 text-xs mt-1 hidden" data-error="siteId"></p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 资源类型
+          </label>
+          <div class="flex-1">
+            <div id="subscriber-edit-resource-type" data-multi-select class="relative"></div>
+            <p class="text-red-500 text-xs mt-1 hidden" data-multi-select-error>请选择</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 预算名称
+          </label>
+          <div class="flex-1">
+            <div id="subscriber-edit-budget" data-multi-select class="relative"></div>
+            <p class="text-red-500 text-xs mt-1 hidden" data-multi-select-error>请选择</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+            <span class="text-red-500">*</span> 条码号类型
+          </label>
+          <div class="flex-1">
+            <div id="subscriber-edit-barcode-type" data-multi-select class="relative"></div>
+            <p class="text-red-500 text-xs mt-1 hidden" data-multi-select-error>请选择</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
+          <div class="flex-1">
+            <textarea name="remark" rows="4" placeholder="请输入" maxlength="500"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 resize-y"></textarea>
+            <p class="text-red-500 text-xs mt-1 hidden" data-error="remark"></p>
+          </div>
+        </div>
+      </form>
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg shrink-0">
+        <button type="button" data-modal-close
+          class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+        <button type="button" id="subscriber-edit-submit"
+          class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/location-data.js"></script>
+  <script src="../js/multi-select.js"></script>
+  <script>
+    /** 资源类型选项 */
+    const resourceTypeOptions = ['纸质书', '视听资料'];
+
+    /** 条码号类型选项 */
+    const barcodeTypeOptions = [
+      '中文成人普通',
+      '中文港台图书',
+      '中文少儿普通图书',
+      '少儿港台图书',
+      '少儿连环画图书',
+      '英文成人图书',
+      '小语种成人图书',
+      '外文少儿图书',
+      '地方文献',
+      '成人视听',
+      '少儿视听'
+    ];
+
+    /** 预算名称选项（状态为使用中的预算） */
+    const budgetOptions = [
+      '2026首都图书馆图书购置费中文普通图书(一)',
+      '2026首都图书馆图书购置费中文普通图书(二)',
+      '2026首都图书馆图书购置费中文普通图书(三)',
+      '2026城市图书馆图书购置费中文普通图书',
+      '2026城市图书馆图书购置费工具书',
+      '2026城市图书馆图书购置费经济管理',
+      '2026首都图书馆图书购置费',
+      '2026城市图书馆图书购置费',
+      '2025北京人天',
+      '2025CNPIEC',
+      '2025北京新华',
+      '2025中国嘉德',
+      '2025古籍采购',
+      '2025数字资源采购',
+      '2025北京台湖'
+    ];
+
+    /** 订户列表示例数据（默认按创建日期倒序） */
+    const subscriberRows = [
+      { name: '少儿外文', siteId: 'site-1', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026首都图书馆图书购置费中文普通图书(三)', '2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书', '2026城市图书馆图书购置费工具书', '2026城市图书馆图书购置费经济管理'], barcodeTypes: ['外文少儿图书'], status: 'active', created: '2026-05-22', remark: '', hasLibrarian: true },
+      { name: '少儿中文', siteId: 'site-1', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026首都图书馆图书购置费中文普通图书(三)', '2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书', '2026城市图书馆图书购置费工具书', '2026城市图书馆图书购置费经济管理'], barcodeTypes: ['中文少儿普通图书'], status: 'active', created: '2026-05-22', remark: '', hasLibrarian: true },
+      { name: '成人外文', siteId: 'site-1', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书'], barcodeTypes: ['英文成人图书', '小语种成人图书'], status: 'active', created: '2026-05-21', remark: '', hasLibrarian: true },
+      { name: '成人中文', siteId: 'site-1', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026城市图书馆图书购置费工具书'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2026-05-20', remark: '', hasLibrarian: true },
+      { name: '古籍民国图书', siteId: 'site-1', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费', '2026城市图书馆图书购置费'], barcodeTypes: ['地方文献'], status: 'disabled', created: '2026-05-18', remark: '', hasLibrarian: false },
+      { name: '采编中心', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京人天', '2025CNPIEC'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-25', remark: '', hasLibrarian: true },
+      { name: '视听中心', siteId: 'site-1', types: ['视听资料'], budgets: ['2025北京新华', '2025北京人天'], barcodeTypes: ['成人视听'], status: 'active', created: '2025-01-22', remark: '', hasLibrarian: true },
+      { name: '地方文献', siteId: 'site-1', types: ['纸质书'], budgets: ['2025中国嘉德'], barcodeTypes: ['地方文献'], status: 'active', created: '2025-01-21', remark: '', hasLibrarian: true },
+      { name: '历史文献', siteId: 'site-4', types: ['纸质书'], budgets: ['2025北京新华'], barcodeTypes: ['地方文献'], status: 'active', created: '2025-01-18', remark: '', hasLibrarian: true },
+      { name: '少儿阅读', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京人天'], barcodeTypes: ['中文少儿普通图书', '少儿连环画图书'], status: 'active', created: '2025-01-17', remark: '', hasLibrarian: true },
+      { name: '外文书刊', siteId: 'site-1', types: ['纸质书'], budgets: ['2025CNPIEC', '2025北京人天'], barcodeTypes: ['英文成人图书'], status: 'active', created: '2025-01-16', remark: '', hasLibrarian: true },
+      { name: '期刊中心', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京新华', '2025中国嘉德'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-15', remark: '', hasLibrarian: true },
+      { name: '数字资源', siteId: 'site-3', types: ['视听资料'], budgets: ['2025数字资源采购'], barcodeTypes: ['成人视听', '少儿视听'], status: 'active', created: '2025-01-14', remark: '', hasLibrarian: true },
+      { name: '参考咨询', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京人天'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-13', remark: '', hasLibrarian: false },
+      { name: '特藏部', siteId: 'site-4', types: ['纸质书'], budgets: ['2025古籍采购', '2025中国嘉德'], barcodeTypes: ['地方文献'], status: 'active', created: '2025-01-12', remark: '', hasLibrarian: true },
+      { name: '流通部', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京新华'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-11', remark: '', hasLibrarian: true },
+      { name: '东馆采编', siteId: 'site-2', types: ['纸质书'], budgets: ['2025北京人天', '2025北京新华'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-10', remark: '', hasLibrarian: true },
+      { name: '西馆采编', siteId: 'site-1', types: ['纸质书'], budgets: ['2025CNPIEC'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-09', remark: '', hasLibrarian: true }
+    ];
+
+    /** 当前展示的列表数据 */
+    let subscriberDisplayRows = [...subscriberRows];
+
+    /** 创建日期排序方向：desc 倒序，asc 正序 */
+    let subscriberCreatedSort = 'desc';
+
+    /** 馆员与订户关联数据 */
+    const librarianSourceRows = [
+      { name: '常辉', subscribers: '少儿外文' },
+      { name: '新华连锁3', subscribers: '少儿外文' },
+      { name: '新华连锁4', subscribers: '少儿外文' },
+      { name: '首图非遗采编人天2', subscribers: '少儿外文' },
+      { name: '首图少儿03', subscribers: '少儿外文' },
+      { name: '首图少儿04', subscribers: '少儿外文' },
+      { name: '首图少儿05', subscribers: '少儿外文' },
+      { name: '首图少儿06', subscribers: '少儿外文' },
+      { name: '首图少儿07', subscribers: '少儿外文' },
+      { name: '首图少儿08', subscribers: '少儿外文' },
+      { name: '首图少儿01', subscribers: '少儿中文, 成人中文' },
+      { name: '首图少儿02', subscribers: '少儿外文, 成人外文' },
+      { name: '首图采编采编02', subscribers: '成人中文, 成人外文, 少儿中文' },
+      { name: '李嘉', subscribers: '采编中心、视听中心' },
+      { name: '王晓宇', subscribers: '视听中心' },
+      { name: '李竹', subscribers: '地方文献' },
+      { name: '杨琳', subscribers: '历史文献' },
+      { name: '黄俊', subscribers: '少儿阅读' },
+      { name: '陆丰', subscribers: '外文书刊' },
+      { name: '范冬', subscribers: '期刊中心' },
+      { name: '张苏白鸥', subscribers: '数字资源' },
+      { name: '张曼', subscribers: '特藏部' },
+      { name: '首图采编采编01', subscribers: '流通部' },
+      { name: '首图采编采编03', subscribers: '东馆采编' },
+      { name: '首图采编采编04', subscribers: '西馆采编' },
+      { name: '首图采编采编05', subscribers: '大兴分馆' },
+      { name: '首图流通01', subscribers: '城市图书馆' },
+      { name: '首图流通02', subscribers: '华威桥馆' },
+      { name: '首图参考01', subscribers: '台湖库房' },
+      { name: '首图视听01', subscribers: '视听中心, 数字资源' },
+      { name: '首图地方01', subscribers: '地方文献' },
+      { name: '首图期刊01', subscribers: '期刊中心' },
+      { name: '首图外文01', subscribers: '外文书刊' },
+      { name: '首图历史01', subscribers: '历史文献' },
+      { name: '首图采编06', subscribers: '采编中心' }
+    ];
+
+    /**
+     * 构建订户与馆员映射
+     * @returns {Record<string, string[]>}
+     */
+    function buildSubscriberLibrarianMap() {
+      /** @type {Record<string, string[]>} */
+      const map = {};
+      librarianSourceRows.forEach(item => {
+        item.subscribers.split(/[,、]/).map(text => text.trim()).filter(Boolean).forEach(subscriber => {
+          if (!map[subscriber]) map[subscriber] = [];
+          if (!map[subscriber].includes(item.name)) map[subscriber].push(item.name);
+        });
+      });
+      return map;
+    }
+
+    /** 订户馆员映射表 */
+    const subscriberLibrarianMap = buildSubscriberLibrarianMap();
+
+    /** 当前查看馆员弹窗中的订户名称 */
+    let currentLibrarianSubscriberName = '';
+
+    /** 当前弹窗展示的馆员列表 */
+    let currentLibrarianDisplayRows = [];
+
+    /** 多选组件实例 ID */
+    let addResourceTypeId = '';
+    let addBudgetId = '';
+    let addBarcodeTypeId = '';
+    let editResourceTypeId = '';
+    let editBudgetId = '';
+    let editBarcodeTypeId = '';
+
+    /**
+     * 渲染订户状态
+     * @param {string} status - 状态标识
+     * @returns {string}
+     */
+    function renderSubscriberStatus(status) {
+      if (status === 'active') {
+        return '<span class="text-green-600">使用中</span>';
+      }
+      return '<span class="text-red-500">已停用</span>';
+    }
+
+    /**
+     * 格式化多选展示文本（预算名称多个时用分号隔开）
+     * @param {string[]} values - 选中值列表
+     * @param {string} [separator=';'] - 分隔符
+     * @returns {string}
+     */
+    function formatMultiValueText(values, separator = ';') {
+      return (values || []).join(separator);
+    }
+
+    /**
+     * 更新记录数展示
+     * @param {number} count - 记录数量
+     */
+    function updateSubscriberRecordCount(count) {
+      const countEl = document.getElementById('subscriber-record-count');
+      if (countEl) countEl.textContent = `共 ${count} 条记录`;
+    }
+
+    /**
+     * 更新创建日期排序图标
+     */
+    function updateSubscriberSortIcon() {
+      const upEl = document.getElementById('subscriber-sort-up');
+      const downEl = document.getElementById('subscriber-sort-down');
+      if (!upEl || !downEl) return;
+      upEl.classList.toggle('text-sky-600', subscriberCreatedSort === 'asc');
+      upEl.classList.toggle('text-gray-400', subscriberCreatedSort !== 'asc');
+      downEl.classList.toggle('text-sky-600', subscriberCreatedSort === 'desc');
+      downEl.classList.toggle('text-gray-400', subscriberCreatedSort !== 'desc');
+    }
+
+    /**
+     * 按创建日期排序
+     * @param {Object[]} rows - 行数据
+     * @returns {Object[]}
+     */
+    function sortSubscriberRows(rows) {
+      return [...rows].sort((a, b) => {
+        const diff = a.created.localeCompare(b.created);
+        return subscriberCreatedSort === 'desc' ? -diff : diff;
+      });
+    }
+
+    /**
+     * 按检索条件过滤订户列表
+     * @param {Object[]} rows - 行数据
+     * @param {HTMLFormElement} form - 检索表单
+     * @returns {Object[]}
+     */
+    function filterSubscriberRows(rows, form) {
+      const name = form.name.value.trim();
+      const resourceType = form.resourceType.value;
+      const budget = form.budget.value.trim();
+      const status = form.status.value;
+      const startDate = form.startDate.value;
+      const endDate = form.endDate.value || startDate;
+
+      return rows.filter(row => {
+        if (name && !row.name.includes(name)) return false;
+        if (resourceType && !(row.types || []).includes(resourceType)) return false;
+        if (budget && !(row.budgets || []).some(item => item.includes(budget))) return false;
+        if (status && row.status !== status) return false;
+        if (startDate) {
+          const created = row.created;
+          if (created < startDate || created > endDate) return false;
+        }
+        return true;
+      });
+    }
+
+    /**
+     * 渲染操作列
+     * @param {Object} row - 行数据
+     * @param {number} index - 行序号（0-based）
+     * @returns {string}
+     */
+    function renderSubscriberOps(row, index) {
+      if (row.status === 'active') {
+        return `
+          <button type="button" class="text-sky-600 hover:underline mr-3 subscriber-edit-btn" data-row-index="${index}">编辑</button>
+          <a href="04_01_03_停用_删除订户.html" class="text-sky-600 hover:underline mr-3">停用</a>
+          <a href="04_01_03_停用_删除订户.html" class="text-sky-600 hover:underline">删除</a>`;
+      }
+      return `
+        <button type="button" class="text-sky-600 hover:underline mr-3 subscriber-edit-btn" data-row-index="${index}">编辑</button>
+        <a href="04_01_03_停用_删除订户.html" class="text-sky-600 hover:underline mr-3">启用</a>
+        <a href="04_01_03_停用_删除订户.html" class="text-sky-600 hover:underline">删除</a>`;
+    }
+
+    /**
+     * 渲染馆员列表链接
+     * @param {Object} row - 行数据
+     * @returns {string}
+     */
+    function renderLibrarianLink(row) {
+      if (row.status === 'active' && row.hasLibrarian !== false) {
+        return `<button type="button" class="text-sky-600 hover:underline subscriber-librarian-btn"
+          data-subscriber-name="${row.name}">查看</button>`;
+      }
+      return '<span class="text-gray-400">查看</span>';
+    }
+
+    /**
+     * 获取订户关联馆员列表
+     * @param {string} subscriberName - 订户名称
+     * @returns {string[]}
+     */
+    function getSubscriberLibrarians(subscriberName) {
+      return subscriberLibrarianMap[subscriberName] || [];
+    }
+
+    /**
+     * 渲染查看馆员表格
+     * @param {string[]} names - 馆员姓名列表
+     */
+    function renderSubscriberLibrarianTable(names) {
+      const tbody = document.getElementById('subscriber-librarian-table-body');
+      if (!tbody) return;
+
+      if (!names.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="2" class="px-3 py-8 text-center text-sm text-gray-400">未检索到任何结果</td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = names.map((name, index) => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 text-gray-600">${index + 1}</td>
+          <td class="px-3 py-2">${name}</td>
+        </tr>`).join('');
+    }
+
+    /**
+     * 按馆员姓名过滤
+     * @param {string[]} names - 馆员姓名列表
+     * @param {string} keyword - 检索关键词
+     * @returns {string[]}
+     */
+    function filterLibrarianNames(names, keyword) {
+      const text = keyword.trim();
+      if (!text) return [...names];
+      return names.filter(name => name.includes(text));
+    }
+
+    /**
+     * 打开查看馆员弹窗
+     * @param {string} subscriberName - 订户名称
+     */
+    function openSubscriberLibrarianModal(subscriberName) {
+      currentLibrarianSubscriberName = subscriberName;
+      const allNames = getSubscriberLibrarians(subscriberName);
+      currentLibrarianDisplayRows = [...allNames];
+
+      const form = document.getElementById('subscriber-librarian-search-form');
+      if (form) form.reset();
+
+      renderSubscriberLibrarianTable(currentLibrarianDisplayRows);
+      document.getElementById('subscriber-librarian-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 检索弹窗内馆员列表
+     * @param {HTMLFormElement} form - 检索表单
+     */
+    function searchSubscriberLibrarians(form) {
+      const allNames = getSubscriberLibrarians(currentLibrarianSubscriberName);
+      currentLibrarianDisplayRows = filterLibrarianNames(allNames, form.name.value);
+      renderSubscriberLibrarianTable(currentLibrarianDisplayRows);
+    }
+
+    /**
+     * 重置弹窗内馆员检索
+     */
+    function resetSubscriberLibrarianSearch() {
+      const form = document.getElementById('subscriber-librarian-search-form');
+      if (!form) return;
+      form.reset();
+      currentLibrarianDisplayRows = getSubscriberLibrarians(currentLibrarianSubscriberName);
+      renderSubscriberLibrarianTable(currentLibrarianDisplayRows);
+    }
+
+    /**
+     * 渲染订户表格行
+     * @param {Object} row - 行数据
+     * @param {number} index - 行序号
+     * @returns {string}
+     */
+    /**
+     * 初始化所属馆下拉选项
+     * @param {HTMLSelectElement} select - 下拉框
+     * @param {string} [selectedId=''] - 选中馆址 ID
+     */
+    function initSubscriberSiteSelect(select, selectedId = '') {
+      if (!select) return;
+      const sites = LocationData.getActiveSites();
+      select.innerHTML = '<option value="">请选择</option>' +
+        sites.map(site => `<option value="${site.id}">${site.name}</option>`).join('');
+      select.value = selectedId;
+    }
+
+    /**
+     * 初始化新增/编辑表单的所属馆下拉
+     */
+    function initSubscriberSiteSelects() {
+      initSubscriberSiteSelect(document.querySelector('#subscriber-add-form select[name="siteId"]'));
+      initSubscriberSiteSelect(document.querySelector('#subscriber-edit-form select[name="siteId"]'));
+    }
+
+    function renderSubscriberRow(row, index, sourceIndex) {
+      return `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2 text-gray-600">${index}</td>
+          <td class="px-3 py-2">
+            <a href="04_01_04_查看订户.html" class="text-sky-600 hover:underline">${row.name}</a>
+          </td>
+          <td class="px-3 py-2 whitespace-nowrap">${LocationData.getSiteName(row.siteId)}</td>
+          <td class="px-3 py-2">${formatMultiValueText(row.types, '、')}</td>
+          <td class="px-3 py-2 text-gray-600 leading-relaxed break-all">${formatMultiValueText(row.budgets, ';')}</td>
+          <td class="px-3 py-2">${renderSubscriberStatus(row.status)}</td>
+          <td class="px-3 py-2">${renderLibrarianLink(row)}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.created}</td>
+          <td class="px-3 py-2 whitespace-nowrap sticky right-0 bg-white">${renderSubscriberOps(row, sourceIndex)}</td>
+        </tr>`;
+    }
+
+    /**
+     * 根据源数据索引获取展示行对应的真实索引
+     * @param {Object} row - 展示行数据
+     * @returns {number}
+     */
+    function getSubscriberSourceIndex(row) {
+      return subscriberRows.findIndex(item =>
+        item.name === row.name && item.created === row.created && item.status === row.status
+      );
+    }
+
+    /**
+     * 刷新订户表格
+     */
+    function renderSubscriberTable() {
+      const tbody = document.getElementById('subscriber-table-body');
+      if (!tbody) return;
+
+      subscriberDisplayRows = sortSubscriberRows(subscriberDisplayRows);
+      updateSubscriberRecordCount(subscriberDisplayRows.length);
+
+      if (!subscriberDisplayRows.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="px-3 py-10 text-center text-sm text-gray-400">未检索到任何结果</td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = subscriberDisplayRows.map((row, i) => {
+        const sourceIndex = getSubscriberSourceIndex(row);
+        return renderSubscriberRow(row, i + 1, sourceIndex);
+      }).join('');
+    }
+
+    /**
+     * 执行检索
+     * @param {HTMLFormElement} form - 检索表单
+     */
+    function searchSubscriberRows(form) {
+      subscriberDisplayRows = filterSubscriberRows(subscriberRows, form);
+      renderSubscriberTable();
+    }
+
+    /**
+     * 重置检索条件
+     */
+    function resetSubscriberSearch() {
+      const form = document.getElementById('subscriber-search-form');
+      if (!form) return;
+      form.reset();
+      subscriberDisplayRows = [...subscriberRows];
+      renderSubscriberTable();
+    }
+
+    /**
+     * 初始化多选组件
+     */
+    function initSubscriberMultiSelects() {
+      addResourceTypeId = MultiSelect.init(
+        document.getElementById('subscriber-add-resource-type'),
+        { options: resourceTypeOptions, placeholder: '请选择' }
+      );
+      addBudgetId = MultiSelect.init(
+        document.getElementById('subscriber-add-budget'),
+        { options: budgetOptions, placeholder: '请选择' }
+      );
+      editResourceTypeId = MultiSelect.init(
+        document.getElementById('subscriber-edit-resource-type'),
+        { options: resourceTypeOptions, placeholder: '请选择' }
+      );
+      editBudgetId = MultiSelect.init(
+        document.getElementById('subscriber-edit-budget'),
+        { options: budgetOptions, placeholder: '请选择' }
+      );
+      addBarcodeTypeId = MultiSelect.init(
+        document.getElementById('subscriber-add-barcode-type'),
+        { options: barcodeTypeOptions, placeholder: '请选择' }
+      );
+      editBarcodeTypeId = MultiSelect.init(
+        document.getElementById('subscriber-edit-barcode-type'),
+        { options: barcodeTypeOptions, placeholder: '请选择' }
+      );
+    }
+
+    /**
+     * 清除表单错误提示
+     * @param {HTMLFormElement} form - 表单
+     */
+    function clearSubscriberFormErrors(form) {
+      form.querySelectorAll('[data-error]').forEach(el => {
+        el.textContent = '';
+        el.classList.add('hidden');
+      });
+      form.querySelectorAll('input, textarea, select').forEach(el => el.classList.remove('border-red-500'));
+      MultiSelect.clearError(addResourceTypeId);
+      MultiSelect.clearError(addBudgetId);
+      MultiSelect.clearError(addBarcodeTypeId);
+      MultiSelect.clearError(editResourceTypeId);
+      MultiSelect.clearError(editBudgetId);
+      MultiSelect.clearError(editBarcodeTypeId);
+    }
+
+    /**
+     * 显示字段错误
+     * @param {HTMLFormElement} form - 表单
+     * @param {string} field - 字段名
+     * @param {string} message - 错误信息
+     */
+    function showSubscriberFormError(form, field, message) {
+      const errorEl = form.querySelector(`[data-error="${field}"]`);
+      const inputEl = form.elements[field];
+      if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+      }
+      if (inputEl) inputEl.classList.add('border-red-500');
+    }
+
+    /**
+     * 校验订户表单
+     * @param {HTMLFormElement} form - 表单
+     * @param {string} resourceTypeId - 资源类型多选 ID
+     * @param {string} budgetId - 预算名称多选 ID
+     * @param {string} barcodeTypeId - 条码号类型多选 ID
+     * @param {number|null} excludeIndex - 编辑时排除的当前行索引
+     * @returns {boolean}
+     */
+    function validateSubscriberForm(form, resourceTypeId, budgetId, barcodeTypeId, excludeIndex = null) {
+      clearSubscriberFormErrors(form);
+      let valid = true;
+      const name = form.name.value.trim();
+      const siteId = form.siteId.value;
+      const remark = form.remark.value.trim();
+      const types = MultiSelect.getValue(resourceTypeId);
+      const budgets = MultiSelect.getValue(budgetId);
+      const barcodeTypes = MultiSelect.getValue(barcodeTypeId);
+
+      if (!siteId) {
+        showSubscriberFormError(form, 'siteId', '请选择');
+        valid = false;
+      }
+
+      if (!name) {
+        showSubscriberFormError(form, 'name', '请输入');
+        valid = false;
+      } else if (name.length > 50) {
+        showSubscriberFormError(form, 'name', '已超字符限制');
+        valid = false;
+      } else if (subscriberRows.some((row, index) => row.name === name && index !== excludeIndex)) {
+        showSubscriberFormError(form, 'name', '已存在');
+        valid = false;
+      }
+
+      if (!types.length) {
+        MultiSelect.showError(resourceTypeId, '请选择');
+        valid = false;
+      }
+
+      if (!budgets.length) {
+        MultiSelect.showError(budgetId, '请选择');
+        valid = false;
+      }
+
+      if (!barcodeTypes.length) {
+        MultiSelect.showError(barcodeTypeId, '请选择');
+        valid = false;
+      }
+
+      if (remark.length > 500) {
+        showSubscriberFormError(form, 'remark', '已超字符限制');
+        valid = false;
+      }
+
+      return valid;
+    }
+
+    /**
+     * 重置新增表单
+     */
+    function resetSubscriberAddForm() {
+      const form = document.getElementById('subscriber-add-form');
+      if (!form) return;
+      form.reset();
+      clearSubscriberFormErrors(form);
+      MultiSelect.reset(addResourceTypeId);
+      MultiSelect.reset(addBudgetId);
+      MultiSelect.reset(addBarcodeTypeId);
+    }
+
+    /**
+     * 打开新增订户弹窗
+     */
+    function openSubscriberAddModal() {
+      resetSubscriberAddForm();
+      document.getElementById('subscriber-add-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 打开编辑订户弹窗
+     * @param {number} rowIndex - 行索引
+     */
+    function openSubscriberEditModal(rowIndex) {
+      const row = subscriberRows[rowIndex];
+      const form = document.getElementById('subscriber-edit-form');
+      if (!row || !form) return;
+
+      clearSubscriberFormErrors(form);
+      form.rowIndex.value = String(rowIndex);
+      form.name.value = row.name;
+      initSubscriberSiteSelect(form.siteId, row.siteId || '');
+      form.remark.value = row.remark || '';
+      MultiSelect.setValue(editResourceTypeId, row.types || []);
+      MultiSelect.setValue(editBudgetId, row.budgets || []);
+      MultiSelect.setValue(editBarcodeTypeId, row.barcodeTypes || []);
+      document.getElementById('subscriber-edit-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 获取当前日期字符串
+     * @returns {string}
+     */
+    function getTodayString() {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${now.getFullYear()}-${month}-${day}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initSubscriberMultiSelects();
+      initSubscriberSiteSelects();
+      updateSubscriberSortIcon();
+      renderSubscriberTable();
+
+      const searchForm = document.getElementById('subscriber-search-form');
+      searchForm?.addEventListener('submit', e => {
+        e.preventDefault();
+        searchSubscriberRows(searchForm);
+      });
+
+      document.getElementById('subscriber-search-reset')?.addEventListener('click', resetSubscriberSearch);
+
+      const expandBtn = document.getElementById('subscriber-search-expand');
+      const searchExtra = document.getElementById('subscriber-search-extra');
+      if (expandBtn && searchExtra) {
+        let expanded = false;
+        expandBtn.addEventListener('click', () => {
+          expanded = !expanded;
+          searchExtra.classList.toggle('hidden', !expanded);
+          const expandText = document.getElementById('subscriber-search-expand-text');
+          if (expandText) expandText.textContent = expanded ? '收起' : '展开';
+          expandBtn.querySelector('svg')?.classList.toggle('rotate-180', expanded);
+        });
+      }
+
+      document.getElementById('subscriber-created-sort')?.addEventListener('click', () => {
+        subscriberCreatedSort = subscriberCreatedSort === 'desc' ? 'asc' : 'desc';
+        updateSubscriberSortIcon();
+        renderSubscriberTable();
+      });
+
+      document.getElementById('subscriber-add-btn')?.addEventListener('click', openSubscriberAddModal);
+
+      document.getElementById('subscriber-table-body')?.addEventListener('click', e => {
+        const editBtn = e.target.closest('.subscriber-edit-btn');
+        if (editBtn) {
+          const rowIndex = Number(editBtn.dataset.rowIndex);
+          if (!Number.isNaN(rowIndex)) openSubscriberEditModal(rowIndex);
+          return;
+        }
+
+        const librarianBtn = e.target.closest('.subscriber-librarian-btn');
+        if (librarianBtn?.dataset.subscriberName) {
+          openSubscriberLibrarianModal(librarianBtn.dataset.subscriberName);
+        }
+      });
+
+      const librarianSearchForm = document.getElementById('subscriber-librarian-search-form');
+      librarianSearchForm?.addEventListener('submit', e => {
+        e.preventDefault();
+        searchSubscriberLibrarians(librarianSearchForm);
+      });
+      document.getElementById('subscriber-librarian-search-reset')
+        ?.addEventListener('click', resetSubscriberLibrarianSearch);
+
+      document.getElementById('subscriber-add-submit')?.addEventListener('click', () => {
+        const form = document.getElementById('subscriber-add-form');
+        if (!form || !validateSubscriberForm(form, addResourceTypeId, addBudgetId, addBarcodeTypeId)) return;
+
+        const newRow = {
+          name: form.name.value.trim(),
+          siteId: form.siteId.value,
+          types: MultiSelect.getValue(addResourceTypeId),
+          budgets: MultiSelect.getValue(addBudgetId),
+          barcodeTypes: MultiSelect.getValue(addBarcodeTypeId),
+          status: 'active',
+          created: getTodayString(),
+          remark: form.remark.value.trim(),
+          hasLibrarian: false
+        };
+        subscriberRows.unshift(newRow);
+        const currentSearchForm = document.getElementById('subscriber-search-form');
+        subscriberDisplayRows = currentSearchForm
+          ? filterSubscriberRows(subscriberRows, currentSearchForm)
+          : [...subscriberRows];
+
+        renderSubscriberTable();
+        document.getElementById('subscriber-add-modal')?.classList.add('hidden');
+      });
+
+      document.getElementById('subscriber-edit-submit')?.addEventListener('click', () => {
+        const form = document.getElementById('subscriber-edit-form');
+        const rowIndex = Number(form?.rowIndex.value);
+        if (!form || Number.isNaN(rowIndex) || !subscriberRows[rowIndex]) return;
+        if (!validateSubscriberForm(form, editResourceTypeId, editBudgetId, editBarcodeTypeId, rowIndex)) return;
+
+        subscriberRows[rowIndex] = {
+          ...subscriberRows[rowIndex],
+          name: form.name.value.trim(),
+          siteId: form.siteId.value,
+          types: MultiSelect.getValue(editResourceTypeId),
+          budgets: MultiSelect.getValue(editBudgetId),
+          barcodeTypes: MultiSelect.getValue(editBarcodeTypeId),
+          remark: form.remark.value.trim()
+        };
+
+        const currentSearchForm = document.getElementById('subscriber-search-form');
+        subscriberDisplayRows = currentSearchForm
+          ? filterSubscriberRows(subscriberRows, currentSearchForm)
+          : [...subscriberRows];
+
+        renderSubscriberTable();
+        document.getElementById('subscriber-edit-modal')?.classList.add('hidden');
+      });
+    });
+  </script>
+</body>
+</html>

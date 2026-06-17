@@ -1,0 +1,58 @@
+/* 全局补充样式 - 主要样式由 Tailwind 控制 */
+.sidebar-children:not(.max-h-0) {
+  max-height: 500px;
+}
+
+[data-modal] {
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+html.embed-mode,
+body.embed-mode {
+  height: 100%;
+}
+
+body.embed-mode {
+  overflow: auto;
+  background: #f3f4f6;
+}
+
+/** 嵌入模式（侧滑面板 / 页签 iframe）下隐藏验收详情面包屑 */
+body.embed-mode #acceptance-detail-breadcrumb {
+  display: none;
+}
+
+/** 页签切换时隐藏的面板须完全不可见，避免被页面级 display:flex 规则覆盖 */
+#tab-panels .tab-panel.hidden {
+  display: none !important;
+}
+
+#page-tab-bar {
+  scrollbar-width: thin;
+}
+
+#page-tab-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+#page-tab-bar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+[data-multi-select] {
+  position: relative;
+}
