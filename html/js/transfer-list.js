@@ -8,7 +8,7 @@ const TransferList = {
   /**
    * 初始化穿梭框
    * @param {HTMLElement} root - 根节点
-   * @param {{ items?: string[], selected?: string[] }} [config] - 初始配置
+   * @param {{ items?: string[], selected?: string[], leftSearchPlaceholder?: string, leftFilter?: (item: string) => string, leftLabel?: (item: string) => string }} [config] - 初始配置
    * @returns {string} 实例 ID
    */
   init(root, config = {}) {
@@ -28,7 +28,10 @@ const TransferList = {
       leftChecked: new Set(),
       rightChecked: new Set(),
       leftKeyword: '',
-      rightKeyword: ''
+      rightKeyword: '',
+      leftSearchPlaceholder: config.leftSearchPlaceholder || '请输入搜索内容',
+      leftFilter: config.leftFilter || (item => item),
+      leftLabel: config.leftLabel || (item => item)
     });
 
     root.innerHTML = `
@@ -48,7 +51,7 @@ const TransferList = {
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
               <input type="text" class="transfer-left-search w-full border border-gray-300 rounded pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:border-sky-500"
-                placeholder="请输入搜索内容">
+                placeholder="${config.leftSearchPlaceholder || '请输入搜索内容'}">
             </div>
           </div>
           <div class="transfer-left-list flex-1 min-h-0 overflow-y-auto py-1"></div>
@@ -115,7 +118,7 @@ const TransferList = {
     root.querySelector('.transfer-left-select-all')?.addEventListener('change', e => {
       const instance = this.instances.get(id);
       if (!instance) return;
-      const visible = this.getVisibleItems(instance.leftItems, instance.leftKeyword);
+      const visible = this.getVisibleItems(instance.leftItems, instance.leftKeyword, instance.leftFilter);
       instance.leftChecked = e.target.checked ? new Set(visible) : new Set();
       this.render(id);
     });
@@ -148,11 +151,13 @@ const TransferList = {
    * 按关键词过滤列表项
    * @param {string[]} items - 列表项
    * @param {string} keyword - 搜索关键词
+   * @param {(item: string) => string} [filterBy] - 自定义搜索字段
    * @returns {string[]}
    */
-  getVisibleItems(items, keyword) {
+  getVisibleItems(items, keyword, filterBy) {
     if (!keyword) return [...items];
-    return items.filter(item => item.includes(keyword));
+    const getText = filterBy || (item => item);
+    return items.filter(item => getText(item).includes(keyword));
   },
 
   /**
@@ -208,7 +213,7 @@ const TransferList = {
     const root = document.querySelector(`[data-transfer-id="${id}"]`);
     if (!instance || !root) return;
 
-    const leftVisible = this.getVisibleItems(instance.leftItems, instance.leftKeyword);
+    const leftVisible = this.getVisibleItems(instance.leftItems, instance.leftKeyword, instance.leftFilter);
     const rightVisible = this.getVisibleItems(instance.rightItems, instance.rightKeyword);
 
     const leftListEl = root.querySelector('.transfer-left-list');
@@ -222,7 +227,7 @@ const TransferList = {
 
     if (leftListEl) {
       leftListEl.innerHTML = leftVisible.length
-        ? leftVisible.map(item => this.renderItem(item, 'left', instance.leftChecked.has(item))).join('')
+        ? leftVisible.map(item => this.renderItem(item, 'left', instance.leftChecked.has(item), instance.leftLabel(item))).join('')
         : `<div class="px-3 py-10 text-center text-sm text-gray-400">暂无数据</div>`;
     }
 
@@ -258,14 +263,16 @@ const TransferList = {
    * @param {string} value - 选项值
    * @param {'left'|'right'} side - 列表侧
    * @param {boolean} checked - 是否勾选
+   * @param {string} [label] - 展示文本
    * @returns {string}
    */
-  renderItem(value, side, checked) {
+  renderItem(value, side, checked, label) {
+    const display = label ?? value;
     return `
       <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer select-none">
         <input type="checkbox" class="transfer-item-checkbox rounded text-sky-600"
           data-side="${side}" data-value="${value}" ${checked ? 'checked' : ''}>
-        <span class="text-sm text-gray-700 truncate">${value}</span>
+        <span class="text-sm text-gray-700 truncate">${display}</span>
       </label>`;
   },
 

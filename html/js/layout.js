@@ -162,16 +162,27 @@ const Layout = {
     }).join('');
 
     return `
-      <aside id="sidebar" class="w-56 bg-slate-800 shrink-0 flex flex-col overflow-y-auto">
-        <div class="flex-1 py-2">${groups}</div>
-        <button type="button" id="sidebar-collapse"
-          class="p-3 border-t border-slate-700 text-gray-400 hover:text-white flex justify-center">
+      <div id="sidebar-wrapper" class="relative shrink-0 h-full">
+        <aside id="sidebar" class="w-56 h-full bg-slate-800 flex flex-col overflow-y-auto transition-[width] duration-200">
+          <div class="flex-1 py-2">${groups}</div>
+          <button type="button" id="sidebar-collapse"
+            class="p-3 border-t border-slate-700 text-gray-400 hover:text-white flex justify-center"
+            title="收起菜单">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+            </svg>
+          </button>
+        </aside>
+        <button type="button" id="sidebar-expand"
+          class="hidden absolute bottom-0 left-0 z-10 w-10 p-3 border-t border-slate-700 bg-slate-800 text-gray-400 hover:text-white hover:bg-slate-700 flex justify-center"
+          title="展开菜单">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+              d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
           </svg>
         </button>
-      </aside>
+      </div>
     `;
   },
 
@@ -190,13 +201,18 @@ const Layout = {
     });
 
     const collapseBtn = document.getElementById('sidebar-collapse');
+    const expandBtn = document.getElementById('sidebar-expand');
     const sidebar = document.getElementById('sidebar');
-    if (collapseBtn && sidebar) {
-      collapseBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('w-56');
-        sidebar.classList.toggle('w-0');
-        sidebar.classList.toggle('overflow-hidden');
-      });
-    }
+
+    const setSidebarCollapsed = (collapsed) => {
+      if (!sidebar) return;
+      sidebar.classList.toggle('w-56', !collapsed);
+      sidebar.classList.toggle('w-0', collapsed);
+      sidebar.classList.toggle('overflow-hidden', collapsed);
+      expandBtn?.classList.toggle('hidden', !collapsed);
+    };
+
+    collapseBtn?.addEventListener('click', () => setSidebarCollapsed(true));
+    expandBtn?.addEventListener('click', () => setSidebarCollapsed(false));
   }
 };

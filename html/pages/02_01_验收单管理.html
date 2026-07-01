@@ -23,11 +23,184 @@
       word-break: break-word;
       pointer-events: none;
     }
+
+    #prd-spec-trigger {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+
+    .prd-spec-drawer {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+    }
+
+    .prd-spec-drawer.hidden {
+      pointer-events: none;
+    }
+
+    .prd-spec-drawer-mask {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .prd-spec-drawer.is-open .prd-spec-drawer-mask {
+      opacity: 1;
+    }
+
+    .prd-spec-drawer-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 600px;
+      max-width: 100vw;
+      background: #fff;
+      box-shadow: -8px 0 24px rgba(15, 23, 42, 0.12);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .prd-spec-drawer.is-open .prd-spec-drawer-panel {
+      transform: translateX(0);
+    }
+
+    .prd-spec-drawer.is-open {
+      pointer-events: auto;
+    }
+
+    .prd-spec-item-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+
+    .prd-spec-item-btn {
+      padding: 4px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #374151;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .prd-spec-item-btn.active {
+      border-color: #0284c7;
+      color: #0284c7;
+      background: #f0f9ff;
+    }
+
+    .prd-spec-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      line-height: 1.6;
+    }
+
+    .prd-spec-content p {
+      margin: 0 0 12px;
+    }
+
+    .prd-spec-content ul,
+    .prd-spec-content ol {
+      margin: 0 0 12px;
+      padding-left: 1.5rem;
+    }
+
+    .prd-spec-content li {
+      margin-bottom: 6px;
+    }
+
+    .prd-spec-content blockquote {
+      margin: 0 0 12px;
+      padding: 8px 12px;
+      border-left: 3px solid #d1d5db;
+      background: #f9fafb;
+      color: #4b5563;
+    }
+
+    .prd-spec-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+      margin: 16px 0 8px;
+    }
+
+    .prd-spec-section-title:first-child {
+      margin-top: 0;
+    }
+
+    .prd-spec-header {
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .prd-spec-header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .prd-spec-anchors {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    .prd-spec-anchors a {
+      color: #0284c7;
+      text-decoration: none;
+    }
+
+    .prd-spec-anchors a:hover {
+      text-decoration: underline;
+    }
+
+    .prd-spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .prd-spec-table th,
+    .prd-spec-table td {
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .prd-spec-table th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #374151;
+    }
   </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden"
   data-page-title="验收单管理"
+  data-page-id="02_01_验收单管理"
   data-active-page="02_01_验收单管理.html">
+
+  <button type="button" id="prd-spec-trigger"
+    class="prd-spec-page-local px-3 py-1.5 text-sm text-sky-600 bg-white border border-sky-200 rounded shadow-sm hover:bg-sky-50">
+    PRD说明
+  </button>
 
   <div id="app-root" class="flex flex-col h-full"></div>
 
@@ -103,6 +276,9 @@
     <div class="flex items-center gap-2 mb-4">
       <button type="button" data-modal-open="acceptance-add-modal"
         class="px-4 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">新增验收单</button>
+      <button type="button" id="acceptance-import-delivery-btn" disabled
+        title="请先在列表中勾选一条未开始或进行中的验收单"
+        class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed opacity-60">导入发货单</button>
       <button type="button" id="acceptance-settlement-btn"
         class="px-4 py-1.5 text-sm rounded bg-amber-500 text-white hover:bg-amber-600">申请结算</button>
       <div class="relative">
@@ -486,9 +662,25 @@
 
   <div id="acceptance-remark-tooltip" class="hidden" role="tooltip"></div>
 
+  <!-- PRD 需求说明抽屉（页面级，壳层启用后隐藏） -->
+  <div id="prd-spec-drawer" class="prd-spec-drawer prd-spec-page-local hidden" aria-hidden="true">
+    <div id="prd-spec-drawer-mask" class="prd-spec-drawer-mask"></div>
+    <aside id="prd-spec-drawer-panel" class="prd-spec-drawer-panel" role="dialog"
+      aria-modal="true" aria-labelledby="prd-spec-drawer-title">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 shrink-0">
+        <h2 id="prd-spec-drawer-title" class="text-base font-medium text-gray-800">PRD 需求说明</h2>
+        <button type="button" id="prd-spec-drawer-close" aria-label="关闭"
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      </div>
+      <div id="prd-spec-item-nav" class="prd-spec-item-nav shrink-0"></div>
+      <div id="prd-spec-content" class="prd-spec-content"></div>
+    </aside>
+  </div>
+
   <script src="../js/config.js"></script>
   <script src="../js/layout.js"></script>
   <script src="../js/tab-manager.js"></script>
+  <script src="../js/prd-spec.js"></script>
   <script src="../js/acceptance-store.js"></script>
   <script src="../js/common.js"></script>
   <script>
@@ -505,6 +697,84 @@
       { no: 9, id: 'ysPG00120200602009', name: '测试验收2', type: '视听资料', lang: '中文', method: '现采', supplier: '湖北三新', shipNo: '20200603发货单002', status: 'inProgress', settlement: 'pending', counts: '2/0/0', remark: false, remarkText: '', barcode: '是', autoBarcode: true, barcodeType: '成人视听', initialBarcode: '001SC26300999', setCurrent: false, time: '2020-06-03 10:22:15', creator: '王二小', detailPage: '02_01_05_验收详情按种_视听资料.html', defaultAccept: false },
       { no: 10, id: 'ysPG00120200602010', name: '验收单测试', type: '纸质书', lang: '中文', method: '现采', supplier: '北京市图书进出口有限公司', shipNo: '20200603发货单003', status: 'finished', settlement: 'settled', counts: '4/0/0', remark: false, barcode: '是', time: '2020-06-03 15:00:00', creator: '赵付', detailPage: '02_01_02_验收详情按种_纸质书.html', defaultAccept: false }
     ];
+
+    /**
+     * 验收单状态是否可导入发货单
+     * @param {string} status
+     * @returns {boolean}
+     */
+    function isImportableAcceptanceStatus(status) {
+      return status === 'notStarted' || status === 'inProgress';
+    }
+
+    /**
+     * 获取列表中已勾选且可导入的唯一验收单行
+     * @returns {Object|null}
+     */
+    function getSelectedImportableAcceptanceRow() {
+      const checkedNos = getCheckedAcceptanceRowNos();
+      if (checkedNos.length !== 1) return null;
+      const row = acceptanceRows.find(r => r.no === checkedNos[0]);
+      if (!row || !isImportableAcceptanceStatus(row.status)) return null;
+      return row;
+    }
+
+    /** @type {string} */
+    const IMPORT_DELIVERY_BTN_ENABLED_CLS = 'px-4 py-1.5 text-sm rounded border border-sky-600 text-sky-600 bg-white hover:bg-sky-50 cursor-pointer';
+    /** @type {string} */
+    const IMPORT_DELIVERY_BTN_DISABLED_CLS = 'px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed opacity-60';
+
+    /**
+     * 同步「导入发货单」按钮启用状态
+     */
+    function syncImportDeliveryBtnState() {
+      const btn = document.getElementById('acceptance-import-delivery-btn');
+      if (!btn) return;
+      const enabled = !!getSelectedImportableAcceptanceRow();
+      btn.disabled = !enabled;
+      btn.className = enabled ? IMPORT_DELIVERY_BTN_ENABLED_CLS : IMPORT_DELIVERY_BTN_DISABLED_CLS;
+      btn.title = enabled ? '' : '请先在列表中勾选一条未开始或进行中的验收单';
+    }
+
+    /**
+     * 携带所选验收单进入导入向导
+     * @param {Object} row - 验收单行数据
+     */
+    function navigateToDeliveryImport(row) {
+      sessionStorage.setItem('deliveryImportContext', JSON.stringify({
+        acceptance: {
+          id: row.id,
+          name: row.name,
+          type: row.type,
+          lang: row.lang,
+          method: row.method,
+          supplier: row.supplier,
+          shipNo: row.shipNo || '',
+          remarkText: row.remarkText || '',
+          status: row.status
+        }
+      }));
+
+      const targetPage = '02_01_13_导入发货单.html';
+      const tabMgr = typeof TabManager !== 'undefined' ? TabManager.getActiveManager() : null;
+      if (tabMgr?.hostPage) {
+        tabMgr.openTab(targetPage, '导入发货单', { reload: true });
+      } else {
+        location.href = targetPage;
+      }
+    }
+
+    /**
+     * 点击导入发货单：须已勾选一条未开始/进行中的验收单
+     */
+    function startDeliveryImport() {
+      const row = getSelectedImportableAcceptanceRow();
+      if (!row) {
+        alert('请先在列表中勾选一条未开始或进行中的验收单');
+        return;
+      }
+      navigateToDeliveryImport(row);
+    }
 
     /**
      * 渲染验收单状态标签
@@ -830,6 +1100,7 @@
       const tbody = document.getElementById('acceptance-table-body');
       if (tbody) tbody.innerHTML = acceptanceRows.map(renderAcceptanceRow).join('');
       syncAcceptanceSelectAllState();
+      syncImportDeliveryBtnState();
       ListSelectionSummary.refresh('acceptance-list-total', { totalCount: acceptanceRows.length });
     }
 
@@ -989,6 +1260,7 @@
           }
           if (e.target.classList.contains('acceptance-row-checkbox')) {
             syncAcceptanceSelectAllState();
+            syncImportDeliveryBtnState();
           }
         });
       }
@@ -1000,8 +1272,11 @@
             cb.checked = selectAll.checked;
           });
           selectAll.indeterminate = false;
+          syncImportDeliveryBtnState();
         });
       }
+
+      document.getElementById('acceptance-import-delivery-btn')?.addEventListener('click', startDeliveryImport);
 
       document.getElementById('acceptance-settlement-btn')?.addEventListener('click', openSettlementConfirmModal);
       document.getElementById('acceptance-settlement-confirm')?.addEventListener('click', closeSettlementConfirmModal);
@@ -1083,6 +1358,68 @@
         });
       }
     });
+  </script>
+
+  <template id="prd-data-02_01_验收单管理">
+{
+  "title": "验收单管理",
+  "items": [
+    {
+      "id": "5.3.5.1",
+      "title": "导入发货单入口",
+      "htmlContent": "<div class=\"prd-spec-header\"><div class=\"prd-spec-header-title\">[5.3.5.1] 导入发货单入口</div><div class=\"prd-spec-anchors\"><a href=\"#prd-5351-overview\">功能描述</a><a href=\"#prd-5351-rules\">业务规则</a><a href=\"#prd-5351-exception\">异常处理</a></div></div><div id=\"prd-5351-overview\"><p class=\"prd-spec-section-title\">功能描述</p><p>在验收单管理列表工具栏提供「<strong>导入发货单</strong>」按钮，作为导入向导（<code>02_01_13_导入发货单.html</code>）的唯一入口。</p><p class=\"prd-spec-section-title\">页面要素</p><ul><li>位置：工具栏，与「新增验收单」「申请结算」「导出列表」相邻</li><li>默认状态：置灰不可用（<code>disabled</code>），悬停提示「请先在列表中勾选一条未开始或进行中的验收单」</li><li>启用时：蓝色描边可点击样式</li><li>禁用时：灰色边框与文字、<code>cursor-not-allowed</code>、<code>opacity-60</code></li></ul><p class=\"prd-spec-section-title\">交互逻辑</p><ul><li>列表行勾选变化或全选变化时，实时调用 <code>syncImportDeliveryBtnState()</code> 同步按钮状态</li><li>点击按钮：校验恰好勾选 1 条且状态为未开始/进行中 → 写入 <code>sessionStorage.deliveryImportContext</code> → 跳转导入向导</li><li>存在 TabManager 时以 Tab 打开「导入发货单」（<code>reload: true</code>），否则 <code>location.href</code> 跳转</li></ul></div><div id=\"prd-5351-rules\"><p class=\"prd-spec-section-title\">按钮启用条件</p><table class=\"prd-spec-table\"><thead><tr><th>条件</th><th>说明</th></tr></thead><tbody><tr><td>勾选数量</td><td>恰好 <strong>1</strong> 条验收单</td></tr><tr><td>验收单状态</td><td><span style=\"display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-right:6px;\"></span>未开始 或 <span style=\"display:inline-block;width:8px;height:8px;border-radius:50%;background:#0ea5e9;margin-right:6px;\"></span>进行中</td></tr></tbody></table><p class=\"prd-spec-section-title\">上下文写入字段</p><p>id、name、type、lang、method、supplier、shipNo、remarkText、status</p></div><div id=\"prd-5351-exception\"><p class=\"prd-spec-section-title\">异常处理</p><ul><li>未勾选或勾选多条：按钮置灰；若触发提示「请先在列表中勾选一条未开始或进行中的验收单」</li><li>勾选已结束验收单：按钮保持置灰</li></ul></div>"
+    },
+    {
+      "id": "5.3.5.2",
+      "title": "上传文件与列名映射",
+      "htmlContent": "<div class=\"prd-spec-header\"><div class=\"prd-spec-header-title\">[5.3.5.2] 上传文件与列名映射</div><div class=\"prd-spec-anchors\"><a href=\"#prd-5352-overview\">功能描述</a><a href=\"#prd-5352-rules\">业务规则</a></div></div><div id=\"prd-5352-overview\"><p class=\"prd-spec-section-title\">功能描述</p><p>导入向导第一步上传书商 Excel；第二步将 Excel 列映射到系统标准字段，并支持映射模板保存与复用。</p><p class=\"prd-spec-section-title\">第一步：上传文件</p><ul><li>必填，支持 <code>.xls</code>、<code>.xlsx</code></li><li>上传后展示文件名，可移除重选</li><li>格式不符提示「请上传 xls/xlsx 格式文件」</li></ul><p class=\"prd-spec-section-title\">第二步：列名映射</p><ul><li>说明：「将文件列映射到系统标准字段（<strong>待收套数</strong> 必填）」</li><li>展示当前标准字段池：资源类型 / 语种分类（具体语种）</li><li>映射模板：下拉选择、保存、删除（<code>localStorage</code>，<code>delivery-import-template-store.js</code>）</li><li>映射表：Excel 列名 → 标准字段下拉（含「不映射」）</li></ul><p class=\"prd-spec-section-title\">标准字段池</p><table class=\"prd-spec-table\"><thead><tr><th>资源类型</th><th>语种分类</th><th>Profile</th></tr></thead><tbody><tr><td>纸质书</td><td>中文</td><td>book_zh</td></tr><tr><td>纸质书</td><td>外文</td><td>book_foreign</td></tr><tr><td>视听资料</td><td>中文</td><td>av_zh</td></tr><tr><td>视听资料</td><td>外文</td><td>av_foreign</td></tr></tbody></table><p><strong>待收套数</strong>（<code>receiveQty</code>）四类字段池均为必填映射项，且<strong>不参与</strong>第三步匹配字段勾选。</p></div><div id=\"prd-5352-rules\"><p class=\"prd-spec-section-title\">业务规则</p><ul><li>未上传文件不可进入第二步</li><li>须完成「待收套数」映射方可进入第三步</li><li>语种判定：<code>lang === '中文'</code> 为中文，其余视为外文</li><li>内置常见列名自动映射（如 ISBN、书名、总套数等）</li></ul></div>"
+    },
+    {
+      "id": "5.3.5.3",
+      "title": "选择匹配字段与匹配预览",
+      "htmlContent": "<div class=\"prd-spec-header\"><div class=\"prd-spec-header-title\">[5.3.5.3] 选择匹配字段与匹配预览</div><div class=\"prd-spec-anchors\"><a href=\"#prd-5353-overview\">功能描述</a><a href=\"#prd-5353-rules\">业务规则</a><a href=\"#prd-5353-exception\">异常处理</a></div></div><div id=\"prd-5353-overview\"><p class=\"prd-spec-section-title\">第三步：选择匹配字段</p><ul><li>仅展示第二步已映射且可匹配的字段（<code>matchable !== false</code>）</li><li>默认勾选 ISBN + 题名（若字段池存在）</li><li>至少勾选 1 个匹配字段</li></ul><p class=\"prd-spec-section-title\">第四步：匹配预览</p><ul><li>进入时展示匹配 loading（固定 8 秒），完成后渲染预览表</li><li>主表列：序号、状态、已映射标准字段列、操作</li><li>展开子表：订单行号、馆址、已映射字段、处置（收货/换货/退货）</li><li>操作：选择订单行、删除</li><li>底部：上一步、取消、下一步</li></ul><p class=\"prd-spec-section-title\">匹配状态</p><table class=\"prd-spec-table\"><thead><tr><th>状态</th><th>显示</th><th>说明</th></tr></thead><tbody><tr><td>匹配失败</td><td><span style=\"color:#ef4444;\">匹配失败</span></td><td>未命中订单行</td></tr><tr><td>匹配成功</td><td><span style=\"color:#16a34a;\">匹配成功</span></td><td>发货待收套数 = 待收合计</td></tr><tr><td>部分收货</td><td><span style=\"color:#d97706;\">部分收货</span></td><td>发货待收套数 &lt; 待收合计</td></tr><tr><td>超收</td><td><span style=\"color:#ef4444;\">超收</span></td><td>发货待收套数 &gt; 待收合计</td></tr></tbody></table><p class=\"prd-spec-section-title\">选择订单行弹窗</p><ul><li>列表字段对齐非连续出版物订单行列表（不含馆藏/订单重复列）</li><li>检索：左侧字段下拉（默认订单号）+ 右侧模糊查询</li></ul></div><div id=\"prd-5353-rules\"><p class=\"prd-spec-section-title\">匹配与分配规则</p><ul><li>仅比对第三步所选字段，精确相等（无软差异）</li><li>部分收货按发订时间由远到近分配</li></ul><p class=\"prd-spec-section-title\">第四步校验（下一步）</p><ul><li>无记录：「没有可提交的发货记录」</li><li>匹配失败未选行：「第 N 行：匹配失败，请选择订单行或删除该行」</li><li>无效套数：「请输入有效套数」</li><li>换货/退货 &gt; 0 未填原因：「请填写换货/退货原因」</li><li>处置合计 &gt; 待收或 &gt; 发货待收套数：对应阻断提示</li></ul><p class=\"prd-spec-section-title\">换货/退货原因</p><p>缺页、错页、装订错误、纸张破损、装订不牢、书脊开裂、被污染或损坏</p></div><div id=\"prd-5353-exception\"><p class=\"prd-spec-section-title\">异常处理</p><ul><li>匹配 loading 进行中阻止重复提交</li><li>选择订单行弹窗未选行：「请至少选择一条订单行」</li></ul></div>"
+    },
+    {
+      "id": "5.3.5.4",
+      "title": "确认提交",
+      "htmlContent": "<div class=\"prd-spec-header\"><div class=\"prd-spec-header-title\">[5.3.5.4] 确认提交</div><div class=\"prd-spec-anchors\"><a href=\"#prd-5354-overview\">功能描述</a><a href=\"#prd-5354-rules\">交互逻辑</a></div></div><div id=\"prd-5354-overview\"><p class=\"prd-spec-section-title\">功能描述</p><p>第五步展示收货/换货/退货汇总，确认后提交写入当前验收单。</p><p class=\"prd-spec-section-title\">页面要素</p><ul><li>汇总：收货 X 行 Y 套、换货 X 行 Y 套、退货 X 行 Y 套</li><li>说明：「确认后将写入当前验收单」</li><li>提交前底部：上一步、取消、确认</li><li>提交成功后隐藏「上一步」，返回验收单管理</li><li>提交失败：「提交失败，请重新提交或者联系管理员」，提供取消与重新提交</li></ul></div><div id=\"prd-5354-rules\"><p class=\"prd-spec-section-title\">导航与路由</p><ul><li>面包屑「验收单管理 / 导入发货单」，点击返回列表（支持 TabManager）</li><li>向导页侧边栏高亮归属验收单管理（路由 <code>02_01_13</code>）</li></ul><blockquote>前置：已通过第四步校验。后置：成功更新验收单并返回列表；失败可重新提交。</blockquote></div>"
+    }
+  ]
+}
+  </template>
+  <script>
+    (function() {
+      window.PRD_DATA_MAP = window.PRD_DATA_MAP || {};
+      var pageId = '02_01_验收单管理';
+      var template = document.getElementById('prd-data-' + pageId);
+      if (template) {
+        try {
+          window.PRD_DATA_MAP[pageId] = JSON.parse(template.textContent);
+        } catch (e) {
+          console.error('PRD data parse error for page:', pageId, e);
+        }
+      }
+    })();
+  </script>
+  <script>
+    /**
+     * 注册 PRD 页面上下文，由壳层统一展示按钮与抽屉
+     */
+    (function registerPrdPageContext() {
+      const PAGE_ID = document.body.dataset.pageId || '02_01_验收单管理';
+      const activePage = document.body.dataset.activePage || '';
+
+      if (typeof PrdSpec !== 'undefined') {
+        PrdSpec.registerPageContext(activePage, {
+          isVisible() {
+            return true;
+          },
+          getPageData() {
+            return window.PRD_DATA_MAP?.[PAGE_ID] || null;
+          }
+        });
+      }
+    })();
   </script>
 </body>
 </html>

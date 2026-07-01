@@ -85,27 +85,32 @@
           <div class="absolute top-0 right-0 flex items-center gap-2">
             <button type="submit"
               class="px-5 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700">检索</button>
-            <button type="button" onclick="Common.resetForm('librarian-search-form')"
+            <button type="button" id="librarian-search-reset"
               class="px-5 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50">重置</button>
           </div>
           <div class="grid grid-cols-3 gap-4 pr-40">
             <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">馆员账号</label>
+              <input type="text" name="account" placeholder="请输入"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+            </div>
+            <div class="flex items-center gap-2">
               <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">馆员姓名</label>
-              <input type="text" placeholder="请输入"
+              <input type="text" name="name" placeholder="请输入"
                 class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
             </div>
             <div class="flex items-center gap-2">
               <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">订户名称</label>
-              <input type="text" placeholder="请输入"
+              <input type="text" name="subscriberName" placeholder="请输入"
                 class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 col-span-1">
               <label class="text-sm text-gray-600 whitespace-nowrap w-20 text-right">关联日期</label>
               <div class="flex flex-1 items-center gap-2">
-                <input type="date"
+                <input type="date" name="associateDateStart"
                   class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
                 <span class="text-gray-400 text-sm">~</span>
-                <input type="date"
+                <input type="date" name="associateDateEnd"
                   class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
               </div>
             </div>
@@ -126,6 +131,15 @@
             <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
                 <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-14">序号</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">
+                  <span class="inline-flex items-center gap-1">
+                    馆员账号
+                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                    </svg>
+                  </span>
+                </th>
                 <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">
                   <span class="inline-flex items-center gap-1">
                     馆员姓名
@@ -161,7 +175,7 @@
         </div>
         <!-- 分页 -->
         <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 shrink-0 bg-white">
-          <span class="text-sm text-gray-500">共 47 条记录</span>
+          <span class="text-sm text-gray-500" id="librarian-total-count">共 47 条记录</span>
           <div class="flex items-center gap-3">
             <span class="text-sm text-gray-500">第 1/1 页</span>
             <button type="button" class="px-2 py-1 border border-gray-300 rounded text-sm text-gray-400" disabled>
@@ -234,65 +248,74 @@
       '特藏部', '流通部', '东馆采编', '西馆采编'
     ];
 
-    /** 馆员池补充数据 */
-    const extraLibrarianPool = [
-      'DINGYANGYANG', 'HJJ社区编目用户1', 'STLIB01', 'XGRQP', 'ZHOUL', '采编主任组用户1',
-      '新华连锁3', '新华连锁4', '首图非遗采编人天2', '常辉'
+    /** 馆员池补充数据（仅账号，不在列表中展示） */
+    const extraLibrarians = [
+      { account: 'DINGYANGYANG', name: '丁洋洋' },
+      { account: 'STLIB01', name: '首图馆员01' },
+      { account: 'XGRQP', name: '西宫人情配' },
+      { account: 'ZHOUL', name: '周林' }
     ];
 
     /** 馆员列表示例数据 */
     const librarianRows = [
-      { name: '首图采编采编02', subscribers: '成人中文, 成人外文, 少儿中文', date: '2020-06-05' },
-      { name: '李嘉', subscribers: '采编中心、视听中心', date: '2025-01-25' },
-      { name: '王晓宇', subscribers: '视听中心', date: '2025-01-22' },
-      { name: '李竹', subscribers: '地方文献', date: '2025-01-21' },
-      { name: '郭帆', subscribers: '古籍', date: '2025-01-20' },
-      { name: '杨琳', subscribers: '历史文献', date: '2025-01-18' },
-      { name: '黄俊', subscribers: '少儿阅读', date: '2025-01-17' },
-      { name: '陆丰', subscribers: '外文书刊', date: '2025-01-16' },
-      { name: '范冬', subscribers: '期刊中心', date: '2025-01-15' },
-      { name: '张苏白鸥', subscribers: '数字资源', date: '2025-01-14' },
-      { name: '李想', subscribers: '参考咨询', date: '2025-01-13' },
-      { name: '张曼', subscribers: '特藏部', date: '2025-01-12' },
-      { name: '首图采编采编01', subscribers: '流通部', date: '2025-01-11' },
-      { name: '首图采编采编03', subscribers: '东馆采编', date: '2025-01-10' },
-      { name: '首图采编采编04', subscribers: '西馆采编', date: '2025-01-09' },
-      { name: '首图采编采编05', subscribers: '大兴分馆', date: '2025-01-08' },
-      { name: '首图流通01', subscribers: '城市图书馆', date: '2025-01-07' },
-      { name: '首图流通02', subscribers: '华威桥馆', date: '2025-01-06' },
-      { name: '首图参考01', subscribers: '台湖库房', date: '2025-01-05' },
-      { name: '首图少儿01', subscribers: '成人中文, 少儿中文', date: '2020-06-04' },
-      { name: '首图少儿02', subscribers: '成人外文', date: '2020-06-03' },
-      { name: '首图古籍01', subscribers: '古籍, 特藏部', date: '2020-06-02' },
-      { name: '首图视听01', subscribers: '视听中心, 数字资源', date: '2020-06-01' },
-      { name: '首图地方01', subscribers: '地方文献', date: '2020-05-31' },
-      { name: '首图期刊01', subscribers: '期刊中心', date: '2020-05-30' },
-      { name: '首图外文01', subscribers: '外文书刊', date: '2020-05-29' },
-      { name: '首图历史01', subscribers: '历史文献', date: '2020-05-28' },
-      { name: '首图采编06', subscribers: '采编中心', date: '2020-05-27' },
-      { name: '首图采编07', subscribers: '采编中心、流通部', date: '2020-05-26' },
-      { name: '首图采编08', subscribers: '东馆采编、西馆采编', date: '2020-05-25' },
-      { name: '首图采编09', subscribers: '大兴分馆', date: '2020-05-24' },
-      { name: '首图采编10', subscribers: '城市图书馆', date: '2020-05-23' },
-      { name: '首图采编11', subscribers: '华威桥馆', date: '2020-05-22' },
-      { name: '首图采编12', subscribers: '台湖库房', date: '2020-05-21' },
-      { name: '首图采编13', subscribers: '参考咨询', date: '2020-05-20' },
-      { name: '首图采编14', subscribers: '少儿阅读', date: '2020-05-19' },
-      { name: '首图采编15', subscribers: '成人中文', date: '2020-05-18' },
-      { name: '首图采编16', subscribers: '成人外文, 外文书刊', date: '2020-05-17' },
-      { name: '首图采编17', subscribers: '数字资源', date: '2020-05-16' },
-      { name: '首图采编18', subscribers: '特藏部', date: '2020-05-15' },
-      { name: '首图采编19', subscribers: '古籍', date: '2020-05-14' },
-      { name: '首图采编20', subscribers: '地方文献, 历史文献', date: '2020-05-13' },
-      { name: '首图采编21', subscribers: '期刊中心', date: '2020-05-12' },
-      { name: '首图采编22', subscribers: '流通部', date: '2020-05-11' },
-      { name: '首图采编23', subscribers: '视听中心', date: '2020-05-10' },
-      { name: '首图采编24', subscribers: '采编中心', date: '2020-05-09' },
-      { name: '首图采编25', subscribers: '东馆采编', date: '2020-05-08' }
+      { account: 'STST1XGW', name: '首图视听夏高娃', subscribers: '视听中心, 数字资源', date: '2020-06-05' },
+      { account: 'STDFZLT', name: '首图地方文献赵兰天', subscribers: '地方文献', date: '2025-01-25' },
+      { account: 'STECZB44', name: '首图采编少儿编目4', subscribers: '少儿中文, 少儿外文', date: '2025-01-22' },
+      { account: 'STECZB61', name: '首图少儿出版荆要武', subscribers: '少儿中文', date: '2025-01-21' },
+      { account: 'STECZB62', name: '首图少儿中采缪文娜', subscribers: '少儿中文', date: '2025-01-20' },
+      { account: 'STECZB63', name: '首图少儿中采张颖', subscribers: '少儿中文, 成人中文', date: '2025-01-18' },
+      { account: 'STECZB65', name: '首图采编少儿审校5', subscribers: '少儿中文', date: '2025-01-17' },
+      { account: 'STECZB42', name: '首图采编赵玉萍', subscribers: '采编中心、视听中心', date: '2025-01-16' },
+      { account: 'STDFZLT01', name: '首图地方文献赵兰天01', subscribers: '地方文献', date: '2025-01-15' },
+      { account: 'STECZB49', name: '首图采编少儿编目9', subscribers: '少儿阅读', date: '2025-01-14' },
+      { account: 'STCBSJHY04', name: '首图采编数据核验4', subscribers: '采编中心', date: '2025-01-13' },
+      { account: 'STFYBM03', name: '首图非遗审校回溯3', subscribers: '古籍民国图书', date: '2025-01-12' },
+      { account: 'STECWB64', name: '少儿西文编目4', subscribers: '少儿外文, 外文书刊', date: '2025-01-11' },
+      { account: 'STCZC606', name: '首图采编采访606', subscribers: '成人中文, 成人外文, 少儿中文', date: '2025-01-10' },
+      { account: 'STCBSJHY08', name: '首图采编数据核验8', subscribers: '采编中心', date: '2025-01-09' },
+      { account: 'STFYCF03', name: '首图非遗采编人天1', subscribers: '古籍民国图书', date: '2025-01-08' },
+      { account: 'STFYCF02', name: '首图非遗采编新华连锁2', subscribers: '采编中心', date: '2025-01-07' },
+      { account: 'STDFWB06', name: '新华连锁4', subscribers: '采编中心', date: '2025-01-06' },
+      { account: 'STDFWB05', name: '新华连锁3', subscribers: '采编中心', date: '2025-01-05' },
+      { account: 'STDFZYN01', name: '首图地方文献张一楠01', subscribers: '地方文献', date: '2020-06-04' },
+      { account: 'STFYBM04', name: '首图非遗审校回溯4', subscribers: '古籍, 特藏部', date: '2020-06-03' },
+      { account: 'STFYCF01', name: '首图非遗采编新华连锁1', subscribers: '特藏部', date: '2020-06-02' },
+      { account: 'STFYCF04', name: '首图非遗采编人天2', subscribers: '历史文献', date: '2020-06-01' },
+      { account: 'STECZB01', name: '首图采编编目1', subscribers: '流通部', date: '2020-05-31' },
+      { account: 'STECZB02', name: '首图采编编目2', subscribers: '东馆采编', date: '2020-05-30' },
+      { account: 'STECZB03', name: '首图采编编目3', subscribers: '西馆采编', date: '2020-05-29' },
+      { account: 'STLT001', name: '首图流通编目1', subscribers: '期刊中心', date: '2020-05-28' },
+      { account: 'STLT002', name: '首图流通编目2', subscribers: '参考咨询', date: '2020-05-27' },
+      { account: 'STREF01', name: '首图参考咨询1', subscribers: '参考咨询', date: '2020-05-26' },
+      { account: 'STREF02', name: '首图参考咨询2', subscribers: '数字资源', date: '2020-05-25' },
+      { account: 'STPER01', name: '首图期刊编目1', subscribers: '期刊中心', date: '2020-05-24' },
+      { account: 'STPER02', name: '首图期刊编目2', subscribers: '外文书刊', date: '2020-05-23' },
+      { account: 'STHIS01', name: '首图历史文献1', subscribers: '历史文献', date: '2020-05-22' },
+      { account: 'STHIS02', name: '首图历史文献2', subscribers: '历史文献', date: '2020-05-21' },
+      { account: 'STADU01', name: '首图成人中文编目1', subscribers: '成人中文', date: '2020-05-20' },
+      { account: 'STADU02', name: '首图成人外文编目1', subscribers: '成人外文', date: '2020-05-19' },
+      { account: 'STCHI01', name: '首图少儿中文编目1', subscribers: '少儿中文', date: '2020-05-18' },
+      { account: 'STCHI02', name: '首图少儿外文编目1', subscribers: '少儿外文', date: '2020-05-17' },
+      { account: 'STSPE01', name: '首图特藏编目1', subscribers: '特藏部', date: '2020-05-16' },
+      { account: 'STSPE02', name: '首图特藏编目2', subscribers: '古籍', date: '2020-05-15' },
+      { account: 'STEAST01', name: '首图东馆采编1', subscribers: '东馆采编', date: '2020-05-14' },
+      { account: 'STWEST01', name: '首图西馆采编1', subscribers: '西馆采编', date: '2020-05-13' },
+      { account: 'STFLOW01', name: '首图流通部1', subscribers: '流通部', date: '2020-05-12' },
+      { account: 'STFLOW02', name: '首图流通部2', subscribers: '流通部', date: '2020-05-11' },
+      { account: 'STAV01', name: '首图视听编目1', subscribers: '视听中心', date: '2020-05-10' },
+      { account: 'STAV02', name: '首图视听编目2', subscribers: '视听中心', date: '2020-05-09' },
+      { account: 'STCB01', name: '首图采编中心1', subscribers: '采编中心', date: '2020-05-08' },
+      { account: 'STCB02', name: '首图采编中心2', subscribers: '采编中心', date: '2020-05-07' }
     ];
 
-    /** 全部馆员姓名池 */
+    /** 全部馆员账号池 */
     let allLibrarianPool = [];
+
+    /** 馆员账号与姓名映射 */
+    let librarianNameByAccount = {};
+
+    /** 当前展示的馆员列表 */
+    let displayedLibrarianRows = [];
 
     /** 订户与馆员关联关系 */
     let subscriberLibrarianAssoc = {};
@@ -305,14 +328,34 @@
      * @returns {string[]}
      */
     function buildAllLibrarianPool() {
-      const names = new Set([
-        ...librarianRows.map(row => row.name),
-        ...extraLibrarianPool
+      const accounts = new Set([
+        ...librarianRows.map(row => row.account),
+        ...extraLibrarians.map(item => item.account)
       ]);
       for (let i = 1; i <= 326; i += 1) {
-        names.add(`系统馆员用户${String(i).padStart(3, '0')}`);
+        accounts.add(`STSYS${String(i).padStart(3, '0')}`);
       }
-      return [...names].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+      return [...accounts].sort((a, b) => a.localeCompare(b, 'en'));
+    }
+
+    /**
+     * 构建馆员账号与姓名映射
+     * @returns {Record<string, string>}
+     */
+    function buildLibrarianNameByAccount() {
+      /** @type {Record<string, string>} */
+      const map = {};
+      librarianRows.forEach(row => {
+        map[row.account] = row.name;
+      });
+      extraLibrarians.forEach(item => {
+        if (!map[item.account]) map[item.account] = item.name;
+      });
+      for (let i = 1; i <= 326; i += 1) {
+        const account = `STSYS${String(i).padStart(3, '0')}`;
+        if (!map[account]) map[account] = `系统馆员${String(i).padStart(3, '0')}`;
+      }
+      return map;
     }
 
     /**
@@ -325,7 +368,7 @@
       librarianRows.forEach(row => {
         row.subscribers.split(/[,、]/).map(text => text.trim()).filter(Boolean).forEach(subscriber => {
           if (!map[subscriber]) map[subscriber] = [];
-          if (!map[subscriber].includes(row.name)) map[subscriber].push(row.name);
+          if (!map[subscriber].includes(row.account)) map[subscriber].push(row.account);
         });
       });
       return map;
@@ -347,29 +390,30 @@
      */
     function syncLibrarianRowsFromAssoc() {
       const librarianSubscriberMap = {};
-      Object.entries(subscriberLibrarianAssoc).forEach(([subscriber, librarians]) => {
-        librarians.forEach(name => {
-          if (!librarianSubscriberMap[name]) librarianSubscriberMap[name] = [];
-          if (!librarianSubscriberMap[name].includes(subscriber)) {
-            librarianSubscriberMap[name].push(subscriber);
+      Object.entries(subscriberLibrarianAssoc).forEach(([subscriber, accounts]) => {
+        accounts.forEach(account => {
+          if (!librarianSubscriberMap[account]) librarianSubscriberMap[account] = [];
+          if (!librarianSubscriberMap[account].includes(subscriber)) {
+            librarianSubscriberMap[account].push(subscriber);
           }
         });
       });
 
-      const existingNames = new Set(librarianRows.map(row => row.name));
-      Object.keys(librarianSubscriberMap).forEach(name => {
-        if (!existingNames.has(name)) {
+      const existingAccounts = new Set(librarianRows.map(row => row.account));
+      Object.keys(librarianSubscriberMap).forEach(account => {
+        if (!existingAccounts.has(account)) {
           librarianRows.push({
-            name,
-            subscribers: librarianSubscriberMap[name].join(', '),
+            account,
+            name: librarianNameByAccount[account] || account,
+            subscribers: librarianSubscriberMap[account].join(', '),
             date: getTodayString()
           });
-          existingNames.add(name);
+          existingAccounts.add(account);
         }
       });
 
       librarianRows.forEach(row => {
-        row.subscribers = (librarianSubscriberMap[row.name] || []).join(', ');
+        row.subscribers = (librarianSubscriberMap[row.account] || []).join(', ');
       });
     }
 
@@ -425,12 +469,39 @@
     }
 
     /**
+     * 根据检索条件过滤馆员列表
+     * @returns {typeof librarianRows}
+     */
+    function filterLibrarianRows() {
+      const form = document.getElementById('librarian-search-form');
+      if (!form) return [...librarianRows];
+
+      const account = form.account?.value.trim() || '';
+      const name = form.name?.value.trim() || '';
+      const subscriberName = form.subscriberName?.value.trim() || '';
+      const dateStart = form.associateDateStart?.value || '';
+      const dateEnd = form.associateDateEnd?.value || '';
+
+      return librarianRows.filter(row => {
+        if (account && !row.account.includes(account)) return false;
+        if (name && !row.name.includes(name)) return false;
+        if (subscriberName && !row.subscribers.includes(subscriberName)) return false;
+        if (dateStart && row.date < dateStart) return false;
+        if (dateEnd && row.date > dateEnd) return false;
+        return true;
+      });
+    }
+
+    /**
      * 渲染馆员表格
      */
     function renderLibrarianTable() {
       const tbody = document.getElementById('librarian-table-body');
       if (!tbody) return;
-      tbody.innerHTML = librarianRows.map((row, i) => renderLibrarianRow(row, i + 1)).join('');
+      displayedLibrarianRows = filterLibrarianRows();
+      tbody.innerHTML = displayedLibrarianRows.map((row, i) => renderLibrarianRow(row, i + 1)).join('');
+      const totalEl = document.getElementById('librarian-total-count');
+      if (totalEl) totalEl.textContent = `共 ${displayedLibrarianRows.length} 条记录`;
     }
 
     /**
@@ -443,6 +514,7 @@
       return `
         <tr class="hover:bg-gray-50">
           <td class="px-3 py-2 text-gray-600">${index}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${row.account}</td>
           <td class="px-3 py-2 whitespace-nowrap">${row.name}</td>
           <td class="px-3 py-2 text-gray-600 leading-relaxed">${row.subscribers}</td>
           <td class="px-3 py-2 whitespace-nowrap">${row.date}</td>
@@ -454,13 +526,30 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       allLibrarianPool = buildAllLibrarianPool();
+      librarianNameByAccount = buildLibrarianNameByAccount();
       subscriberLibrarianAssoc = buildSubscriberLibrarianAssoc();
       initAssociateSubscriberSelect();
       librarianTransferId = TransferList.init(
         document.getElementById('librarian-associate-transfer'),
-        { items: allLibrarianPool, selected: [] }
+        {
+          items: allLibrarianPool,
+          selected: [],
+          leftSearchPlaceholder: '请输入馆员账号',
+          leftFilter: account => account,
+          leftLabel: account => account
+        }
       );
       renderLibrarianTable();
+
+      document.getElementById('librarian-search-form')?.addEventListener('submit', e => {
+        e.preventDefault();
+        renderLibrarianTable();
+      });
+
+      document.getElementById('librarian-search-reset')?.addEventListener('click', () => {
+        Common.resetForm('librarian-search-form');
+        renderLibrarianTable();
+      });
 
       document.getElementById('librarian-associate-btn')?.addEventListener('click', openLibrarianAssociateModal);
 
@@ -476,6 +565,7 @@
         const subscriberName = form.subscriberName.value;
         subscriberLibrarianAssoc[subscriberName] = TransferList.getSelected(librarianTransferId);
         syncLibrarianRowsFromAssoc();
+        librarianNameByAccount = buildLibrarianNameByAccount();
         renderLibrarianTable();
         document.getElementById('librarian-associate-modal')?.classList.add('hidden');
       });

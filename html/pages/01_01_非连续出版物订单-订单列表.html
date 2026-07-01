@@ -577,7 +577,7 @@
   data-active-page="01_01_非连续出版物订单-订单列表.html">
 
   <button type="button" id="prd-spec-trigger"
-    class="hidden px-3 py-1.5 text-sm text-sky-600 bg-white border border-sky-200 rounded shadow-sm hover:bg-sky-50">
+    class="hidden prd-spec-page-local px-3 py-1.5 text-sm text-sky-600 bg-white border border-sky-200 rounded shadow-sm hover:bg-sky-50">
     PRD说明
   </button>
 
@@ -746,7 +746,7 @@
               <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">导出订单</a>
             </div>
           </div>
-          <a href="01_01_18_馆藏查重.html" id="order-dedup-btn"
+          <a href="01_01_18_书目查询.html" id="order-dedup-btn"
             class="hidden px-4 py-1.5 bg-teal-500 text-white text-sm rounded hover:bg-teal-600">查重</a>
           <button type="button" id="order-z3950-btn"
             class="hidden px-4 py-1.5 bg-teal-500 text-white text-sm rounded hover:bg-teal-600">查Z3950</button>
@@ -1557,8 +1557,8 @@
     </aside>
   </div>
 
-  <!-- PRD 需求说明抽屉 -->
-  <div id="prd-spec-drawer" class="prd-spec-drawer hidden" aria-hidden="true">
+  <!-- PRD 需求说明抽屉（页面级，壳层启用后隐藏） -->
+  <div id="prd-spec-drawer" class="prd-spec-drawer prd-spec-page-local hidden" aria-hidden="true">
     <div id="prd-spec-drawer-mask" class="prd-spec-drawer-mask"></div>
     <aside id="prd-spec-drawer-panel" class="prd-spec-drawer-panel" role="dialog"
       aria-modal="true" aria-labelledby="prd-spec-drawer-title">
@@ -1575,6 +1575,7 @@
   <script src="../js/config.js"></script>
   <script src="../js/layout.js"></script>
   <script src="../js/tab-manager.js"></script>
+  <script src="../js/prd-spec.js"></script>
   <script src="../js/common.js"></script>
   <script src="../js/import-template-data.js"></script>
   <script>
@@ -4207,6 +4208,8 @@
         panel.classList.toggle('hidden', panel.dataset.orderPanel !== tab);
       });
       document.getElementById('prd-spec-trigger')?.classList.toggle('hidden', tab !== 'order-line');
+      window.__prdSetOrderTab?.(tab);
+      PrdSpec.getShellInstance()?.syncActive(document.body.dataset.activePage || '');
       history.replaceState(null, '', `#${tab}`);
     }
 
@@ -4959,98 +4962,33 @@
           {
             id: '03',
             title: '查重结果展示',
-            htmlContent: '<div class="prd-spec-header"><div class="prd-spec-header-title">[03] 查重结果展示</div></div><div id="prd-03-overview"><p class="prd-spec-section-title">功能描述</p><p>查重完成后，在订单行列表展示重复标识；用户可查看详细查重结果。</p><p class="prd-spec-section-title">列表重复标识列</p><p>列表新增两列：<strong>馆藏重复</strong>、<strong>订单重复</strong>。</p><table class="prd-spec-table"><thead><tr><th>状态</th><th>显示</th></tr></thead><tbody><tr><td>未查重</td><td>空白</td></tr><tr><td>无重复</td><td>「无」</td></tr><tr><td>有重复</td><td>蓝色文字链「<strong>有</strong>」，点击打开查重结果侧滑面板</td></tr></tbody></table><p class="prd-spec-section-title">查重结果侧滑面板</p><ul><li>从页面右侧滑出，宽度约页面 75%（最小 520px，最大 960px）</li><li>标题：「馆藏重复查重结果」或「订单重复查重结果」</li><li>摘要区显示：当前订单行号、查重字段（本次使用的字段）、重复记录数；馆藏重复另显示<strong>总复本数</strong>，订单重复另显示<strong>总套数</strong></li></ul><p class="prd-spec-section-title">馆藏查重结果</p><p>内容区顶部提供「<strong>书目</strong>」「<strong>MARC信息</strong>」两个页签，默认展示「书目」页签。</p><p class="prd-spec-section-title">书目页签</p><ul><li>以<strong>书目卡片</strong>形式展示重复书目；卡片头部展示题名，以及书目记录号、ISBN、作者、出版社、出版年</li><li>卡片头部可点击展开/收起；展开后展示<strong>四层馆藏树</strong>：机构 → 馆区 → 分馆 → 馆藏地</li><li>馆藏地节点以蓝色圆角标签展示复本数，如「1本」「2本」</li><li>默认展开当前页第一条书目卡片</li><li>操作列「查看」：切换至「MARC信息」页签，展示<strong>当前书目</strong>的 MARC 详细信息（不跳转外部页面）</li></ul><p class="prd-spec-section-title">MARC信息页签</p><ul><li>顶部显示书目记录号标签，如「书目记录号【BIB2024002001】」</li><li>下方表格展示 MARC 字段详情，列：字段名、指示符、字段内容（格式与书目查询页 <code>01_01_18_馆藏查重.html</code> 详细信息侧滑面板一致）</li><li>直接点击「MARC信息」页签：默认展示查重结果<strong>第一条书目</strong>的 MARC 信息</li><li>在书目页签点击某条「查看」：切换至本页签并展示该书目 MARC 信息</li></ul><p class="prd-spec-section-title">订单查重结果</p><ul><li>以表格形式展示，字段：订单行号、馆址、正题名、资源标识、作者、套内册数、套数、行状态、发订时间</li><li><em>操作列暂隐藏，后续版本开放「查看」跳转订单行详情</em></li></ul><p class="prd-spec-section-title">交互与排序</p><ul><li>结果列表支持分页，默认 5 条/页，可选 5 / 10 / 20 / 50 条/页</li><li>分页控件：上一页、页码、下一页、每页条数选择</li><li>无重复记录时，内容区显示「暂无查重结果」</li><li>点击遮罩或关闭按钮关闭侧滑面板</li></ul></div><div id="prd-03-rules"><p class="prd-spec-section-title">业务规则</p><ul><li><strong>订单查重</strong>比对范围：当前登录馆员<strong>关联订户</strong>下的全部订单行（不含当前行自身）</li><li><strong>馆藏查重</strong>比对范围：馆藏書目库</li><li>重复标识按本次查重配置的重复类型分别更新（选择「不限」时同时更新两列）</li></ul><p class="prd-spec-section-title">数据权限</p><blockquote>查重与查重结果均受订户数据隔离约束，仅比对当前用户所属订户可见范围内的订单行与馆藏数据。</blockquote></div><div id="prd-03-exception"><p class="prd-spec-section-title">异常处理</p><ul><li>重复标识为「有」时方可打开结果面板；「无」或未查重时不响应点击</li><li>结果为空时显示「暂无查重结果」，分页显示第 1/1 页</li></ul></div>'
+            htmlContent: '<div class="prd-spec-header"><div class="prd-spec-header-title">[03] 查重结果展示</div></div><div id="prd-03-overview"><p class="prd-spec-section-title">功能描述</p><p>查重完成后，在订单行列表展示重复标识；用户可查看详细查重结果。</p><p class="prd-spec-section-title">列表重复标识列</p><p>列表新增两列：<strong>馆藏重复</strong>、<strong>订单重复</strong>。</p><table class="prd-spec-table"><thead><tr><th>状态</th><th>显示</th></tr></thead><tbody><tr><td>未查重</td><td>空白</td></tr><tr><td>无重复</td><td>「无」</td></tr><tr><td>有重复</td><td>蓝色文字链「<strong>有</strong>」，点击打开查重结果侧滑面板</td></tr></tbody></table><p class="prd-spec-section-title">查重结果侧滑面板</p><ul><li>从页面右侧滑出，宽度约页面 75%（最小 520px，最大 960px）</li><li>标题：「馆藏重复查重结果」或「订单重复查重结果」</li><li>摘要区显示：当前订单行号、查重字段（本次使用的字段）、重复记录数；馆藏重复另显示<strong>总复本数</strong>，订单重复另显示<strong>总套数</strong></li></ul><p class="prd-spec-section-title">馆藏查重结果</p><p>内容区顶部提供「<strong>书目</strong>」「<strong>MARC信息</strong>」两个页签，默认展示「书目」页签。</p><p class="prd-spec-section-title">书目页签</p><ul><li>以<strong>书目卡片</strong>形式展示重复书目；卡片头部展示题名，以及书目记录号、ISBN、作者、出版社、出版年</li><li>卡片头部可点击展开/收起；展开后展示<strong>四层馆藏树</strong>：机构 → 馆区 → 分馆 → 馆藏地</li><li>馆藏地节点以蓝色圆角标签展示复本数，如「1本」「2本」</li><li>默认展开当前页第一条书目卡片</li><li>操作列「查看」：切换至「MARC信息」页签，展示<strong>当前书目</strong>的 MARC 详细信息（不跳转外部页面）</li></ul><p class="prd-spec-section-title">MARC信息页签</p><ul><li>顶部显示书目记录号标签，如「书目记录号【BIB2024002001】」</li><li>下方表格展示 MARC 字段详情，列：字段名、指示符、字段内容（格式与书目查询页 <code>01_01_18_书目查询.html</code> 详细信息侧滑面板一致）</li><li>直接点击「MARC信息」页签：默认展示查重结果<strong>第一条书目</strong>的 MARC 信息</li><li>在书目页签点击某条「查看」：切换至本页签并展示该书目 MARC 信息</li></ul><p class="prd-spec-section-title">订单查重结果</p><ul><li>以表格形式展示，字段：订单行号、馆址、正题名、资源标识、作者、套内册数、套数、行状态、发订时间</li><li><em>操作列暂隐藏，后续版本开放「查看」跳转订单行详情</em></li></ul><p class="prd-spec-section-title">交互与排序</p><ul><li>结果列表支持分页，默认 5 条/页，可选 5 / 10 / 20 / 50 条/页</li><li>分页控件：上一页、页码、下一页、每页条数选择</li><li>无重复记录时，内容区显示「暂无查重结果」</li><li>点击遮罩或关闭按钮关闭侧滑面板</li></ul></div><div id="prd-03-rules"><p class="prd-spec-section-title">业务规则</p><ul><li><strong>订单查重</strong>比对范围：当前登录馆员<strong>关联订户</strong>下的全部订单行（不含当前行自身）</li><li><strong>馆藏查重</strong>比对范围：馆藏書目库</li><li>重复标识按本次查重配置的重复类型分别更新（选择「不限」时同时更新两列）</li></ul><p class="prd-spec-section-title">数据权限</p><blockquote>查重与查重结果均受订户数据隔离约束，仅比对当前用户所属订户可见范围内的订单行与馆藏数据。</blockquote></div><div id="prd-03-exception"><p class="prd-spec-section-title">异常处理</p><ul><li>重复标识为「有」时方可打开结果面板；「无」或未查重时不响应点击</li><li>结果为空时显示「暂无查重结果」，分页显示第 1/1 页</li></ul></div>'
           }
         ]
       }
     };
 
     /**
-     * 初始化 PRD 需求说明抽屉
+     * 注册 PRD 页面上下文，由壳层统一展示按钮与抽屉
      */
-    (function initPrdSpecDrawer() {
-      const PAGE_ID = '01_01_01_订单行列表';
-      const drawer = document.getElementById('prd-spec-drawer');
-      const trigger = document.getElementById('prd-spec-trigger');
-      const navEl = document.getElementById('prd-spec-item-nav');
-      const contentEl = document.getElementById('prd-spec-content');
-      const titleEl = document.getElementById('prd-spec-drawer-title');
-      const pageData = window.PRD_DATA?.[PAGE_ID];
-      let activeItemId = pageData?.items?.[0]?.id || '01';
-      let drawerOpen = false;
-      let drawerTimer = null;
+    (function registerPrdPageContext() {
+      const activePage = document.body.dataset.activePage || '';
+      let prdOrderTab = (location.hash || '').replace('#', '') || 'order-list';
 
-      /**
-       * 渲染当前选中的需求项
-       */
-      function renderActiveItem() {
-        if (!pageData || !contentEl || !navEl) return;
+      window.__prdSetOrderTab = tab => {
+        prdOrderTab = tab;
+      };
 
-        const activeItem = pageData.items.find(item => item.id === activeItemId) || pageData.items[0];
-        if (!activeItem) return;
-
-        activeItemId = activeItem.id;
-        if (titleEl) titleEl.textContent = `${pageData.title} · PRD 需求说明`;
-
-        navEl.innerHTML = pageData.items.map(item => `
-          <button type="button" class="prd-spec-item-btn${item.id === activeItemId ? ' active' : ''}"
-            data-prd-item-id="${item.id}">[${item.id}] ${item.title || ''}</button>`).join('');
-
-        contentEl.innerHTML = activeItem.htmlContent || '';
+      if (typeof PrdSpec !== 'undefined') {
+        PrdSpec.registerPageContext(activePage, {
+          isVisible() {
+            return prdOrderTab === 'order-line';
+          },
+          getPageData() {
+            return window.PRD_DATA?.['01_01_01_订单行列表'] || null;
+          }
+        });
       }
-
-      /**
-       * 打开 PRD 抽屉
-       */
-      function openPrdDrawer() {
-        if (!drawer || drawerOpen) return;
-        renderActiveItem();
-        drawer.classList.remove('hidden');
-        drawer.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('order-line-dedup-drawer-open');
-        requestAnimationFrame(() => drawer.classList.add('is-open'));
-        drawerOpen = true;
-      }
-
-      /**
-       * 关闭 PRD 抽屉
-       */
-      function closePrdDrawer() {
-        if (!drawer || !drawerOpen) return;
-        drawer.classList.remove('is-open');
-        drawer.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('order-line-dedup-drawer-open');
-        drawerOpen = false;
-        if (drawerTimer) clearTimeout(drawerTimer);
-        drawerTimer = window.setTimeout(() => {
-          drawer.classList.add('hidden');
-          drawerTimer = null;
-        }, 300);
-      }
-
-      trigger?.addEventListener('click', openPrdDrawer);
-      document.getElementById('prd-spec-drawer-close')?.addEventListener('click', closePrdDrawer);
-      document.getElementById('prd-spec-drawer-mask')?.addEventListener('click', closePrdDrawer);
-      document.getElementById('prd-spec-drawer-panel')?.addEventListener('click', event => {
-        event.stopPropagation();
-      });
-
-      navEl?.addEventListener('click', event => {
-        const btn = event.target.closest('[data-prd-item-id]');
-        if (!btn) return;
-        activeItemId = btn.dataset.prdItemId || activeItemId;
-        renderActiveItem();
-      });
-
-      contentEl?.addEventListener('click', event => {
-        const anchor = event.target.closest('a[href^="#"]');
-        if (!anchor) return;
-        const target = contentEl.querySelector(anchor.getAttribute('href'));
-        if (target) {
-          event.preventDefault();
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
     })();
   </script>
 </body>

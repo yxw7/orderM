@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>导入发货单</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    body[data-active-page="02_01_13_导入发货单.html"] #page-content {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body[data-active-page="02_01_13_导入发货单.html"] #delivery-import-page {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    body[data-active-page="02_01_13_导入发货单.html"] .delivery-import-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .delivery-step-line.done { background-color: #0284c7; }
+    .delivery-step-circle.active {
+      border-color: #0284c7;
+      background-color: #0284c7;
+      color: #fff;
+    }
+    .delivery-step-circle.done {
+      border-color: #0284c7;
+      background-color: #e0f2fe;
+      color: #0284c7;
+    }
+    .delivery-step-title.active { color: #0284c7; font-weight: 500; }
+
+    #delivery-remark-text.truncate-remark {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      vertical-align: bottom;
+    }
+
+    #delivery-remark-tooltip {
+      position: fixed;
+      z-index: 80;
+      max-width: 320px;
+      padding: 8px 12px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+      font-size: 13px;
+      line-height: 1.6;
+      color: #374151;
+      white-space: pre-wrap;
+      word-break: break-word;
+      pointer-events: none;
+    }
+
+    @keyframes delivery-match-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .delivery-matching-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e5e7eb;
+      border-top-color: #0284c7;
+      border-radius: 50%;
+      animation: delivery-match-spin 0.8s linear infinite;
+    }
+
+    .delivery-preview-chevron {
+      width: 12px;
+      height: 12px;
+      transition: transform 0.2s ease;
+    }
+
+    .delivery-toggle-row.is-expanded .delivery-preview-chevron {
+      transform: rotate(90deg);
+    }
+
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="导入发货单"
+  data-active-page="02_01_13_导入发货单.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden flex flex-col h-full overflow-hidden">
+    <div id="delivery-import-page">
+      <!-- 面包屑 -->
+      <div id="delivery-import-breadcrumb" class="flex items-center gap-2 mb-4 text-sm shrink-0">
+        <a href="02_01_验收单管理.html" id="delivery-import-breadcrumb-back"
+          class="flex items-center gap-1 text-gray-500 hover:text-sky-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          验收单管理
+        </a>
+        <span class="text-gray-400">/</span>
+        <span class="text-gray-800 font-medium">导入发货单</span>
+      </div>
+
+      <!-- 验收单信息顶栏 -->
+      <div class="bg-white rounded border border-gray-200 px-5 py-3 mb-4 shrink-0">
+        <div class="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm text-gray-700">
+          <span>验收单号：<span id="delivery-ctx-id" class="text-gray-900">—</span></span>
+          <span>验收单名称：<span id="delivery-ctx-name" class="text-gray-900">—</span></span>
+          <span>资源类型：<span id="delivery-ctx-type" class="text-gray-900">—</span></span>
+          <span>语种：<span id="delivery-ctx-lang" class="text-gray-900">—</span></span>
+          <span>发货单号：<span id="delivery-ctx-ship" class="text-gray-900">—</span></span>
+          <span>供应商：<span id="delivery-ctx-supplier" class="text-gray-900">—</span></span>
+          <span class="flex items-center gap-1 min-w-0">
+            验收备注：
+            <span id="delivery-remark-text" class="text-gray-900 truncate-remark">—</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- 步骤条 -->
+      <div id="delivery-import-steps" class="bg-white rounded border border-gray-200 px-6 py-4 mb-4 shrink-0">
+        <div class="flex items-start">
+          <div class="delivery-import-step flex flex-col items-center flex-1" data-step="1">
+            <div class="delivery-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 border-gray-300 text-gray-400">1</div>
+            <p class="delivery-step-title mt-2 text-sm text-gray-400">上传文件</p>
+          </div>
+          <div class="delivery-step-line flex-shrink-0 w-12 h-0.5 bg-gray-200 mt-4"></div>
+          <div class="delivery-import-step flex flex-col items-center flex-1" data-step="2">
+            <div class="delivery-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 border-gray-300 text-gray-400">2</div>
+            <p class="delivery-step-title mt-2 text-sm text-gray-400">列名映射</p>
+          </div>
+          <div class="delivery-step-line flex-shrink-0 w-12 h-0.5 bg-gray-200 mt-4"></div>
+          <div class="delivery-import-step flex flex-col items-center flex-1" data-step="3">
+            <div class="delivery-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 border-gray-300 text-gray-400">3</div>
+            <p class="delivery-step-title mt-2 text-sm text-gray-400">选择匹配字段</p>
+          </div>
+          <div class="delivery-step-line flex-shrink-0 w-12 h-0.5 bg-gray-200 mt-4"></div>
+          <div class="delivery-import-step flex flex-col items-center flex-1" data-step="4">
+            <div class="delivery-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 border-gray-300 text-gray-400">4</div>
+            <p class="delivery-step-title mt-2 text-sm text-gray-400">匹配预览</p>
+          </div>
+          <div class="delivery-step-line flex-shrink-0 w-12 h-0.5 bg-gray-200 mt-4"></div>
+          <div class="delivery-import-step flex flex-col items-center flex-1" data-step="5">
+            <div class="delivery-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 border-gray-300 text-gray-400">5</div>
+            <p class="delivery-step-title mt-2 text-sm text-gray-400">确认提交</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="delivery-import-body flex flex-col min-h-0">
+        <!-- ① 上传文件 -->
+        <div id="delivery-step-1" class="bg-white rounded border border-gray-200 p-6 flex-1">
+          <div class="flex items-start gap-3 max-w-2xl">
+            <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+              <span class="text-red-500">*</span> 文件上传
+            </label>
+            <div class="flex-1">
+              <div class="flex items-center gap-3 flex-wrap">
+                <button type="button" id="delivery-upload-btn"
+                  class="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-50">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/>
+                  </svg>
+                  上传文件
+                </button>
+                <input type="file" id="delivery-file-input" accept=".xls,.xlsx" class="hidden">
+                <div id="delivery-file-info" class="hidden items-center gap-2 text-sm text-gray-700">
+                  <span id="delivery-file-name"></span>
+                  <button type="button" id="delivery-file-remove"
+                    class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+                </div>
+              </div>
+              <p class="text-sm text-orange-500 mt-2">支持类型：xls、xlsx</p>
+              <p id="delivery-format-error" class="text-red-500 text-xs mt-1 hidden">请上传 xls/xlsx 格式文件</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ② 列名映射 -->
+        <div id="delivery-step-2" class="hidden bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-100 shrink-0 space-y-3">
+            <p class="text-sm text-gray-600">将文件列映射到系统标准字段（<span class="text-red-500">待收套数</span> 必填）</p>
+            <p id="delivery-mapping-profile" class="text-xs text-gray-500"></p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <div class="flex items-center gap-2">
+                <label for="delivery-template-select" class="text-sm text-gray-600 whitespace-nowrap">映射模板</label>
+                <select id="delivery-template-select"
+                  class="min-w-[220px] border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+                  <option value="">无</option>
+                </select>
+              </div>
+              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer shrink-0">
+                <input type="checkbox" id="delivery-save-template" class="rounded text-sky-600">
+                保存为模板
+              </label>
+              <div id="delivery-template-name-wrap" class="hidden flex items-center gap-2">
+                <span class="text-red-500 text-sm">*</span>
+                <label for="delivery-template-name" class="text-sm text-gray-600 whitespace-nowrap">模板名称</label>
+                <input type="text" id="delivery-template-name" placeholder="请输入模板名称" maxlength="50" autocomplete="off"
+                  class="w-48 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+              </div>
+            </div>
+            <p id="delivery-template-name-error" class="text-red-500 text-xs mt-1 hidden"></p>
+          </div>
+          <div class="flex-1 overflow-auto p-4">
+            <table class="w-full text-sm border border-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-3 py-2 text-left text-gray-600 font-medium border-b">文件列名</th>
+                  <th class="px-3 py-2 text-left text-gray-600 font-medium border-b">映射到标准字段</th>
+                </tr>
+              </thead>
+              <tbody id="delivery-mapping-body"></tbody>
+            </table>
+            <p id="delivery-mapping-error" class="text-red-500 text-xs mt-2 hidden"></p>
+          </div>
+        </div>
+
+        <!-- ③ 选择匹配字段 -->
+        <div id="delivery-step-3" class="hidden bg-white rounded border border-gray-200 p-6 flex-1">
+          <p class="text-sm text-gray-600 mb-4">以下为第二步已映射的标准字段，请勾选用于精确匹配的字段（至少 1 个）</p>
+          <div id="delivery-match-fields" class="flex flex-wrap gap-3"></div>
+          <p id="delivery-match-error" class="text-red-500 text-xs mt-4 hidden">请至少选择一个匹配字段</p>
+        </div>
+
+        <!-- ④ 匹配预览 -->
+        <div id="delivery-step-4" class="hidden bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden relative">
+          <div id="delivery-matching-panel" class="hidden flex-1 flex flex-col items-center justify-center gap-3 px-6 py-16 bg-white">
+            <div class="delivery-matching-spinner" aria-hidden="true"></div>
+            <p class="text-base font-medium text-gray-800">数据正在匹配中…</p>
+            <p class="text-sm text-gray-500 text-center max-w-lg leading-relaxed">
+              正在将发货单与验收单内订单行进行匹配。发货单行较多时匹配时间可能较久，请勿关闭或刷新页面。
+            </p>
+            <p id="delivery-matching-progress" class="text-xs text-sky-600 mt-1">正在准备匹配…</p>
+          </div>
+          <div id="delivery-preview-content" class="overflow-auto flex-1">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <tr id="delivery-preview-head">
+                  <th class="px-2 py-2 w-8"></th>
+                  <th class="px-2 py-2 text-left text-gray-600 font-medium whitespace-nowrap">序号</th>
+                  <th class="px-2 py-2 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+                  <th class="px-2 py-2 text-left text-gray-600 font-medium whitespace-nowrap">操作</th>
+                </tr>
+              </thead>
+              <tbody id="delivery-preview-body"></tbody>
+            </table>
+          </div>
+          <div class="flex justify-between items-center px-4 py-3 border-t border-gray-200 bg-gray-50 shrink-0">
+            <button type="button" id="delivery-preview-prev-btn"
+              class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-white">上一步</button>
+            <div class="flex gap-3">
+              <button type="button" id="delivery-preview-cancel-btn"
+                class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-white">取消</button>
+              <button type="button" id="delivery-preview-next-btn"
+                class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">下一步</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑤ 确认提交 / 成功 -->
+        <div id="delivery-step-5" class="hidden bg-white rounded border border-gray-200 p-6 flex-1">
+          <div id="delivery-success-panel" class="hidden flex flex-col items-center justify-center py-16 gap-4">
+            <div class="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <p id="delivery-success-text" class="text-base text-gray-800"></p>
+          </div>
+          <div id="delivery-failure-panel" class="hidden flex flex-col items-center justify-center py-16 gap-4">
+            <div class="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </div>
+            <p class="text-base text-gray-800">提交失败，请重新提交或者联系管理员</p>
+          </div>
+          <div id="delivery-confirm-panel" class="hidden max-w-lg mx-auto py-8 space-y-4">
+            <h3 class="text-base font-medium text-gray-800" id="delivery-confirm-title">确认提交</h3>
+            <div id="delivery-confirm-summary" class="text-sm text-gray-700 space-y-2 bg-gray-50 rounded p-4"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部导航 -->
+      <div id="delivery-footer" class="flex justify-between items-center mt-4 shrink-0">
+        <button type="button" id="delivery-prev-btn"
+          class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50 hidden">上一步</button>
+        <div class="flex-1"></div>
+        <div class="flex gap-3">
+          <button type="button" id="delivery-cancel-btn"
+            class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+          <button type="button" id="delivery-next-btn"
+            class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">下一步</button>
+          <button type="button" id="delivery-final-confirm-btn"
+            class="hidden px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">确认</button>
+          <button type="button" id="delivery-step5-back-btn"
+            class="hidden px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">返回验收单管理</button>
+          <button type="button" id="delivery-step5-retry-btn"
+            class="hidden px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">重新提交</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="delivery-remark-tooltip" class="hidden"></div>
+
+  <!-- 选择订单行弹窗 -->
+  <div id="delivery-pick-line-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-[96vw] max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+        <h2 class="text-base font-medium text-gray-800">选择订单行</h2>
+        <button type="button" id="delivery-pick-line-close"
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+      </div>
+      <div class="px-6 py-3 border-b border-gray-100 shrink-0">
+        <form id="delivery-pick-line-search" class="flex items-center gap-3 flex-wrap">
+          <select name="field" id="delivery-pick-line-search-field"
+            class="border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:border-sky-500 shrink-0 min-w-[120px]">
+          </select>
+          <input type="text" name="keyword" placeholder="请输入检索内容（模糊查询）"
+            class="flex-1 min-w-[200px] border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500">
+          <button type="submit" class="px-4 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700 shrink-0">检索</button>
+        </form>
+      </div>
+      <div class="flex-1 overflow-auto px-6 py-3">
+        <table class="w-full text-sm min-w-max">
+          <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+            <tr id="delivery-pick-line-head"></tr>
+          </thead>
+          <tbody id="delivery-pick-line-body"></tbody>
+        </table>
+      </div>
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 shrink-0">
+        <button type="button" id="delivery-pick-line-cancel"
+          class="px-5 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">取消</button>
+        <button type="button" id="delivery-pick-line-confirm"
+          class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/delivery-import-template-store.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    /** @type {Object|null} */
+    let acceptanceContext = null;
+
+    /** @type {number} */
+    let currentStep = 1;
+
+    /** @type {File|null} */
+    let uploadedFile = null;
+
+    /** @type {string[]} */
+    const MOCK_FILE_COLUMNS = [
+      'ISBN', '书名', '作者', '出版社', '图书类型', '每套册数', '订单号',
+      'RMB单价', '总套数', '总册数', 'RMB码洋', '折扣', 'RMB实洋', '包号'
+    ];
+
+    /**
+     * 构建标准字段定义
+     * @param {string} value
+     * @param {string} label
+     * @param {{ required?: boolean, matchable?: boolean }} [opts]
+     * @returns {{ value: string, label: string, matchable: boolean, required?: boolean }}
+     */
+    function stdField(value, label, opts = {}) {
+      return {
+        value,
+        label,
+        matchable: opts.matchable !== false,
+        required: !!opts.required
+      };
+    }
+
+    /** @type {Record<string, { value: string, label: string, matchable: boolean, required?: boolean }[]>} */
+    const STANDARD_FIELD_POOLS = {
+      book_zh: [
+        stdField('receiveQty', '待收套数', { required: true, matchable: false }),
+        stdField('volCount', '套内册数'),
+        stdField('sets', '套数'),
+        stdField('title', '正题名'),
+        stdField('isbn', 'ISBN'),
+        stdField('subTitle', '副题名'),
+        stdField('volNo', '分卷号'),
+        stdField('volName', '分卷名'),
+        stdField('classNo', '分类号'),
+        stdField('publisher', '出版社'),
+        stdField('author', '作者'),
+        stdField('pubYear', '出版年'),
+        stdField('price', '定价'),
+        stdField('edition', '版本'),
+        stdField('series', '丛编'),
+        stdField('subject', '主题词'),
+        stdField('audience', '读者对象'),
+        stdField('binding', '装帧形式'),
+        stdField('size', '尺寸'),
+        stdField('textLang', '正文语种'),
+        stdField('generalNote', '一般性附注'),
+        stdField('summary', '图书简介'),
+        stdField('remark', '备注'),
+        stdField('volumeCount', '卷数'),
+        stdField('pubPlace', '出版地')
+      ],
+      book_foreign: [
+        stdField('receiveQty', '待收套数', { required: true, matchable: false }),
+        stdField('fullVolCount', '全套册数'),
+        stdField('sets', '套数'),
+        stdField('isbn', 'ISBN'),
+        stdField('subjectMajor', '学科大类'),
+        stdField('subjectDetail', '学科细分'),
+        stdField('clcNo', '中图分类号'),
+        stdField('cnTitle', '中译名'),
+        stdField('title', '题名'),
+        stdField('subTitle', '副题名'),
+        stdField('author', '责任者'),
+        stdField('series', '丛编'),
+        stdField('publisher', '出版社'),
+        stdField('binding', '装帧形式'),
+        stdField('pubDate', '出版日期'),
+        stdField('edition', '版次'),
+        stdField('pages', '页数'),
+        stdField('currency', '币种'),
+        stdField('price', '价格'),
+        stdField('subject', '主题词'),
+        stdField('audience', '读者对象'),
+        stdField('size', '尺寸'),
+        stdField('lang', '语种'),
+        stdField('summary', '简介'),
+        stdField('isbnConcise', '精简装ISBN对照'),
+        stdField('holdingInfo', '馆藏信息'),
+        stdField('reviewLevel', '审读级别'),
+        stdField('award', '获奖信息'),
+        stdField('toc', '目次信息'),
+        stdField('volNo', '分卷号'),
+        stdField('volName', '分卷名'),
+        stdField('authorBio', '作者简介'),
+        stdField('bookReview', '书评'),
+        stdField('remark', '备注')
+      ],
+      av_zh: [
+        stdField('receiveQty', '待收套数', { required: true, matchable: false }),
+        stdField('pieceCount', '套内件数'),
+        stdField('sets', '套数'),
+        stdField('isbn', 'ISBN'),
+        stdField('isrc', 'ISRC'),
+        stdField('title', '题名'),
+        stdField('carrier', '载体'),
+        stdField('publisher', '出版社'),
+        stdField('format', '版本/格式'),
+        stdField('author', '著者'),
+        stdField('currency', '币种'),
+        stdField('listPrice', '码洋'),
+        stdField('vinylColor', '彩胶颜色'),
+        stdField('limitedNo', '限量编号'),
+        stdField('label', '厂牌'),
+        stdField('seriesName', '系列名称'),
+        stdField('isSigned', '是否签名'),
+        stdField('isOldRecord', '是否老唱片'),
+        stdField('award', '获奖信息'),
+        stdField('bjPublisher', '北京出版社'),
+        stdField('category', '分类'),
+        stdField('discNo', '盘号'),
+        stdField('oldRecordBrand', '老唱片品牌'),
+        stdField('operaType', '剧种'),
+        stdField('era', '年代'),
+        stdField('remark', '备注')
+      ],
+      av_foreign: [
+        stdField('receiveQty', '待收套数', { required: true, matchable: false }),
+        stdField('pieceCount', '套内件数'),
+        stdField('sets', '套数'),
+        stdField('isrc', 'ISRC'),
+        stdField('title', '题名'),
+        stdField('carrier', '载体'),
+        stdField('barcode', '商品条码'),
+        stdField('catalogNo', '目录号'),
+        stdField('origTitle', '外文原文题名'),
+        stdField('publisher', '出版方'),
+        stdField('listPrice', '码洋'),
+        stdField('currency', '币种'),
+        stdField('remark', '备注'),
+        stdField('label', '厂牌')
+      ]
+    };
+
+    const COLUMN_AUTO_MAP = {
+      'ISBN': 'isbn',
+      '书名': 'title',
+      '作者': 'author',
+      '出版社': 'publisher',
+      '每套册数': 'volCount',
+      'RMB单价': 'price',
+      '总套数': 'receiveQty',
+      'RMB实洋': 'price',
+      'RMB码洋': 'listPrice'
+    };
+
+    /**
+     * 是否为中文语种
+     * @param {string} lang
+     * @returns {boolean}
+     */
+    function isChineseLang(lang) {
+      return lang === '中文';
+    }
+
+    /**
+     * 解析标准字段池 profile key
+     * @param {string} resourceType
+     * @param {string} lang
+     * @returns {string}
+     */
+    function getFieldProfileKey(resourceType, lang) {
+      if (resourceType === '纸质书') return isChineseLang(lang) ? 'book_zh' : 'book_foreign';
+      if (resourceType === '视听资料') return isChineseLang(lang) ? 'av_zh' : 'av_foreign';
+      return 'book_zh';
+    }
+
+    /**
+     * 获取当前验收单上下文下的标准字段池
+     * @returns {{ value: string, label: string, matchable: boolean, required?: boolean }[]}
+     */
+    function getActiveStandardFields() {
+      const key = getFieldProfileKey(acceptanceContext?.type || '', acceptanceContext?.lang || '');
+      const pool = STANDARD_FIELD_POOLS[key] || STANDARD_FIELD_POOLS.book_zh;
+      return [{ value: '', label: '不映射', matchable: false }, ...pool];
+    }
+
+    /**
+     * 初始化默认匹配字段勾选
+     */
+    function initDefaultMatchFields() {
+      const fields = getActiveStandardFields();
+      const defaults = [];
+      if (fields.some(f => f.value === 'isbn')) defaults.push('isbn');
+      if (fields.some(f => f.value === 'title')) defaults.push('title');
+      selectedMatchFields = new Set(defaults);
+    }
+
+    /**
+     * 渲染第二步标准字段池说明
+     */
+    function renderMappingProfileHint() {
+      const el = document.getElementById('delivery-mapping-profile');
+      if (!el || !acceptanceContext) return;
+      const langLabel = isChineseLang(acceptanceContext.lang) ? '中文' : '外文';
+      el.textContent = `当前标准字段池：${acceptanceContext.type} / ${langLabel}（${acceptanceContext.lang}）`;
+    }
+
+    const EXCHANGE_REASONS = ['缺页', '错页', '装订错误', '纸张破损', '装订不牢', '书脊开裂', '被污染或损坏'];
+    const RETURN_REASONS = ['缺页', '错页', '装订错误', '纸张破损', '装订不牢', '书脊开裂', '被污染或损坏'];
+
+    /** @type {Object<string, string>} */
+    let columnMapping = {};
+
+    /** @type {Set<string>} */
+    let selectedMatchFields = new Set(['isbn', 'title']);
+
+    /** @type {Object[]} */
+    let previewRows = [];
+
+    /** @type {number|null} */
+    let pickingRowIndex = null;
+
+    /** @type {boolean} */
+    let isPreviewMatching = false;
+
+    /**
+     * 加载验收单上下文
+     * @returns {boolean}
+     */
+    function loadAcceptanceContext() {
+      try {
+        const raw = sessionStorage.getItem('deliveryImportContext');
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        acceptanceContext = parsed.acceptance;
+        return !!acceptanceContext;
+      } catch {
+        return false;
+      }
+    }
+
+    /**
+     * 渲染顶栏验收单信息
+     */
+    function renderAcceptanceHeader() {
+      if (!acceptanceContext) return;
+      const fields = {
+        'delivery-ctx-id': acceptanceContext.id,
+        'delivery-ctx-name': acceptanceContext.name,
+        'delivery-ctx-type': acceptanceContext.type,
+        'delivery-ctx-lang': acceptanceContext.lang,
+        'delivery-ctx-ship': acceptanceContext.shipNo,
+        'delivery-ctx-supplier': acceptanceContext.supplier
+      };
+      Object.entries(fields).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val || '—';
+      });
+      const remarkEl = document.getElementById('delivery-remark-text');
+      const remark = (acceptanceContext.remarkText || '').trim();
+      if (remarkEl) {
+        remarkEl.textContent = remark || '—';
+        remarkEl.title = remark;
+      }
+    }
+
+    /**
+     * 初始化备注悬停提示
+     */
+    function initRemarkTooltip() {
+      const trigger = document.getElementById('delivery-remark-text');
+      const tooltip = document.getElementById('delivery-remark-tooltip');
+      if (!trigger || !tooltip) return;
+      trigger.addEventListener('mouseenter', () => {
+        const text = (acceptanceContext?.remarkText || '').trim();
+        if (!text || text === '—') return;
+        tooltip.textContent = text;
+        tooltip.classList.remove('hidden');
+        const rect = trigger.getBoundingClientRect();
+        tooltip.style.top = `${rect.bottom + 6}px`;
+        tooltip.style.left = `${rect.left}px`;
+      });
+      trigger.addEventListener('mouseleave', () => tooltip.classList.add('hidden'));
+    }
+
+    /**
+     * 更新步骤条样式
+     * @param {number} step
+     */
+    function updateStepIndicator(step) {
+      document.querySelectorAll('.delivery-import-step').forEach(el => {
+        const n = Number(el.dataset.step);
+        const circle = el.querySelector('.delivery-step-circle');
+        const title = el.querySelector('.delivery-step-title');
+        circle?.classList.remove('active', 'done');
+        title?.classList.remove('active');
+        if (n < step) {
+          circle?.classList.add('done');
+          if (circle) circle.textContent = '✓';
+        } else if (n === step) {
+          circle?.classList.add('active');
+          if (circle) circle.textContent = String(n);
+          title?.classList.add('active');
+        } else if (circle) {
+          circle.textContent = String(n);
+        }
+      });
+      document.querySelectorAll('.delivery-step-line').forEach((line, i) => {
+        line.classList.toggle('done', i < step - 1);
+      });
+    }
+
+    /**
+     * 切换向导步骤
+     * @param {number} step
+     */
+    function goToStep(step) {
+      currentStep = step;
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`delivery-step-${i}`)?.classList.toggle('hidden', i !== step);
+      }
+      updateStepIndicator(step);
+
+      const prevBtn = document.getElementById('delivery-prev-btn');
+      const nextBtn = document.getElementById('delivery-next-btn');
+      const footer = document.getElementById('delivery-footer');
+
+      if (nextBtn) nextBtn.classList.toggle('hidden', step >= 4);
+      if (footer) footer.classList.toggle('hidden', step === 4);
+
+      if (step === 5) {
+        resetStep5ToConfirm();
+      } else {
+        updateStep5Footer(null);
+        if (prevBtn) prevBtn.classList.toggle('hidden', step <= 1 || step === 4);
+      }
+
+      if (step === 2) {
+        renderMappingProfileHint();
+        renderTemplateSelect();
+        renderMappingTable();
+      }
+      if (step === 3) renderMatchFieldCheckboxes();
+      if (step === 4) runPreviewMatching();
+    }
+
+    /**
+     * 更新匹配进度提示
+     * @param {string} text
+     */
+    function updateMatchingProgress(text) {
+      const el = document.getElementById('delivery-matching-progress');
+      if (el) el.textContent = text;
+    }
+
+    /**
+     * 切换第四步匹配中 / 预览内容展示
+     * @param {boolean} matching
+     */
+    function togglePreviewMatchingView(matching) {
+      document.getElementById('delivery-matching-panel')?.classList.toggle('hidden', !matching);
+      document.getElementById('delivery-preview-content')?.classList.toggle('hidden', matching);
+    }
+
+    /**
+     * 设置第四步底部按钮可用状态
+     * @param {boolean} busy
+     */
+    function setPreviewStepBusy(busy) {
+      isPreviewMatching = busy;
+      ['delivery-preview-prev-btn', 'delivery-preview-cancel-btn', 'delivery-preview-next-btn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.disabled = busy;
+        el.classList.toggle('opacity-50', busy);
+        el.classList.toggle('cursor-not-allowed', busy);
+      });
+    }
+
+    /**
+     * 异步延迟（原型模拟匹配耗时）
+     * @param {number} ms
+     * @returns {Promise<void>}
+     */
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /** 匹配加载动画最短展示时长（毫秒） */
+    const PREVIEW_MATCHING_DURATION_MS = 8000;
+
+    /**
+     * 执行匹配并渲染第四步预览
+     */
+    async function runPreviewMatching() {
+      togglePreviewMatchingView(true);
+      setPreviewStepBusy(true);
+      updateMatchingProgress('正在准备匹配…');
+
+      buildPreviewRows();
+      const total = Math.max(previewRows.length, 1);
+      const finishDelay = 500;
+      const rowDelay = Math.max(200, Math.floor((PREVIEW_MATCHING_DURATION_MS - finishDelay) / total));
+
+      for (let i = 0; i < total; i++) {
+        updateMatchingProgress(`正在匹配第 ${i + 1} / ${total} 行…`);
+        await delay(rowDelay);
+      }
+
+      updateMatchingProgress('匹配完成，正在生成预览…');
+      await delay(finishDelay);
+
+      renderPreviewTable();
+      togglePreviewMatchingView(false);
+      setPreviewStepBusy(false);
+    }
+
+    /**
+     * 校验文件扩展名
+     * @param {string} name
+     * @returns {boolean}
+     */
+    function isValidFileName(name) {
+      return /\.(xls|xlsx)$/i.test(name);
+    }
+
+    /** @type {string} */
+    let selectedTemplateId = '';
+
+    /**
+     * 从 DOM 同步列映射到 columnMapping
+     */
+    function syncColumnMappingFromDom() {
+      document.querySelectorAll('.delivery-col-map').forEach(sel => {
+        const col = sel.dataset.fileCol;
+        if (col) columnMapping[col] = sel.value;
+      });
+    }
+
+    /**
+     * 渲染映射模板下拉
+     */
+    function renderTemplateSelect() {
+      const select = document.getElementById('delivery-template-select');
+      if (!select || typeof DeliveryImportTemplateStore === 'undefined') return;
+
+      const templates = DeliveryImportTemplateStore.getTemplatesForCurrentSubscriber();
+      select.innerHTML = '<option value="">无</option>'
+        + templates.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+      select.value = selectedTemplateId && templates.some(t => t.id === selectedTemplateId)
+        ? selectedTemplateId
+        : '';
+    }
+
+    /**
+     * 应用所选映射模板
+     * @param {string} templateId
+     */
+    function applyMappingTemplate(templateId) {
+      selectedTemplateId = templateId || '';
+      const nameInput = document.getElementById('delivery-template-name');
+
+      if (!templateId) {
+        if (nameInput) nameInput.value = '';
+        renderMappingTable();
+        return;
+      }
+
+      const tpl = DeliveryImportTemplateStore.getById(templateId);
+      if (!tpl?.mapping) return;
+
+      Object.entries(tpl.mapping).forEach(([fileCol, standardField]) => {
+        if (MOCK_FILE_COLUMNS.includes(fileCol)) {
+          columnMapping[fileCol] = standardField;
+        }
+      });
+
+      if (nameInput) nameInput.value = tpl.name;
+      renderMappingTable();
+    }
+
+    /**
+     * 切换「保存为模板」区域显示
+     */
+    function toggleSaveTemplatePanel() {
+      const checked = document.getElementById('delivery-save-template')?.checked;
+      const wrap = document.getElementById('delivery-template-name-wrap');
+      wrap?.classList.toggle('hidden', !checked);
+      if (!checked) {
+        hideTemplateNameError();
+      }
+    }
+
+    /**
+     * 隐藏模板名称错误
+     */
+    function hideTemplateNameError() {
+      const err = document.getElementById('delivery-template-name-error');
+      if (err) {
+        err.textContent = '';
+        err.classList.add('hidden');
+      }
+    }
+
+    /**
+     * 显示模板名称错误
+     * @param {string} message
+     */
+    function showTemplateNameError(message) {
+      const err = document.getElementById('delivery-template-name-error');
+      if (err) {
+        err.textContent = message;
+        err.classList.remove('hidden');
+      }
+    }
+
+    /**
+     * 校验并保存映射模板（勾选保存为模板时）
+     * @returns {boolean}
+     */
+    function validateAndSaveMappingTemplate() {
+      const saveChecked = document.getElementById('delivery-save-template')?.checked;
+      if (!saveChecked) {
+        hideTemplateNameError();
+        return true;
+      }
+
+      syncColumnMappingFromDom();
+      const name = document.getElementById('delivery-template-name')?.value?.trim() || '';
+      if (!name) {
+        showTemplateNameError('请输入模板名称');
+        return false;
+      }
+
+      const existingByName = DeliveryImportTemplateStore.getTemplatesForCurrentSubscriber()
+        .find(t => t.name === name);
+      if (existingByName && existingByName.id !== selectedTemplateId) {
+        showTemplateNameError('模板名称已存在');
+        return false;
+      }
+
+      const saveId = existingByName?.id || selectedTemplateId || '';
+      const result = DeliveryImportTemplateStore.save({
+        id: saveId,
+        name,
+        mapping: { ...columnMapping },
+        supplier: acceptanceContext?.supplier || '',
+        resourceType: acceptanceContext?.type || '',
+        lang: acceptanceContext?.lang || ''
+      });
+
+      if (!result.ok) {
+        showTemplateNameError(result.error || '保存失败');
+        return false;
+      }
+
+      selectedTemplateId = result.id || selectedTemplateId;
+      hideTemplateNameError();
+      renderTemplateSelect();
+      const select = document.getElementById('delivery-template-select');
+      if (select && result.id) select.value = result.id;
+      return true;
+    }
+
+    /**
+     * 渲染列映射表
+     */
+    function renderMappingTable() {
+      const tbody = document.getElementById('delivery-mapping-body');
+      if (!tbody) return;
+      const activeFields = getActiveStandardFields();
+      const activeValues = new Set(activeFields.map(f => f.value));
+      const options = activeFields.map(f =>
+        `<option value="${f.value}">${f.label}${f.required ? ' *' : ''}</option>`
+      ).join('');
+
+      tbody.innerHTML = MOCK_FILE_COLUMNS.map(col => {
+        const auto = COLUMN_AUTO_MAP[col];
+        const autoMapped = auto && activeValues.has(auto) ? auto : '';
+        const mapped = columnMapping[col] || autoMapped || '';
+        if (!columnMapping[col] && autoMapped) columnMapping[col] = autoMapped;
+        return `
+          <tr class="border-b border-gray-100">
+            <td class="px-3 py-2 text-gray-800">${col}</td>
+            <td class="px-3 py-2">
+              <select class="delivery-col-map w-full max-w-xs border border-gray-300 rounded px-2 py-1.5 text-sm"
+                data-file-col="${col}">${options}</select>
+            </td>
+          </tr>`;
+      }).join('');
+
+      tbody.querySelectorAll('.delivery-col-map').forEach(sel => {
+        const col = sel.dataset.fileCol;
+        sel.value = columnMapping[col] || '';
+        sel.addEventListener('change', () => {
+          columnMapping[col] = sel.value;
+        });
+      });
+    }
+
+    /**
+     * 获取已映射的标准字段值列表
+     * @returns {string[]}
+     */
+    function getMappedStandardValues() {
+      return [...new Set(Object.values(columnMapping).filter(Boolean))];
+    }
+
+    /**
+     * 获取第二步已映射的标准字段定义
+     * @returns {{ value: string, label: string, matchable: boolean }[]}
+     */
+    function getMappedStandardFieldDefs() {
+      syncColumnMappingFromDom();
+      const mapped = getMappedStandardValues();
+      return getActiveStandardFields().filter(f => f.value && mapped.includes(f.value));
+    }
+
+    /**
+     * 渲染匹配字段勾选
+     */
+    function renderMatchFieldCheckboxes() {
+      const container = document.getElementById('delivery-match-fields');
+      if (!container) return;
+
+      const mappedFields = getMappedStandardFieldDefs();
+      const matchableFields = mappedFields.filter(f => f.matchable);
+
+      selectedMatchFields = new Set(
+        [...selectedMatchFields].filter(v => matchableFields.some(f => f.value === v))
+      );
+
+      if (!mappedFields.length) {
+        container.innerHTML = '<p class="text-amber-600 text-sm">请返回上一步完成列名映射</p>';
+        return;
+      }
+
+      if (!matchableFields.length) {
+        container.innerHTML = mappedFields.map(f => `
+          <span class="inline-flex items-center px-3 py-1.5 text-sm text-gray-500 bg-gray-100 rounded border border-gray-200">
+            ${f.label}
+          </span>`).join('')
+          + '<p class="w-full text-amber-600 text-sm mt-2">请至少映射一个可用于匹配的字段</p>';
+        return;
+      }
+
+      container.innerHTML = mappedFields.map(f => {
+        if (!f.matchable) {
+          return `
+            <span class="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 bg-gray-50 rounded border border-gray-200">
+              ${f.label}
+              <span class="text-xs text-gray-400">（不参与匹配）</span>
+            </span>`;
+        }
+        const checked = selectedMatchFields.has(f.value) ? ' checked' : '';
+        return `
+          <label class="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 cursor-pointer rounded border border-gray-200 hover:border-sky-300 hover:bg-sky-50/50">
+            <input type="checkbox" class="delivery-match-cb rounded text-sky-600" value="${f.value}"${checked}>
+            ${f.label}
+          </label>`;
+      }).join('');
+
+      container.querySelectorAll('.delivery-match-cb').forEach(cb => {
+        cb.addEventListener('change', () => {
+          if (cb.checked) selectedMatchFields.add(cb.value);
+          else selectedMatchFields.delete(cb.value);
+        });
+      });
+    }
+
+    /**
+     * 构建预览 mock 数据
+     */
+    function buildPreviewRows() {
+      previewRows = [
+        {
+          status: 'success',
+          fieldValues: {
+            isbn: '9787308273220',
+            title: '传统村落活力评价与规划方法研究',
+            author: '刘声著',
+            publisher: '浙大',
+            receiveQty: 1,
+            price: '78.00'
+          },
+          allocated: 1,
+          expanded: true,
+          children: [{
+            location: '华威桥馆',
+            lineNo: 'OL20250623001',
+            orderNo: 'DD202506001',
+            pending: 1,
+            fieldValues: {
+              isbn: '9787308273220',
+              title: '传统村落活力评价与规划方法研究',
+              author: '刘声著',
+              publisher: '浙江大学出版社',
+              price: '78.00',
+              receiveQty: '—'
+            },
+            receive: 1,
+            exchange: 0,
+            exchangeReason: '',
+            ret: 0,
+            returnReason: ''
+          }]
+        },
+        {
+          status: 'partial',
+          fieldValues: {
+            isbn: '9787115640930',
+            title: '人工智能通识教程',
+            author: '主编王永华',
+            publisher: '人民邮电出版社',
+            receiveQty: 3,
+            price: '89.00'
+          },
+          allocated: 3,
+          expanded: true,
+          children: [
+            {
+              location: '华威桥馆',
+              lineNo: 'OL20250623002',
+              orderNo: 'DD202506002',
+              pending: 2,
+              fieldValues: {
+                isbn: '9787115640930',
+                title: '人工智能通识教程',
+                author: '主编王永华',
+                publisher: '人民邮电出版社',
+                price: '89.00',
+                receiveQty: '—'
+              },
+              receive: 2,
+              exchange: 0,
+              exchangeReason: '',
+              ret: 0,
+              returnReason: ''
+            },
+            {
+              location: '城市图书馆',
+              lineNo: 'OL20250623003',
+              orderNo: 'DD202506003',
+              pending: 2,
+              fieldValues: {
+                isbn: '9787115640930',
+                title: '人工智能通识教程',
+                author: '主编王永华',
+                publisher: '人民邮电出版社',
+                price: '89.00',
+                receiveQty: '—'
+              },
+              receive: 1,
+              exchange: 0,
+              exchangeReason: '',
+              ret: 0,
+              returnReason: ''
+            }
+          ]
+        },
+        {
+          status: 'fail',
+          fieldValues: {
+            isbn: '9780000000000',
+            title: '未匹配书目示例',
+            author: '—',
+            receiveQty: 2
+          },
+          allocated: 0,
+          expanded: false,
+          children: []
+        },
+        {
+          status: 'over',
+          fieldValues: {
+            isbn: '9787521718222',
+            title: '超收示例图书',
+            author: '张三',
+            publisher: '商务印书馆',
+            receiveQty: 5,
+            price: '128.00'
+          },
+          allocated: 3,
+          expanded: false,
+          children: [
+            {
+              location: '华威桥馆',
+              lineNo: 'OL20250623004',
+              orderNo: 'DD202506004',
+              pending: 3,
+              fieldValues: {
+                isbn: '9787521718222',
+                title: '超收示例图书',
+                author: '张三',
+                publisher: '商务印书馆',
+                price: '128.00',
+                receiveQty: '—'
+              },
+              receive: 3,
+              exchange: 0,
+              exchangeReason: '',
+              ret: 0,
+              returnReason: ''
+            }
+          ]
+        }
+      ];
+    }
+
+    /**
+     * 根据发货套数与命中订单行待收合计解析匹配状态
+     * @param {number} shipQty
+     * @param {number} totalPending
+     * @returns {'success'|'partial'|'over'}
+     */
+    function resolvePreviewMatchStatus(shipQty, totalPending) {
+      if (shipQty > totalPending) return 'over';
+      if (shipQty < totalPending) return 'partial';
+      return 'success';
+    }
+
+    /**
+     * 渲染状态标签
+     * @param {string} status
+     * @returns {string}
+     */
+    function renderStatusBadge(status) {
+      const map = {
+        success: '<span class="text-green-600">匹配成功</span>',
+        partial: '<span class="text-amber-600">部分收货</span>',
+        fail: '<span class="text-red-500">匹配失败</span>',
+        over: '<span class="text-red-500">超收</span>'
+      };
+      return map[status] || '';
+    }
+
+    /**
+     * 构建原因下拉选项
+     * @param {string[]} reasons
+     * @param {string} selected
+     * @returns {string}
+     */
+    function buildReasonOptions(reasons, selected) {
+      return '<option value="">请选择</option>'
+        + reasons.map(r => `<option value="${r}"${r === selected ? ' selected' : ''}>${r}</option>`).join('');
+    }
+
+    /**
+     * 渲染预览表头（已映射标准字段列）
+     */
+    function renderPreviewHead() {
+      const tr = document.getElementById('delivery-preview-head');
+      if (!tr) return;
+      const mappedCols = getMappedStandardFieldDefs();
+      const mappedHeaders = mappedCols.map(c =>
+        `<th class="px-2 py-2 text-left text-gray-600 font-medium whitespace-nowrap">${c.label}</th>`
+      ).join('');
+      tr.innerHTML = `
+        <th class="px-2 py-2 w-8"></th>
+        <th class="px-2 py-2 text-left text-gray-600 font-medium whitespace-nowrap">序号</th>
+        <th class="px-2 py-2 text-left text-gray-600 font-medium whitespace-nowrap">状态</th>
+        ${mappedHeaders}
+        <th class="px-2 py-2 text-left text-gray-600 font-medium whitespace-nowrap">操作</th>`;
+    }
+
+    /**
+     * 渲染订单行已映射标准字段单元格
+     * @param {Object} child
+     * @param {{ value: string, label: string }[]} mappedCols
+     * @returns {string}
+     */
+    function renderOrderLineFieldCells(child, mappedCols) {
+      return mappedCols.map(c => {
+        const val = c.value === 'receiveQty'
+          ? (child.pending ?? '—')
+          : (child.fieldValues?.[c.value] ?? '—');
+        return `<td class="px-2 py-1.5 border-b border-gray-100${c.value === 'isbn' ? ' whitespace-nowrap' : ''}">${val}</td>`;
+      }).join('');
+    }
+
+    /**
+     * 渲染展开区嵌套订单行子表
+     * @param {Object} row
+     * @param {number} parentIdx
+     * @param {{ value: string, label: string }[]} mappedCols
+     * @returns {string}
+     */
+    function renderPreviewChildTable(row, parentIdx, mappedCols) {
+      const mappedHeaders = mappedCols.map(c =>
+        `<th class="px-2 py-1.5 text-left text-gray-600 font-medium whitespace-nowrap border-b border-gray-200">${c.label}</th>`
+      ).join('');
+
+      const bodyRows = row.children.map((ch, ci) => `
+        <tr class="hover:bg-sky-50/60">
+          <td class="px-2 py-1.5 border-b border-gray-100 whitespace-nowrap">${ch.lineNo}</td>
+          <td class="px-2 py-1.5 border-b border-gray-100 whitespace-nowrap">${ch.location}</td>
+          ${renderOrderLineFieldCells(ch, mappedCols)}
+          <td class="px-2 py-1.5 border-b border-gray-100">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-[280px]">
+              <span class="inline-flex items-center gap-1 whitespace-nowrap">
+                收货
+                <input type="number" min="0" class="delivery-receive-qty w-14 border border-gray-300 rounded px-1 py-0.5 text-xs"
+                  data-pidx="${parentIdx}" data-cidx="${ci}" value="${ch.receive}">
+              </span>
+              <span class="inline-flex items-center gap-1 whitespace-nowrap">
+                换货
+                <input type="number" min="0" class="delivery-exchange-qty w-12 border border-gray-300 rounded px-1 py-0.5 text-xs"
+                  data-pidx="${parentIdx}" data-cidx="${ci}" value="${ch.exchange}">
+                <select class="delivery-exchange-reason border border-gray-300 rounded px-1 py-0.5 text-xs"
+                  data-pidx="${parentIdx}" data-cidx="${ci}">${buildReasonOptions(EXCHANGE_REASONS, ch.exchangeReason)}</select>
+              </span>
+              <span class="inline-flex items-center gap-1 whitespace-nowrap">
+                退货
+                <input type="number" min="0" class="delivery-return-qty w-12 border border-gray-300 rounded px-1 py-0.5 text-xs"
+                  data-pidx="${parentIdx}" data-cidx="${ci}" value="${ch.ret}">
+                <select class="delivery-return-reason border border-gray-300 rounded px-1 py-0.5 text-xs"
+                  data-pidx="${parentIdx}" data-cidx="${ci}">${buildReasonOptions(RETURN_REASONS, ch.returnReason)}</select>
+              </span>
+            </div>
+          </td>
+        </tr>`).join('');
+
+      return `
+        <div class="py-2 pl-6 pr-2">
+          <p class="text-xs text-gray-500 mb-2">订单行信息（可与上行发货单字段对照查看）</p>
+          <div class="overflow-x-auto border border-gray-200 rounded bg-white">
+            <table class="w-full text-xs">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-2 py-1.5 text-left text-gray-600 font-medium whitespace-nowrap border-b border-gray-200">订单行号</th>
+                  <th class="px-2 py-1.5 text-left text-gray-600 font-medium whitespace-nowrap border-b border-gray-200">馆址</th>
+                  ${mappedHeaders}
+                  <th class="px-2 py-1.5 text-left text-gray-600 font-medium whitespace-nowrap border-b border-gray-200">处置</th>
+                </tr>
+              </thead>
+              <tbody>${bodyRows}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+
+    /**
+     * 渲染预览表
+     */
+    function renderPreviewTable() {
+      const tbody = document.getElementById('delivery-preview-body');
+      if (!tbody) return;
+
+      renderPreviewHead();
+      const mappedCols = getMappedStandardFieldDefs();
+      const childColspan = 3 + mappedCols.length;
+
+      tbody.innerHTML = previewRows.map((row, idx) => {
+        const mappedCells = mappedCols.map(c => {
+          const val = row.fieldValues?.[c.value] ?? '—';
+          return `<td class="px-2 py-2${c.value === 'isbn' ? ' whitespace-nowrap' : ''}">${val}</td>`;
+        }).join('');
+        const pickBtn = `
+          <span class="inline-flex items-center gap-2">
+            <button type="button" class="delivery-pick-line text-sky-600 hover:underline text-xs" data-idx="${idx}">选择订单行</button>
+            <button type="button" class="delivery-delete-preview-row text-red-500 hover:underline text-xs" data-idx="${idx}">删除</button>
+          </span>`;
+
+        const mainRow = `
+          <tr class="border-b border-gray-100 hover:bg-gray-50">
+            <td class="px-2 py-2">
+              <button type="button"
+                class="delivery-toggle-row inline-flex items-center justify-center w-6 h-6 text-gray-500${row.expanded ? ' is-expanded' : ''}"
+                data-idx="${idx}" aria-expanded="${row.expanded ? 'true' : 'false'}" aria-label="展开或收起">
+                <svg class="delivery-preview-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </td>
+            <td class="px-2 py-2">${idx + 1}</td>
+            <td class="px-2 py-2">${renderStatusBadge(row.status)}</td>
+            ${mappedCells}
+            <td class="px-2 py-2 whitespace-nowrap">${pickBtn}</td>
+          </tr>`;
+
+        const childRow = row.expanded && row.children.length ? `
+          <tr class="bg-sky-50/40 border-b border-gray-100 delivery-child-row" data-parent="${idx}">
+            <td class="px-2 py-2"></td>
+            <td class="px-2 py-2" colspan="${childColspan}">
+              ${renderPreviewChildTable(row, idx, mappedCols)}
+            </td>
+          </tr>` : '';
+
+        return mainRow + childRow;
+      }).join('');
+
+      bindPreviewEvents();
+    }
+
+    /**
+     * 绑定预览表事件
+     */
+    function bindPreviewEvents() {
+      document.querySelectorAll('.delivery-toggle-row').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.idx);
+          if (previewRows[idx]) {
+            previewRows[idx].expanded = !previewRows[idx].expanded;
+            renderPreviewTable();
+          }
+        });
+      });
+
+      document.querySelectorAll('.delivery-pick-line').forEach(btn => {
+        btn.addEventListener('click', () => openPickLineModal(Number(btn.dataset.idx)));
+      });
+
+      document.querySelectorAll('.delivery-delete-preview-row').forEach(btn => {
+        btn.addEventListener('click', () => deletePreviewRow(Number(btn.dataset.idx)));
+      });
+
+      const syncChild = (selector, field) => {
+        document.querySelectorAll(selector).forEach(el => {
+          el.addEventListener('change', () => {
+            const p = Number(el.dataset.pidx);
+            const c = Number(el.dataset.cidx);
+            const ch = previewRows[p]?.children[c];
+            if (!ch) return;
+            if (field === 'receive') ch.receive = Number(el.value) || 0;
+            if (field === 'exchange') ch.exchange = Number(el.value) || 0;
+            if (field === 'exchangeReason') ch.exchangeReason = el.value;
+            if (field === 'ret') ch.ret = Number(el.value) || 0;
+            if (field === 'returnReason') ch.returnReason = el.value;
+          });
+        });
+      };
+      syncChild('.delivery-receive-qty', 'receive');
+      syncChild('.delivery-exchange-qty', 'exchange');
+      syncChild('.delivery-exchange-reason', 'exchangeReason');
+      syncChild('.delivery-return-qty', 'ret');
+      syncChild('.delivery-return-reason', 'returnReason');
+    }
+
+    /**
+     * 删除预览行
+     * @param {number} rowIndex
+     */
+    function deletePreviewRow(rowIndex) {
+      if (!previewRows[rowIndex]) return;
+      if (!confirm('确认删除该发货记录？删除后本次导入将不再处理此行。')) return;
+      previewRows.splice(rowIndex, 1);
+      renderPreviewTable();
+    }
+
+    /** 选择订单行弹窗检索字段 */
+    const PICK_ORDER_LINE_SEARCH_FIELDS = [
+      { key: 'orderId', label: '订单号' },
+      { key: 'orderLineNo', label: '订单行号' },
+      { key: 'bibRecordNo', label: '书目记录号' },
+      { key: 'title', label: '正题名' },
+      { key: 'resourceId', label: '资源标识' },
+      { key: 'site', label: '馆址' },
+      { key: 'author', label: '作者' },
+      { key: 'publisher', label: '出版社' }
+    ];
+
+    /** 选择订单行弹窗列表列（对齐非连续出版物订单行列表，不含操作列） */
+    const PICK_ORDER_LINE_COLUMNS = [
+      { key: '_index', label: '序号' },
+      { key: 'orderId', label: '订单号' },
+      { key: 'site', label: '馆址' },
+      { key: 'orderLineNo', label: '订单行号' },
+      { key: 'bibRecordNo', label: '书目记录号' },
+      { key: 'title', label: '正题名' },
+      { key: 'resourceId', label: '资源标识' },
+      { key: 'carrier', label: '载体' },
+      { key: 'author', label: '作者' },
+      { key: 'publisher', label: '出版社' },
+      { key: 'publishTime', label: '出版时间' },
+      { key: 'volumeNo', label: '分卷号' },
+      { key: 'volumeName', label: '分卷名' },
+      { key: 'price', label: '定价' },
+      { key: 'currency', label: '币种' },
+      { key: 'copiesInSet', label: '套内册数' },
+      { key: 'sets', label: '套数' },
+      { key: 'lineStatus', label: '行状态' },
+      { key: 'acceptanceStatus', label: '验收状态' },
+      { key: 'settlementStatus', label: '结算状态' },
+      { key: 'isShortage', label: '是否催缺' },
+      { key: 'flowStats', label: '发/收/换/退/撤订' },
+      { key: 'issueTime', label: '发订时间' },
+      { key: 'remark', label: '备注' }
+    ];
+
+    /** @type {Object[]} 可选订单行 mock（字段结构对齐 01_01 订单行列表） */
+    const MOCK_ORDER_LINES = [
+      {
+        orderId: 'PG001B20250623001',
+        site: '华威桥馆',
+        orderLineNo: 'PG001B20250623001-1',
+        bibRecordNo: 'bjlib900120250623001',
+        title: '未匹配书目示例',
+        resourceId: '9780000000000',
+        carrier: 'AP',
+        author: '示例作者',
+        publisher: '示例出版社',
+        publishTime: '2025',
+        volumeNo: '—',
+        volumeName: '—',
+        price: '58.00',
+        currency: 'CNY',
+        copiesInSet: 1,
+        sets: 2,
+        lineStatus: '已发订',
+        acceptanceStatus: '待验收',
+        settlementStatus: '待申请',
+        isShortage: '否',
+        flowStats: '2/0/0/0/0',
+        issueTime: '2025-06-20 10:00:00',
+        holdingDuplicate: '',
+        orderDuplicate: '',
+        hasRemark: false,
+        remark: ''
+      },
+      {
+        orderId: 'PG001B20250623002',
+        site: '城市图书馆',
+        orderLineNo: 'PG001B20250623002-1',
+        bibRecordNo: 'bjlib900120250623002',
+        title: '未匹配书目示例',
+        resourceId: '9780000000000',
+        carrier: 'AP',
+        author: '示例作者',
+        publisher: '示例出版社',
+        publishTime: '2025',
+        volumeNo: '—',
+        volumeName: '—',
+        price: '58.00',
+        currency: 'CNY',
+        copiesInSet: 1,
+        sets: 1,
+        lineStatus: '已发订',
+        acceptanceStatus: '待验收',
+        settlementStatus: '待申请',
+        isShortage: '否',
+        flowStats: '1/0/0/0/0',
+        issueTime: '2025-06-21 11:30:00',
+        holdingDuplicate: '',
+        orderDuplicate: '',
+        hasRemark: false,
+        remark: ''
+      },
+      {
+        orderId: 'PG001B20250623003',
+        site: '大兴机场馆',
+        orderLineNo: 'PG001B20250623003-1',
+        bibRecordNo: 'bjlib900120250623003',
+        title: '超收示例图书',
+        resourceId: '9787521718222',
+        carrier: 'AP',
+        author: '张三',
+        publisher: '商务印书馆',
+        publishTime: '2024-08',
+        volumeNo: '—',
+        volumeName: '—',
+        price: '128.00',
+        currency: 'CNY',
+        copiesInSet: 1,
+        sets: 2,
+        lineStatus: '处理中',
+        acceptanceStatus: '部分收货',
+        settlementStatus: '待申请',
+        isShortage: '否',
+        flowStats: '2/0/0/0/0',
+        issueTime: '2025-06-18 09:15:00',
+        holdingDuplicate: '',
+        orderDuplicate: '',
+        hasRemark: true,
+        remark: '加急验收'
+      }
+    ];
+
+    /**
+     * 计算订单行待收套数（发订 - 已收 - 已退 - 已撤订）
+     * @param {Object} line
+     * @returns {number}
+     */
+    function getOrderLinePendingReceive(line) {
+      const parts = String(line.flowStats || '0/0/0/0/0').split('/').map(v => Number(v) || 0);
+      const [issue = 0, receive = 0, , ret = 0, cancel = 0] = parts;
+      return Math.max(0, issue - receive - ret - cancel);
+    }
+
+    /**
+     * 渲染选择订单行弹窗表头
+     */
+    function renderPickLineHead() {
+      const tr = document.getElementById('delivery-pick-line-head');
+      if (!tr) return;
+      const cols = PICK_ORDER_LINE_COLUMNS.map(c =>
+        `<th class="px-2 py-2 text-left text-gray-600 font-medium whitespace-nowrap">${c.label}</th>`
+      ).join('');
+      tr.innerHTML = `<th class="px-2 py-2 w-10"></th>${cols}`;
+    }
+
+    /**
+     * 获取选择订单行弹窗单元格展示值
+     * @param {Object} line
+     * @param {{ key: string, label: string }} col
+     * @param {number} index
+     * @returns {string}
+     */
+    function getPickLineCellValue(line, col, index) {
+      if (col.key === '_index') return String(index);
+      if (col.key === 'acceptanceStatus') return line.acceptanceStatus || '—';
+      if (col.key === 'issueTime') return line.issueTime || '—';
+      if (col.key === 'remark') {
+        return line.hasRemark ? '<span class="text-sky-600">查看</span>' : '—';
+      }
+      const val = line[col.key];
+      return val === undefined || val === null || val === '' ? '—' : String(val);
+    }
+
+    /**
+     * 由订单行构建预览子行 fieldValues
+     * @param {Object} line
+     * @returns {Object<string, string>}
+     */
+    function buildChildFieldValuesFromOrderLine(line) {
+      return {
+        bibId: line.bibRecordNo || '',
+        title: line.title || '',
+        isbn: line.resourceId || '',
+        isrc: line.resourceId || '',
+        carrier: line.carrier || '',
+        barcode: line.productBarcode || '',
+        catalogNo: line.catalogNo || '',
+        author: line.author || '',
+        publisher: line.publisher || '',
+        pubDate: line.publishTime || '',
+        volNo: line.volumeNo || '',
+        volName: line.volumeName || '',
+        price: line.price || '',
+        currency: line.currency || '',
+        volCount: line.copiesInSet != null ? String(line.copiesInSet) : ''
+      };
+    }
+
+    /**
+     * 渲染选择订单行检索字段下拉
+     */
+    function renderPickLineSearchFields() {
+      const select = document.getElementById('delivery-pick-line-search-field');
+      if (!select) return;
+      select.innerHTML = PICK_ORDER_LINE_SEARCH_FIELDS.map(f =>
+        `<option value="${f.key}"${f.key === 'orderId' ? ' selected' : ''}>${f.label}</option>`
+      ).join('');
+    }
+
+    /**
+     * 重置选择订单行检索表单
+     */
+    function resetPickLineSearchForm() {
+      const form = document.getElementById('delivery-pick-line-search');
+      if (!form) return;
+      const fieldEl = form.elements.field;
+      const keywordEl = form.elements.keyword;
+      if (fieldEl) fieldEl.value = 'orderId';
+      if (keywordEl) keywordEl.value = '';
+    }
+
+    /**
+     * 检索过滤可选订单行
+     * @param {string} fieldKey
+     * @param {string} keyword
+     * @returns {Object[]}
+     */
+    function filterPickOrderLines(fieldKey, keyword) {
+      const kw = keyword.trim().toLowerCase();
+      if (!kw) return MOCK_ORDER_LINES;
+      return MOCK_ORDER_LINES.filter(line => {
+        const val = line[fieldKey];
+        return String(val ?? '').toLowerCase().includes(kw);
+      });
+    }
+
+    /**
+     * 打开选择订单行弹窗
+     * @param {number} rowIndex
+     */
+    function openPickLineModal(rowIndex) {
+      pickingRowIndex = rowIndex;
+      renderPickLineHead();
+      renderPickLineSearchFields();
+      resetPickLineSearchForm();
+      renderPickLineTable(MOCK_ORDER_LINES);
+      document.getElementById('delivery-pick-line-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * 关闭选择订单行弹窗
+     */
+    function closePickLineModal() {
+      pickingRowIndex = null;
+      document.getElementById('delivery-pick-line-modal')?.classList.add('hidden');
+    }
+
+    /**
+     * 渲染可选订单行
+     * @param {Object[]} lines
+     */
+    function renderPickLineTable(lines) {
+      const tbody = document.getElementById('delivery-pick-line-body');
+      if (!tbody) return;
+      tbody.innerHTML = lines.map((ln, i) => {
+        const cells = PICK_ORDER_LINE_COLUMNS.map(col => {
+          const val = getPickLineCellValue(ln, col, i + 1);
+          const nowrap = ['orderId', 'orderLineNo', 'bibRecordNo', 'resourceId', 'issueTime', 'flowStats'].includes(col.key);
+          return `<td class="px-2 py-2${nowrap ? ' whitespace-nowrap' : ''}${col.key === 'title' ? ' max-w-[160px] truncate' : ''}">${val}</td>`;
+        }).join('');
+        return `
+        <tr class="border-b border-gray-100 hover:bg-gray-50">
+          <td class="px-2 py-2">
+            <input type="checkbox" class="delivery-pick-cb rounded" data-order-line-no="${ln.orderLineNo}">
+          </td>
+          ${cells}
+        </tr>`;
+      }).join('');
+    }
+
+    /**
+     * 确认选择订单行
+     */
+    function confirmPickLines() {
+      if (pickingRowIndex === null) return;
+      const checked = [...document.querySelectorAll('.delivery-pick-cb:checked')];
+      if (!checked.length) {
+        alert('请至少选择一条订单行');
+        return;
+      }
+      const row = previewRows[pickingRowIndex];
+      if (!row) return;
+
+      row.children = checked.map(cb => {
+        const ln = MOCK_ORDER_LINES.find(l => l.orderLineNo === cb.dataset.orderLineNo);
+        if (!ln) return null;
+        return {
+          location: ln.site,
+          lineNo: ln.orderLineNo,
+          orderNo: ln.orderId,
+          pending: getOrderLinePendingReceive(ln),
+          fieldValues: buildChildFieldValuesFromOrderLine(ln),
+          receive: 0,
+          exchange: 0,
+          exchangeReason: '',
+          ret: 0,
+          returnReason: ''
+        };
+      }).filter(Boolean);
+      let remain = Number(row.fieldValues?.receiveQty) || 0;
+      row.children.forEach(ch => {
+        const alloc = Math.min(ch.pending, remain);
+        ch.receive = alloc;
+        remain -= alloc;
+      });
+      row.allocated = (Number(row.fieldValues?.receiveQty) || 0) - remain;
+      const shipQty = Number(row.fieldValues?.receiveQty) || 0;
+      const totalPending = row.children.reduce((s, ch) => s + ch.pending, 0);
+      row.status = resolvePreviewMatchStatus(shipQty, totalPending);
+      row.expanded = true;
+      closePickLineModal();
+      renderPreviewTable();
+    }
+
+    /**
+     * 校验映射步骤
+     * @returns {boolean}
+     */
+    function validateMapping() {
+      const err = document.getElementById('delivery-mapping-error');
+      syncColumnMappingFromDom();
+
+      if (!validateAndSaveMappingTemplate()) {
+        return false;
+      }
+
+      const mapped = getMappedStandardValues();
+      if (!mapped.includes('receiveQty')) {
+        if (err) {
+          err.textContent = '请映射「待收套数」字段';
+          err.classList.remove('hidden');
+        }
+        return false;
+      }
+      const hasMatchable = getActiveStandardFields().some(f => f.matchable && mapped.includes(f.value));
+      if (!hasMatchable) {
+        if (err) {
+          err.textContent = '请至少映射一个可用于匹配的字段';
+          err.classList.remove('hidden');
+        }
+        return false;
+      }
+      err?.classList.add('hidden');
+      return true;
+    }
+
+    /**
+     * 校验匹配字段步骤
+     * @returns {boolean}
+     */
+    function validateMatchFields() {
+      const err = document.getElementById('delivery-match-error');
+      if (!selectedMatchFields.size) {
+        err?.classList.remove('hidden');
+        return false;
+      }
+      err?.classList.add('hidden');
+      return true;
+    }
+
+    /**
+     * 校验上传步骤
+     * @returns {boolean}
+     */
+    function validateUpload() {
+      const err = document.getElementById('delivery-format-error');
+      if (!uploadedFile) {
+        err?.classList.remove('hidden');
+        return false;
+      }
+      err?.classList.add('hidden');
+      return true;
+    }
+
+    /**
+     * 从 DOM 同步预览子行处置数据
+     */
+    function syncPreviewFromDom() {
+      const sync = (selector, apply) => {
+        document.querySelectorAll(selector).forEach(el => {
+          const p = Number(el.dataset.pidx);
+          const c = Number(el.dataset.cidx);
+          const ch = previewRows[p]?.children[c];
+          if (ch) apply(ch, el);
+        });
+      };
+      sync('.delivery-receive-qty', (ch, el) => { ch.receive = Number(el.value) || 0; });
+      sync('.delivery-exchange-qty', (ch, el) => { ch.exchange = Number(el.value) || 0; });
+      sync('.delivery-exchange-reason', (ch, el) => { ch.exchangeReason = el.value; });
+      sync('.delivery-return-qty', (ch, el) => { ch.ret = Number(el.value) || 0; });
+      sync('.delivery-return-reason', (ch, el) => { ch.returnReason = el.value; });
+    }
+
+    /**
+     * 解析处置套数输入
+     * @param {HTMLInputElement|null|undefined} el
+     * @returns {{ valid: boolean, value: number }}
+     */
+    function parseQtyInput(el) {
+      if (!el) return { valid: true, value: 0 };
+      const raw = el.value.trim();
+      if (raw === '') return { valid: true, value: 0 };
+      const num = Number(raw);
+      if (Number.isNaN(num) || num < 0) return { valid: false, value: num };
+      return { valid: true, value: num };
+    }
+
+    /**
+     * 校验第四步预览处置数据
+     * @returns {string[]}
+     */
+    function validatePreviewStep() {
+      syncPreviewFromDom();
+      const errors = [];
+
+      if (!previewRows.length) {
+        errors.push('没有可提交的发货记录');
+        return errors;
+      }
+
+      previewRows.forEach((row, pi) => {
+        const rowNo = pi + 1;
+        const shipQty = Number(row.fieldValues?.receiveQty) || 0;
+
+        if (row.status === 'fail' && !row.children.length) {
+          errors.push(`第${rowNo}行：匹配失败，请选择订单行或删除该行`);
+          return;
+        }
+        if (!row.children.length) return;
+
+        let dispositionTotal = 0;
+        row.children.forEach((ch, ci) => {
+          const receiveEl = document.querySelector(`.delivery-receive-qty[data-pidx="${pi}"][data-cidx="${ci}"]`);
+          const exchangeEl = document.querySelector(`.delivery-exchange-qty[data-pidx="${pi}"][data-cidx="${ci}"]`);
+          const returnEl = document.querySelector(`.delivery-return-qty[data-pidx="${pi}"][data-cidx="${ci}"]`);
+
+          const receiveParsed = parseQtyInput(receiveEl);
+          const exchangeParsed = parseQtyInput(exchangeEl);
+          const returnParsed = parseQtyInput(returnEl);
+
+          if (!receiveParsed.valid || !exchangeParsed.valid || !returnParsed.valid) {
+            errors.push(`第${rowNo}行 ${ch.lineNo}：请输入有效套数`);
+            return;
+          }
+
+          const receive = receiveParsed.value;
+          const exchange = exchangeParsed.value;
+          const ret = returnParsed.value;
+          const total = receive + exchange + ret;
+          dispositionTotal += total;
+
+          if (exchange > 0 && !ch.exchangeReason) {
+            errors.push(`第${rowNo}行 ${ch.lineNo}：请填写换货原因`);
+          }
+          if (ret > 0 && !ch.returnReason) {
+            errors.push(`第${rowNo}行 ${ch.lineNo}：请填写退货原因`);
+          }
+          if (total > ch.pending) {
+            errors.push(`第${rowNo}行 ${ch.lineNo}：处置套数合计不能大于待收套数`);
+          }
+        });
+
+        if (dispositionTotal > shipQty) {
+          errors.push(`第${rowNo}行：处置套数合计不能大于发货待收套数（${shipQty}）`);
+        }
+      });
+
+      return errors;
+    }
+
+    /**
+     * 渲染第五步确认汇总
+     */
+    function renderStep5ConfirmSummary() {
+      const receive = summarizeAction('receive');
+      const exchange = summarizeAction('exchange');
+      const ret = summarizeAction('return');
+      const el = document.getElementById('delivery-confirm-summary');
+      if (!el) return;
+      el.innerHTML = `
+        <p>收货：<strong>${receive.count}</strong> 行，<strong>${receive.qty}</strong> 套</p>
+        <p>换货：<strong>${exchange.count}</strong> 行，<strong>${exchange.qty}</strong> 套</p>
+        <p>退货：<strong>${ret.count}</strong> 行，<strong>${ret.qty}</strong> 套</p>
+        <p class="text-gray-500 mt-2">确认后将写入当前验收单</p>`;
+    }
+
+    /**
+     * 提交第四步并进入确认页
+     * @returns {boolean}
+     */
+    function submitPreviewStep() {
+      if (isPreviewMatching) return false;
+      const errors = validatePreviewStep();
+      if (errors.length) {
+        alert(errors.join('\n'));
+        return false;
+      }
+      renderStep5ConfirmSummary();
+      goToStep(5);
+      return true;
+    }
+
+    /**
+     * 统计预览操作数据
+     * @param {'receive'|'exchange'|'return'} action
+     * @returns {{ count: number, qty: number, errors: string[] }}
+     */
+    function summarizeAction(action) {
+      let count = 0;
+      let qty = 0;
+      const errors = [];
+
+      previewRows.forEach((row, pi) => {
+        row.children.forEach((ch) => {
+          if (action === 'receive' && ch.receive > 0) {
+            count++;
+            qty += ch.receive;
+          }
+          if (action === 'exchange' && ch.exchange > 0) {
+            if (!ch.exchangeReason) errors.push(`第${pi + 1}行 ${ch.lineNo}：请选择换货原因`);
+            else { count++; qty += ch.exchange; }
+          }
+          if (action === 'return' && ch.ret > 0) {
+            if (!ch.returnReason) errors.push(`第${pi + 1}行 ${ch.lineNo}：请选择退货原因`);
+            else { count++; qty += ch.ret; }
+          }
+        });
+      });
+
+      return { count, qty, errors };
+    }
+
+    /**
+     * 切换第五步底部按钮
+     * @param {'confirm'|'success'|'failure'|null} state
+     */
+    function updateStep5Footer(state) {
+      const prevBtn = document.getElementById('delivery-prev-btn');
+      const cancelBtn = document.getElementById('delivery-cancel-btn');
+      const finalBtn = document.getElementById('delivery-final-confirm-btn');
+      const backBtn = document.getElementById('delivery-step5-back-btn');
+      const retryBtn = document.getElementById('delivery-step5-retry-btn');
+
+      if (currentStep === 5) {
+        prevBtn?.classList.toggle('hidden', state !== 'confirm');
+      }
+      cancelBtn?.classList.toggle('hidden', state !== 'confirm' && state !== 'failure');
+      finalBtn?.classList.toggle('hidden', state !== 'confirm');
+      backBtn?.classList.toggle('hidden', state !== 'success');
+      retryBtn?.classList.toggle('hidden', state !== 'failure');
+    }
+
+    /**
+     * 重置第五步为确认提交状态
+     */
+    function resetStep5ToConfirm() {
+      document.getElementById('delivery-confirm-panel')?.classList.remove('hidden');
+      document.getElementById('delivery-success-panel')?.classList.add('hidden');
+      document.getElementById('delivery-failure-panel')?.classList.add('hidden');
+      updateStep5Footer('confirm');
+    }
+
+    /**
+     * 展示第五步提交成功
+     */
+    function showStep5Success() {
+      const receive = summarizeAction('receive');
+      const exchange = summarizeAction('exchange');
+      const ret = summarizeAction('return');
+      document.getElementById('delivery-confirm-panel')?.classList.add('hidden');
+      document.getElementById('delivery-failure-panel')?.classList.add('hidden');
+      document.getElementById('delivery-success-panel')?.classList.remove('hidden');
+      document.getElementById('delivery-success-text').textContent =
+        `提交成功：收货 ${receive.qty} 套，换货 ${exchange.qty} 套，退货 ${ret.qty} 套`;
+      updateStep5Footer('success');
+    }
+
+    /**
+     * 展示第五步提交失败
+     */
+    function showStep5Failure() {
+      document.getElementById('delivery-confirm-panel')?.classList.add('hidden');
+      document.getElementById('delivery-success-panel')?.classList.add('hidden');
+      document.getElementById('delivery-failure-panel')?.classList.remove('hidden');
+      updateStep5Footer('failure');
+    }
+
+    /**
+     * 设置第五步提交按钮 busy 状态
+     * @param {boolean} busy
+     */
+    function setStep5SubmitBusy(busy) {
+      ['delivery-final-confirm-btn', 'delivery-step5-retry-btn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.disabled = busy;
+        el.classList.toggle('opacity-50', busy);
+        el.classList.toggle('cursor-not-allowed', busy);
+      });
+    }
+
+    /**
+     * 执行最终确认提交
+     */
+    async function executeFinalConfirm() {
+      setStep5SubmitBusy(true);
+      await delay(600);
+
+      /** @type {boolean} 原型模拟：设为 false 可预览失败态 */
+      const submitSuccess = true;
+
+      setStep5SubmitBusy(false);
+      if (submitSuccess) {
+        showStep5Success();
+      } else {
+        showStep5Failure();
+      }
+    }
+
+    /**
+     * 绑定面包屑返回验收单管理
+     */
+    function bindBreadcrumbNavigation() {
+      document.getElementById('delivery-import-breadcrumb-back')?.addEventListener('click', e => {
+        e.preventDefault();
+        backToAcceptanceList();
+      });
+    }
+
+    /**
+     * 返回验收单管理
+     */
+    function backToAcceptanceList() {
+      const page = '02_01_验收单管理.html';
+      const tabMgr = typeof TabManager !== 'undefined' ? TabManager.getActiveManager() : null;
+      if (tabMgr?.hostPage) tabMgr.openTab(page, '验收单管理', { reload: true });
+      else location.href = page;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!loadAcceptanceContext()) {
+        alert('请先选择验收单');
+        backToAcceptanceList();
+        return;
+      }
+      renderAcceptanceHeader();
+      initRemarkTooltip();
+      bindBreadcrumbNavigation();
+      renderTemplateSelect();
+      renderMappingProfileHint();
+      initDefaultMatchFields();
+      renderPickLineSearchFields();
+      goToStep(1);
+
+      document.getElementById('delivery-template-select')?.addEventListener('change', e => {
+        applyMappingTemplate(e.target.value);
+      });
+
+      document.getElementById('delivery-save-template')?.addEventListener('change', toggleSaveTemplatePanel);
+
+      document.getElementById('delivery-template-name')?.addEventListener('input', () => {
+        hideTemplateNameError();
+      });
+
+      document.getElementById('delivery-upload-btn')?.addEventListener('click', () => {
+        document.getElementById('delivery-file-input')?.click();
+      });
+
+      document.getElementById('delivery-file-input')?.addEventListener('change', e => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!isValidFileName(file.name)) {
+          document.getElementById('delivery-format-error')?.classList.remove('hidden');
+          return;
+        }
+        uploadedFile = file;
+        document.getElementById('delivery-format-error')?.classList.add('hidden');
+        document.getElementById('delivery-file-name').textContent = file.name;
+        document.getElementById('delivery-file-info')?.classList.remove('hidden');
+        document.getElementById('delivery-file-info')?.classList.add('flex');
+      });
+
+      document.getElementById('delivery-file-remove')?.addEventListener('click', () => {
+        uploadedFile = null;
+        const input = document.getElementById('delivery-file-input');
+        if (input) input.value = '';
+        document.getElementById('delivery-file-info')?.classList.add('hidden');
+        document.getElementById('delivery-file-info')?.classList.remove('flex');
+      });
+
+      document.getElementById('delivery-next-btn')?.addEventListener('click', () => {
+        if (currentStep === 1 && !validateUpload()) return;
+        if (currentStep === 2 && !validateMapping()) return;
+        if (currentStep === 3) {
+          if (!validateMatchFields()) return;
+        }
+        if (currentStep < 4) goToStep(currentStep + 1);
+      });
+
+      document.getElementById('delivery-prev-btn')?.addEventListener('click', () => {
+        if (currentStep === 5) {
+          goToStep(4);
+          return;
+        }
+        if (currentStep > 1 && currentStep < 5) goToStep(currentStep - 1);
+      });
+
+      document.getElementById('delivery-cancel-btn')?.addEventListener('click', () => {
+        if (confirm('确定取消导入？')) backToAcceptanceList();
+      });
+
+      document.getElementById('delivery-preview-prev-btn')?.addEventListener('click', () => {
+        goToStep(3);
+      });
+
+      document.getElementById('delivery-preview-cancel-btn')?.addEventListener('click', () => {
+        if (confirm('确定取消导入？')) backToAcceptanceList();
+      });
+
+      document.getElementById('delivery-preview-next-btn')?.addEventListener('click', () => {
+        submitPreviewStep();
+      });
+
+      document.getElementById('delivery-final-confirm-btn')?.addEventListener('click', executeFinalConfirm);
+      document.getElementById('delivery-step5-back-btn')?.addEventListener('click', backToAcceptanceList);
+      document.getElementById('delivery-step5-retry-btn')?.addEventListener('click', executeFinalConfirm);
+
+      document.getElementById('delivery-pick-line-close')?.addEventListener('click', closePickLineModal);
+      document.getElementById('delivery-pick-line-cancel')?.addEventListener('click', closePickLineModal);
+      document.getElementById('delivery-pick-line-confirm')?.addEventListener('click', confirmPickLines);
+
+      document.getElementById('delivery-pick-line-search')?.addEventListener('submit', e => {
+        e.preventDefault();
+        const field = e.target.elements.field?.value || 'orderId';
+        const kw = e.target.elements.keyword?.value || '';
+        renderPickLineTable(filterPickOrderLines(field, kw));
+      });
+    });
+  </script>
+</body>
+</html>

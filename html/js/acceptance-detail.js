@@ -436,7 +436,6 @@ const AcceptanceDetail = {
       'acceptance-detail-supplier': a.supplier,
       'acceptance-detail-total-list-price': this.formatSummaryAmount(a.totalListPrice),
       'acceptance-detail-total-net-price': this.formatSummaryAmount(a.totalNetPrice),
-      'acceptance-detail-discount': this.formatSummaryAmount(a.discount),
       'acceptance-detail-total-species': this.formatSummaryCount(a.totalSpeciesCount),
       'acceptance-detail-total-volumes': this.formatSummaryCount(a.totalVolumeCount),
       'acceptance-detail-remark': a.remarkText || '—'

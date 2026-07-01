@@ -13,11 +13,29 @@ const AppConfig = {
   currentSubscriber: 'ceshi',
 
   /**
+   * 当前用户可查看的关联订户列表（原型演示）
+   * @type {string[]}
+   */
+  viewableSubscribers: ['ceshi'],
+
+  /**
    * 获取当前登录用户所属订户
    * @returns {string}
    */
   getCurrentSubscriber() {
     return this.currentSubscriber || '';
+  },
+
+  /**
+   * 获取当前用户可查看的关联订户列表
+   * @returns {string[]}
+   */
+  getViewableSubscribers() {
+    if (Array.isArray(this.viewableSubscribers) && this.viewableSubscribers.length) {
+      return [...this.viewableSubscribers];
+    }
+    const subscriber = this.getCurrentSubscriber();
+    return subscriber ? [subscriber] : [];
   },
 
   /**
@@ -45,11 +63,13 @@ const AppConfig = {
 
   /** 子页面在侧边栏高亮归属的主菜单页 */
   sidebarHighlightMap: {
-    '01_01_19_查Z3950.html': '01_01_非连续出版物订单-订单列表.html',
+    '01_01_19_查Z3950.html': '01_01_18_书目查询.html',
+    '01_01_20_新建书目.html': '01_01_18_书目查询.html',
     '02_01_02_验收详情按种_纸质书.html': '02_01_验收单管理.html',
     '02_01_05_验收详情按种_视听资料.html': '02_01_验收单管理.html',
     '02_01_11_验收单详情按册_纸质书.html': '02_01_验收单管理.html',
-    '02_01_12_验收单详情按册_视听资料.html': '02_01_验收单管理.html'
+    '02_01_12_验收单详情按册_视听资料.html': '02_01_验收单管理.html',
+    '02_01_13_导入发货单.html': '02_01_验收单管理.html'
   },
 
   /** 侧边栏菜单 */
@@ -58,7 +78,7 @@ const AppConfig = {
       id: 'order-mgmt', label: '订单管理', expanded: true,
       children: [
         { label: '非连续出版物订单', page: '01_01_非连续出版物订单-订单列表.html' },
-        { label: '书目查询', page: '01_01_18_馆藏查重.html' }
+        { label: '书目查询', page: '01_01_18_书目查询.html' }
       ]
     },
     {

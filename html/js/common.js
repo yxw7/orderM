@@ -276,4 +276,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Layout.init({ pageTitle, activePage, isModal });
   Common.init();
+
+  if (typeof PrdSpec !== 'undefined') {
+    PrdSpec.initShell();
+    PrdSpec.syncActive(activePage);
+  }
 });

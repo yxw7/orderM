@@ -181,6 +181,12 @@ const TabManager = {
 
     panel.appendChild(iframe);
     container.appendChild(panel);
+
+    iframe.addEventListener('load', () => {
+      if (this.activePage === page && typeof PrdSpec !== 'undefined') {
+        PrdSpec.syncActive(page);
+      }
+    });
   },
 
   /**
@@ -245,6 +251,9 @@ const TabManager = {
 
     this.renderTabBar();
     this.updateSidebarActive(page);
+    if (typeof PrdSpec !== 'undefined') {
+      PrdSpec.syncActive(page);
+    }
     if (save) this.saveState();
   },
 

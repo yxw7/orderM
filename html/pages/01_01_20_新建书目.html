@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新建书目</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    body[data-active-page="01_01_20_新建书目.html"] #tab-panel-host,
+    body[data-active-page="01_01_20_新建书目.html"] #main-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    body[data-active-page="01_01_20_新建书目.html"] #new-bib-page {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    body[data-active-page="01_01_20_新建书目.html"] .new-bib-marc-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    body[data-active-page="01_01_20_新建书目.html"] .new-bib-marc-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    body[data-active-page="01_01_20_新建书目.html"] .new-bib-marc-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    body[data-active-page="01_01_20_新建书目.html"] .new-bib-recent-item.active {
+      background: #eff6ff;
+      color: #0284c7;
+    }
+
+    body[data-active-page="01_01_20_新建书目.html"] .new-bib-marc-table tbody tr:nth-child(odd) {
+      background: #f9fafb;
+    }
+
+    body[data-active-page="01_01_20_新建书目.html"] .new-bib-marc-table tbody tr:nth-child(even) {
+      background: #fff;
+    }
+
+    body[data-active-page="01_01_20_新建书目.html"] .new-bib-marc-table td {
+      vertical-align: top;
+    }
+
+    body[data-active-page="01_01_20_新建书目.html"] .new-bib-indicator-input {
+      width: 2rem;
+      text-align: center;
+    }
+
+    body[data-active-page="01_01_20_新建书目.html"] .new-bib-toolbar-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden"
+  data-page-title="新建书目"
+  data-active-page="01_01_20_新建书目.html">
+
+  <div id="app-root" class="flex flex-col h-full"></div>
+
+  <div id="main-content" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+    <div class="flex items-center gap-2 mb-4 text-sm shrink-0">
+      <a href="01_01_18_书目查询.html"
+        class="flex items-center gap-1 text-gray-500 hover:text-sky-600">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        书目查询
+      </a>
+      <span class="text-gray-400">/</span>
+      <span class="text-gray-800">新建书目</span>
+    </div>
+
+    <div id="new-bib-page" class="bg-white rounded border border-gray-200 overflow-hidden">
+      <!-- 工具栏 -->
+      <div class="new-bib-toolbar flex items-center justify-between gap-4 px-4 py-2 border-b border-gray-200 shrink-0 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap">
+          <select id="new-bib-db-select"
+            class="border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:border-sky-500">
+            <option value="stl01" selected>文献库</option>
+            <option value="stl02">视听资料库</option>
+            <option value="stl03">电子资源库</option>
+          </select>
+          <select id="new-bib-marc-type-select"
+            class="border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:border-sky-500">
+            <option value="CNMARC|中文图书" selected>CNMARC | 中文图书</option>
+            <option value="CNMARC|中文录音资料">CNMARC | 中文录音资料</option>
+            <option value="CNMARC|中文影像资料">CNMARC | 中文影像资料</option>
+            <option value="MARC21|外文图书">MARC21 | 外文图书</option>
+          </select>
+          <button type="button" id="new-bib-load-template-btn"
+            class="new-bib-toolbar-btn px-3 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            载入模板
+          </button>
+          <button type="button" id="new-bib-dedup-btn"
+            class="new-bib-toolbar-btn px-3 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            查重
+          </button>
+          <button type="button" id="new-bib-z3950-btn"
+            class="new-bib-toolbar-btn px-3 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            查询Z3950
+          </button>
+          <button type="button" id="new-bib-auto-generate-btn"
+            class="new-bib-toolbar-btn px-3 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            自动生成
+          </button>
+          <button type="button" id="new-bib-check-btn"
+            class="new-bib-toolbar-btn px-3 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            检查
+          </button>
+          <button type="button" id="new-bib-more-btn"
+            class="px-3 py-1.5 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50">
+            更多 ▾
+          </button>
+        </div>
+        <div class="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="new-bib-show-field-help" class="rounded text-sky-600">
+            <span>显示字段帮助</span>
+          </label>
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="new-bib-show-field-names" class="rounded text-sky-600" checked>
+            <span>显示字段名称</span>
+          </label>
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="new-bib-vertical-subfields" class="rounded text-sky-600">
+            <span>子字段竖排</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex flex-1 min-h-0">
+        <!-- 最近编辑 -->
+        <aside class="new-bib-recent-sidebar w-52 shrink-0 border-r border-gray-200 bg-gray-50 flex flex-col min-h-0">
+          <div class="px-3 py-2 text-sm font-medium text-gray-700 border-b border-gray-200 shrink-0">最近编辑</div>
+          <div id="new-bib-recent-list" class="flex-1 overflow-y-auto py-1"></div>
+        </aside>
+
+        <!-- MARC 编辑区 -->
+        <div class="new-bib-editor flex flex-col flex-1 min-h-0">
+          <div class="px-4 py-2 border-b border-gray-100 shrink-0 text-sm">
+            <span class="text-red-600">书目库【<span id="new-bib-db-code">stl01</span>】</span>
+            <span class="text-red-600 ml-4">创建人员【<span id="new-bib-creator">—</span>】</span>
+            <span class="text-red-600 ml-4">MARC类型【<span id="new-bib-marc-type-label">CNMARC|中文图书</span>】</span>
+          </div>
+
+          <div class="new-bib-marc-scroll">
+            <table class="new-bib-marc-table w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <tr>
+                  <th id="new-bib-col-field-name"
+                    class="px-3 py-2 text-left text-gray-600 font-medium whitespace-nowrap w-36">字段名称</th>
+                  <th class="px-3 py-2 text-left text-gray-600 font-medium whitespace-nowrap w-16">字段</th>
+                  <th class="px-3 py-2 text-left text-gray-600 font-medium whitespace-nowrap w-12">指示符1</th>
+                  <th class="px-3 py-2 text-left text-gray-600 font-medium whitespace-nowrap w-12">指示符2</th>
+                  <th class="px-3 py-2 text-left text-gray-600 font-medium whitespace-nowrap">字段内容</th>
+                </tr>
+              </thead>
+              <tbody id="new-bib-marc-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部操作栏 -->
+      <div class="flex items-center justify-between px-4 py-2 border-t border-gray-200 shrink-0 bg-gray-50">
+        <button type="button" id="new-bib-delete-btn"
+          class="new-bib-toolbar-btn px-4 py-1.5 text-sm rounded bg-red-500 text-white hover:bg-red-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          删除新记录
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" id="new-bib-save-btn" disabled
+            class="new-bib-toolbar-btn px-4 py-1.5 text-sm rounded bg-gray-300 text-gray-500 cursor-not-allowed">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+            </svg>
+            保存
+          </button>
+          <button type="button" id="new-bib-undo-btn" disabled
+            class="px-4 py-1.5 text-sm rounded border border-gray-200 text-gray-400 cursor-not-allowed">撤销</button>
+          <button type="button" id="new-bib-redo-btn" disabled
+            class="px-4 py-1.5 text-sm rounded border border-gray-200 text-gray-400 cursor-not-allowed">恢复</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/tab-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    /** @type {number} 新建记录序号 */
+    let newBibRecordSeq = 7;
+
+    /** @type {string|null} 当前记录 ID */
+    let activeNewBibRecordId = null;
+
+    /** @type {boolean} 当前记录是否有未保存修改 */
+    let newBibDirty = false;
+
+    /** 最近编辑列表示例数据 */
+    const NEW_BIB_RECENT_ITEMS = [
+      { id: 'stl01-NEW7', title: '', isNew: true },
+      { id: 'stl01-NEW6', title: '', isNew: true },
+      { id: 'stl01-NEW5', title: '', isNew: true },
+      { id: 'stl01-bjlib9001202606135036', title: '流固耦合声学', isNew: false },
+      { id: 'stl01-bjlib9001202605833181', title: '小王子', isNew: false },
+      { id: 'stl01-bjlib9001202605833182', title: '小王子的星际旅行', isNew: false }
+    ];
+
+    /** CNMARC 中文图书默认模板字段 */
+    const NEW_BIB_DEFAULT_FIELDS = [
+      { label: '头标区', tag: 'LDR', ind1: '', ind2: '', content: '-----nam0-22-----450-' },
+      { label: '国际标准书号', tag: '010', ind1: '', ind2: '', content: '▼a ▼d' },
+      { label: '通用处理数据', tag: '100', ind1: '', ind2: '', content: '▼a --------d--------em-y0chiy50-------ea' },
+      { label: '文献语种', tag: '101', ind1: '0', ind2: '', content: '▼a chi' },
+      { label: '编码数据字段', tag: '105', ind1: '', ind2: '', content: '▼a y ▼d zzzzzzzzy' },
+      { label: '题名与责任说明', tag: '200', ind1: '1', ind2: '', content: '▼a ▼b 专著 ▼f' },
+      { label: '版本说明', tag: '205', ind1: '', ind2: '', content: '▼a' },
+      { label: '出版发行等', tag: '210', ind1: '', ind2: '', content: '▼a ▼c ▼d' },
+      { label: '载体形态项', tag: '215', ind1: '', ind2: '', content: '▼a 页 ▼c 图 ▼d cm' },
+      { label: '提要或文摘附注', tag: '330', ind1: '', ind2: '', content: '▼a' },
+      { label: '论题名称主题', tag: '606', ind1: '0', ind2: '', content: '▼a' },
+      { label: '中国图书馆分类法', tag: '690', ind1: '', ind2: '', content: '▼a ▼v 5' }
+    ];
+
+    /** @type {Object<string, {bibDb: string, marcType: string, fields: Object[]}>} 记录缓存 */
+    const newBibRecordStore = {};
+
+    /**
+     * 克隆默认 MARC 字段模板
+     * @returns {Object[]}
+     */
+    function cloneDefaultNewBibFields() {
+      return NEW_BIB_DEFAULT_FIELDS.map(field => ({ ...field }));
+    }
+
+    /**
+     * 获取当前书目库代码
+     * @returns {string}
+     */
+    function getCurrentBibDbCode() {
+      const select = document.getElementById('new-bib-db-select');
+      return select?.value || 'stl01';
+    }
+
+    /**
+     * 更新书目库展示
+     */
+    function updateBibDbLabel() {
+      const code = getCurrentBibDbCode();
+      const labelEl = document.getElementById('new-bib-db-code');
+      if (labelEl) labelEl.textContent = code;
+    }
+
+    /**
+     * 获取当前 MARC 类型标签
+     * @returns {string}
+     */
+    function getCurrentMarcTypeLabel() {
+      const select = document.getElementById('new-bib-marc-type-select');
+      return select?.value || 'CNMARC|中文图书';
+    }
+
+    /**
+     * 更新 MARC 类型展示
+     */
+    function updateMarcTypeLabel() {
+      const label = getCurrentMarcTypeLabel();
+      const labelEl = document.getElementById('new-bib-marc-type-label');
+      if (labelEl) labelEl.textContent = label;
+    }
+
+    /**
+     * 设置保存按钮状态
+     * @param {boolean} dirty - 是否有未保存修改
+     */
+    function setNewBibDirty(dirty) {
+      newBibDirty = dirty;
+      const saveBtn = document.getElementById('new-bib-save-btn');
+      if (!saveBtn) return;
+
+      if (dirty) {
+        saveBtn.disabled = false;
+        saveBtn.className = 'new-bib-toolbar-btn px-4 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700';
+      } else {
+        saveBtn.disabled = true;
+        saveBtn.className = 'new-bib-toolbar-btn px-4 py-1.5 text-sm rounded bg-gray-300 text-gray-500 cursor-not-allowed';
+      }
+    }
+
+    /**
+     * 从表单读取当前 MARC 字段
+     * @returns {Object[]}
+     */
+    function readMarcFieldsFromForm() {
+      const rows = document.querySelectorAll('#new-bib-marc-body tr[data-field-index]');
+      return Array.from(rows).map(row => ({
+        label: row.dataset.fieldLabel || '',
+        tag: row.dataset.fieldTag || '',
+        ind1: row.querySelector('[data-ind="1"]')?.value ?? '',
+        ind2: row.querySelector('[data-ind="2"]')?.value ?? '',
+        content: row.querySelector('[data-field-content]')?.value ?? ''
+      }));
+    }
+
+    /**
+     * 保存当前记录到缓存
+     */
+    function persistActiveNewBibRecord() {
+      if (!activeNewBibRecordId) return;
+      newBibRecordStore[activeNewBibRecordId] = {
+        bibDb: getCurrentBibDbCode(),
+        marcType: getCurrentMarcTypeLabel(),
+        fields: readMarcFieldsFromForm()
+      };
+    }
+
+    /**
+     * 渲染 MARC 编辑表格
+     * @param {Object[]} fields - MARC 字段列表
+     */
+    function renderNewBibMarcTable(fields) {
+      const tbody = document.getElementById('new-bib-marc-body');
+      if (!tbody) return;
+
+      const showFieldNames = document.getElementById('new-bib-show-field-names')?.checked !== false;
+      const verticalSubfields = document.getElementById('new-bib-vertical-subfields')?.checked === true;
+
+      tbody.innerHTML = fields.map((field, index) => `
+        <tr data-field-index="${index}" data-field-label="${field.label}" data-field-tag="${field.tag}">
+          <td class="px-3 py-2 text-gray-600 whitespace-nowrap new-bib-field-name-cell${showFieldNames ? '' : ' hidden'}">${field.label}</td>
+          <td class="px-3 py-2 text-gray-800 whitespace-nowrap font-medium">${field.tag}</td>
+          <td class="px-3 py-2">
+            <input type="text" maxlength="1" data-ind="1" value="${field.ind1 || ''}"
+              class="new-bib-indicator-input border border-gray-300 rounded px-1 py-1 text-sm focus:outline-none focus:border-sky-500">
+          </td>
+          <td class="px-3 py-2">
+            <input type="text" maxlength="1" data-ind="2" value="${field.ind2 || ''}"
+              class="new-bib-indicator-input border border-gray-300 rounded px-1 py-1 text-sm focus:outline-none focus:border-sky-500">
+          </td>
+          <td class="px-3 py-2">
+            <textarea data-field-content rows="${verticalSubfields ? 3 : 1}"
+              class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-sky-500 resize-y min-h-[2rem]">${field.content || ''}</textarea>
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('input, textarea').forEach(el => {
+        el.addEventListener('input', () => setNewBibDirty(true));
+      });
+    }
+
+    /**
+     * 渲染最近编辑列表
+     */
+    function renderNewBibRecentList() {
+      const container = document.getElementById('new-bib-recent-list');
+      if (!container) return;
+
+      container.innerHTML = NEW_BIB_RECENT_ITEMS.map(item => {
+        const prefix = item.isNew ? '*' : '';
+        const suffix = item.title ? ` (${item.title})` : '';
+        const isActive = item.id === activeNewBibRecordId;
+        return `
+          <button type="button"
+            class="new-bib-recent-item block w-full text-left px-3 py-2 text-sm truncate hover:bg-gray-100${isActive ? ' active' : ''}"
+            data-recent-id="${item.id}">
+            ${prefix}${item.id}${suffix}
+          </button>`;
+      }).join('');
+    }
+
+    /**
+     * 加载指定记录
+     * @param {string} recordId - 记录 ID
+     */
+    function loadNewBibRecord(recordId) {
+      persistActiveNewBibRecord();
+
+      activeNewBibRecordId = recordId;
+      const cached = newBibRecordStore[recordId];
+      const recentItem = NEW_BIB_RECENT_ITEMS.find(item => item.id === recordId);
+
+      if (cached) {
+        const dbSelect = document.getElementById('new-bib-db-select');
+        const marcSelect = document.getElementById('new-bib-marc-type-select');
+        if (dbSelect) dbSelect.value = cached.bibDb || 'stl01';
+        if (marcSelect) marcSelect.value = cached.marcType;
+        updateBibDbLabel();
+        updateMarcTypeLabel();
+        renderNewBibMarcTable(cached.fields);
+      } else if (recentItem?.isNew) {
+        const dbSelect = document.getElementById('new-bib-db-select');
+        const marcSelect = document.getElementById('new-bib-marc-type-select');
+        if (dbSelect) dbSelect.value = 'stl01';
+        if (marcSelect) marcSelect.value = 'CNMARC|中文图书';
+        updateBibDbLabel();
+        updateMarcTypeLabel();
+        renderNewBibMarcTable(cloneDefaultNewBibFields());
+      } else {
+        const dbSelect = document.getElementById('new-bib-db-select');
+        if (dbSelect) dbSelect.value = recordId.split('-')[0] || 'stl01';
+        updateBibDbLabel();
+        updateMarcTypeLabel();
+        renderNewBibMarcTable([
+          { label: '头标区', tag: 'LDR', ind1: '', ind2: '', content: '01095nam0 2200003 450' },
+          { label: '国际标准书号', tag: '010', ind1: '', ind2: '', content: '▼a9787576724455▼d168' },
+          { label: '文献语种', tag: '101', ind1: '0', ind2: '', content: '▼a chi' },
+          { label: '题名与责任说明', tag: '200', ind1: '1', ind2: '', content: `▼a${recentItem?.title || ''}▼f` },
+          { label: '载体形态项', tag: '215', ind1: '', ind2: '', content: '▼a408页▼c图▼d26cm' },
+          { label: '中国图书馆分类法', tag: '690', ind1: '', ind2: '', content: '▼aO427▼v4' }
+        ]);
+      }
+
+      setNewBibDirty(false);
+      renderNewBibRecentList();
+    }
+
+    /**
+     * 创建新的未保存记录
+     * @returns {string} 新记录 ID
+     */
+    function createNewBibRecord() {
+      newBibRecordSeq += 1;
+      const bibDb = getCurrentBibDbCode();
+      const recordId = `${bibDb}-NEW${newBibRecordSeq}`;
+      NEW_BIB_RECENT_ITEMS.unshift({ id: recordId, title: '', isNew: true });
+      newBibRecordStore[recordId] = {
+        bibDb,
+        marcType: getCurrentMarcTypeLabel(),
+        fields: cloneDefaultNewBibFields()
+      };
+      return recordId;
+    }
+
+    /**
+     * 切换字段名称列显示
+     */
+    function toggleNewBibFieldNameColumn() {
+      const show = document.getElementById('new-bib-show-field-names')?.checked !== false;
+      document.getElementById('new-bib-col-field-name')?.classList.toggle('hidden', !show);
+      document.querySelectorAll('.new-bib-field-name-cell').forEach(cell => {
+        cell.classList.toggle('hidden', !show);
+      });
+    }
+
+    /**
+     * 重新载入模板
+     */
+    function loadNewBibTemplate() {
+      if (!confirm('载入模板将覆盖当前字段内容，是否继续？')) return;
+      renderNewBibMarcTable(cloneDefaultNewBibFields());
+      setNewBibDirty(true);
+    }
+
+    /**
+     * 保存当前书目记录
+     */
+    function saveNewBibRecord() {
+      persistActiveNewBibRecord();
+      const item = NEW_BIB_RECENT_ITEMS.find(entry => entry.id === activeNewBibRecordId);
+      if (item?.isNew) {
+        const titleField = readMarcFieldsFromForm().find(field => field.tag === '200');
+        const titleMatch = titleField?.content?.match(/▼a\s*([^▼]+)/);
+        if (titleMatch?.[1]?.trim()) {
+          item.title = titleMatch[1].trim();
+          item.isNew = false;
+        }
+      }
+      setNewBibDirty(false);
+      renderNewBibRecentList();
+      alert('保存成功');
+    }
+
+    /**
+     * 删除当前新记录
+     */
+    function deleteNewBibRecord() {
+      const item = NEW_BIB_RECENT_ITEMS.find(entry => entry.id === activeNewBibRecordId);
+      if (!item?.isNew) {
+        alert('仅可删除未保存的新记录');
+        return;
+      }
+      if (!confirm('确定删除当前新记录？')) return;
+
+      delete newBibRecordStore[activeNewBibRecordId];
+      const index = NEW_BIB_RECENT_ITEMS.findIndex(entry => entry.id === activeNewBibRecordId);
+      if (index >= 0) NEW_BIB_RECENT_ITEMS.splice(index, 1);
+
+      const nextItem = NEW_BIB_RECENT_ITEMS[0];
+      if (nextItem) {
+        loadNewBibRecord(nextItem.id);
+      } else {
+        loadNewBibRecord(createNewBibRecord());
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const creatorEl = document.getElementById('new-bib-creator');
+      if (creatorEl) creatorEl.textContent = AppConfig.getCurrentSubscriber() || '—';
+
+      NEW_BIB_RECENT_ITEMS.filter(item => item.isNew).forEach(item => {
+        if (!newBibRecordStore[item.id]) {
+          newBibRecordStore[item.id] = {
+            bibDb: item.id.split('-')[0] || 'stl01',
+            marcType: 'CNMARC|中文图书',
+            fields: cloneDefaultNewBibFields()
+          };
+        }
+      });
+
+      const params = new URLSearchParams(location.search);
+      const initialId = params.get('new') === '1'
+        ? createNewBibRecord()
+        : (NEW_BIB_RECENT_ITEMS.find(item => item.isNew)?.id || createNewBibRecord());
+
+      loadNewBibRecord(initialId);
+
+      document.getElementById('new-bib-db-select')?.addEventListener('change', () => {
+        updateBibDbLabel();
+        setNewBibDirty(true);
+      });
+
+      document.getElementById('new-bib-marc-type-select')?.addEventListener('change', () => {
+        updateMarcTypeLabel();
+        setNewBibDirty(true);
+      });
+
+      document.getElementById('new-bib-show-field-names')?.addEventListener('change', toggleNewBibFieldNameColumn);
+      document.getElementById('new-bib-vertical-subfields')?.addEventListener('change', () => {
+        persistActiveNewBibRecord();
+        const cached = newBibRecordStore[activeNewBibRecordId];
+        renderNewBibMarcTable(cached?.fields || cloneDefaultNewBibFields());
+        if (newBibDirty) setNewBibDirty(true);
+      });
+
+      document.getElementById('new-bib-show-field-help')?.addEventListener('change', e => {
+        alert(e.target.checked ? '字段帮助已开启（原型演示）' : '字段帮助已关闭');
+      });
+
+      document.getElementById('new-bib-load-template-btn')?.addEventListener('click', loadNewBibTemplate);
+      document.getElementById('new-bib-auto-generate-btn')?.addEventListener('click', () => {
+        alert('自动生成完成（原型演示）');
+        setNewBibDirty(true);
+      });
+      document.getElementById('new-bib-check-btn')?.addEventListener('click', () => {
+        alert('检查通过（原型演示）');
+      });
+      document.getElementById('new-bib-more-btn')?.addEventListener('click', () => {
+        alert('更多功能（原型演示）');
+      });
+
+      document.getElementById('new-bib-dedup-btn')?.addEventListener('click', () => {
+        location.href = '01_01_18_书目查询.html';
+      });
+
+      document.getElementById('new-bib-z3950-btn')?.addEventListener('click', () => {
+        if (!AppConfig.hasZ3950Config()) {
+          alert('当前系统未配置Z3950地址，请联系管理员');
+          return;
+        }
+        location.href = '01_01_19_查Z3950.html';
+      });
+
+      document.getElementById('new-bib-recent-list')?.addEventListener('click', e => {
+        const btn = e.target.closest('[data-recent-id]');
+        if (!btn) return;
+        loadNewBibRecord(btn.dataset.recentId);
+      });
+
+      document.getElementById('new-bib-save-btn')?.addEventListener('click', saveNewBibRecord);
+      document.getElementById('new-bib-delete-btn')?.addEventListener('click', deleteNewBibRecord);
+    });
+  </script>
+</body>
+</html>
