@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 全局补充样式 - 主要样式由 Tailwind 控制 */
+.sidebar-children:not(.max-h-0) {
+  max-height: 500px;
+}
+
+.table-scroll::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+#page-tab-bar {
+  scrollbar-width: thin;
+}
+
+#page-tab-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+#page-tab-bar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.page-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.page-panel--scroll {
+  overflow: auto;
+}
+
+.page-panel .table-area-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.order-tab.active {
+  color: #0284c7;
+  border-bottom-color: #0284c7;
+}

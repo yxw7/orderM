@@ -153,11 +153,7 @@
     }
 
     .holding-dedup-result-table.order-dedup-result-table {
-      min-width: 1180px;
-    }
-
-    .order-dedup-result-table .dedup-action-col {
-      display: none;
+      min-width: 1280px;
     }
 
     .holding-dedup-result-table .dedup-action-col {
@@ -171,233 +167,6 @@
     .holding-dedup-result-table thead .dedup-action-col {
       background: #f9fafb;
       z-index: 3;
-    }
-
-    .holding-dedup-bib-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .holding-dedup-bib-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-
-    .holding-dedup-bib-header {
-      width: 100%;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 12px 14px;
-      text-align: left;
-      background: #f9fafb;
-      border: 0;
-      cursor: pointer;
-      transition: background-color 0.15s ease;
-    }
-
-    .holding-dedup-bib-header:hover {
-      background: #f3f4f6;
-    }
-
-    .holding-dedup-bib-chevron {
-      width: 16px;
-      height: 16px;
-      margin-top: 2px;
-      flex-shrink: 0;
-      color: #6b7280;
-      transition: transform 0.2s ease;
-    }
-
-    .holding-dedup-bib-card.is-expanded .holding-dedup-bib-chevron {
-      transform: rotate(90deg);
-    }
-
-    .holding-dedup-bib-meta {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .holding-dedup-bib-title {
-      font-size: 14px;
-      font-weight: 500;
-      color: #111827;
-      line-height: 1.4;
-    }
-
-    .holding-dedup-bib-fields {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 16px;
-      margin-top: 6px;
-      font-size: 12px;
-      color: #6b7280;
-    }
-
-    .holding-dedup-bib-action {
-      flex-shrink: 0;
-      font-size: 13px;
-      color: #0284c7;
-      text-decoration: none;
-      padding-top: 2px;
-    }
-
-    .holding-dedup-bib-action:hover {
-      text-decoration: underline;
-    }
-
-    .holding-dedup-tabs {
-      display: flex;
-      gap: 24px;
-      border-bottom: 1px solid #e5e7eb;
-      margin-bottom: 16px;
-    }
-
-    .holding-dedup-tab {
-      padding: 8px 0;
-      font-size: 14px;
-      color: #6b7280;
-      background: none;
-      border: 0;
-      border-bottom: 2px solid transparent;
-      cursor: pointer;
-      transition: color 0.15s ease, border-color 0.15s ease;
-    }
-
-    .holding-dedup-tab:hover {
-      color: #0284c7;
-    }
-
-    .holding-dedup-tab.active {
-      color: #0284c7;
-      border-bottom-color: #0284c7;
-      font-weight: 500;
-    }
-
-    .holding-dedup-marc-label {
-      padding: 0 0 12px;
-      border-bottom: 1px solid #f3f4f6;
-      margin-bottom: 12px;
-    }
-
-    .holding-dedup-marc-scroll {
-      overflow: auto;
-      max-height: calc(100vh - 320px);
-    }
-
-    .holding-dedup-marc-table td {
-      vertical-align: top;
-    }
-
-    .holding-dedup-bib-tree {
-      display: none;
-      padding: 12px 14px 14px 18px;
-      border-top: 1px solid #e5e7eb;
-      background: #fff;
-    }
-
-    .holding-dedup-bib-card.is-expanded .holding-dedup-bib-tree {
-      display: block;
-    }
-
-    .holding-tree-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    .holding-tree-list .holding-tree-list {
-      margin-left: 18px;
-      padding-left: 14px;
-      border-left: 1px solid #cbd5e1;
-    }
-
-    .holding-tree-item {
-      position: relative;
-    }
-
-    .holding-tree-row {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding: 5px 0;
-      position: relative;
-      font-size: 13px;
-      color: #374151;
-      line-height: 1.5;
-    }
-
-    .holding-tree-toggle {
-      width: 16px;
-      height: 16px;
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      border: 0;
-      background: transparent;
-      color: #6b7280;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-
-    .holding-tree-toggle:hover {
-      background: #f3f4f6;
-      color: #374151;
-    }
-
-    .holding-tree-toggle-spacer {
-      width: 16px;
-      flex-shrink: 0;
-    }
-
-    .holding-tree-chevron {
-      width: 12px;
-      height: 12px;
-      transition: transform 0.2s ease;
-    }
-
-    .holding-tree-item.is-expanded > .holding-tree-row .holding-tree-chevron {
-      transform: rotate(90deg);
-    }
-
-    .holding-tree-item:not(.is-expanded) > .holding-tree-children {
-      display: none;
-    }
-
-    .holding-tree-list .holding-tree-list > .holding-tree-item > .holding-tree-row::before {
-      content: '';
-      position: absolute;
-      left: -14px;
-      top: 50%;
-      width: 14px;
-      height: 1px;
-      background: #cbd5e1;
-    }
-
-    .holding-tree-label {
-      color: #374151;
-    }
-
-    .holding-tree-label.is-location {
-      color: #111827;
-    }
-
-    .holding-dedup-copy-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 1px 10px;
-      border-radius: 9999px;
-      background: #0ea5e9;
-      color: #fff;
-      font-size: 12px;
-      line-height: 1.5;
-      white-space: nowrap;
     }
 
     #prd-spec-trigger {
@@ -577,7 +346,7 @@
   data-active-page="01_01_非连续出版物订单-订单列表.html">
 
   <button type="button" id="prd-spec-trigger"
-    class="hidden prd-spec-page-local px-3 py-1.5 text-sm text-sky-600 bg-white border border-sky-200 rounded shadow-sm hover:bg-sky-50">
+    class="hidden px-3 py-1.5 text-sm text-sky-600 bg-white border border-sky-200 rounded shadow-sm hover:bg-sky-50">
     PRD说明
   </button>
 
@@ -746,7 +515,7 @@
               <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">导出订单</a>
             </div>
           </div>
-          <a href="01_01_18_书目查询.html" id="order-dedup-btn"
+          <a href="01_01_18_馆藏查重.html" id="order-dedup-btn"
             class="hidden px-4 py-1.5 bg-teal-500 text-white text-sm rounded hover:bg-teal-600">查重</a>
           <button type="button" id="order-z3950-btn"
             class="hidden px-4 py-1.5 bg-teal-500 text-white text-sm rounded hover:bg-teal-600">查Z3950</button>
@@ -1557,8 +1326,8 @@
     </aside>
   </div>
 
-  <!-- PRD 需求说明抽屉（页面级，壳层启用后隐藏） -->
-  <div id="prd-spec-drawer" class="prd-spec-drawer prd-spec-page-local hidden" aria-hidden="true">
+  <!-- PRD 需求说明抽屉 -->
+  <div id="prd-spec-drawer" class="prd-spec-drawer hidden" aria-hidden="true">
     <div id="prd-spec-drawer-mask" class="prd-spec-drawer-mask"></div>
     <aside id="prd-spec-drawer-panel" class="prd-spec-drawer-panel" role="dialog"
       aria-modal="true" aria-labelledby="prd-spec-drawer-title">
@@ -1575,7 +1344,6 @@
   <script src="../js/config.js"></script>
   <script src="../js/layout.js"></script>
   <script src="../js/tab-manager.js"></script>
-  <script src="../js/prd-spec.js"></script>
   <script src="../js/common.js"></script>
   <script src="../js/import-template-data.js"></script>
   <script>
@@ -2607,107 +2375,13 @@
 
     /** 馆藏查重 mock 书目数据 */
     const HOLDING_DEDUP_CATALOG = [
-      {
-        bibRecordNo: 'BIB2024002001', standardNo: '9787040456789', isbn: '978-7-04-045678-9', title: '中国现代史纲要', author: '王顺生著', edition: '第2版', textLanguage: '中文', publisher: '高等教育出版社', publishTime: '2024',
-        holdingTree: [
-          {
-            name: '首都图书馆',
-            children: [
-              {
-                name: '首图华威桥馆',
-                children: [
-                  {
-                    name: '市少儿图书馆',
-                    children: [
-                      { name: '首少.少儿中文库本库', copyCount: 1 }
-                    ]
-                  }
-                ]
-              },
-              {
-                name: '平谷区图书馆',
-                children: [
-                  {
-                    name: '平谷区图书馆',
-                    children: [
-                      { name: '生态书库', copyCount: 1 },
-                      { name: '集体外借部', copyCount: 1 },
-                      { name: '少儿外借部（新库）', copyCount: 2 }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        bibRecordNo: 'BIB2024002002', standardNo: '9787565855375', isbn: '978-7-5658-5537-5', title: '地质勘查工程与生态修复', author: '张昕, 冯红彩, 张海燕主编', edition: '', textLanguage: '中文', publisher: '汕头大学出版社', publishTime: '2026',
-        holdingTree: [
-          {
-            name: '首都图书馆',
-            children: [
-              {
-                name: '首图华威桥馆',
-                children: [
-                  {
-                    name: '华威桥馆',
-                    children: [
-                      { name: '自然科学借阅室', copyCount: 2 }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        bibRecordNo: 'BIB2024002003', standardNo: '9787501345678', isbn: '978-7-5013-4567-8', title: '图书馆学概论', author: '吴慰慈著', edition: '第4版', textLanguage: '中文', publisher: '国家图书馆出版社', publishTime: '2023-06',
-        holdingTree: [
-          {
-            name: '首都图书馆',
-            children: [
-              {
-                name: '首图华威桥馆',
-                children: [
-                  {
-                    name: '华威桥馆',
-                    children: [
-                      { name: '社会科学借阅室', copyCount: 1 },
-                      { name: '工具书阅览室', copyCount: 1 }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
+      { bibRecordNo: 'BIB2024002001', standardNo: '9787040456789', isbn: '978-7-04-045678-9', title: '中国现代史纲要', author: '王顺生著', edition: '第2版', textLanguage: '中文', publisher: '高等教育出版社', publishTime: '2024' },
+      { bibRecordNo: 'BIB2024002002', standardNo: '9787565855375', isbn: '978-7-5658-5537-5', title: '地质勘查工程与生态修复', author: '张昕, 冯红彩, 张海燕主编', edition: '', textLanguage: '中文', publisher: '汕头大学出版社', publishTime: '2026' },
+      { bibRecordNo: 'BIB2024002003', standardNo: '9787501345678', isbn: '978-7-5013-4567-8', title: '图书馆学概论', author: '吴慰慈著', edition: '第4版', textLanguage: '中文', publisher: '国家图书馆出版社', publishTime: '2023-06' },
       { bibRecordNo: 'BIB2024002004', standardNo: '9787111234567', isbn: '978-7-111-23456-7', title: '捐赠图书书目汇编', author: '首都图书馆编', edition: '', textLanguage: '中文', publisher: '北京出版社', publishTime: '2022' },
       { bibRecordNo: 'BIB2024002005', standardNo: '9787200123456', isbn: '978-7-200-12345-6', title: '首都图书馆年鉴', author: '首都图书馆编', edition: '2021卷', textLanguage: '中文', publisher: '北京出版社', publishTime: '2021-12' },
       { bibRecordNo: 'BIB2024002006', standardNo: '9787300267890', isbn: '978-7-300-26789-0', title: '版本与出版研究', author: '李四编', edition: '第1版', textLanguage: '中文', publisher: '江苏人民出版社', publishTime: '2025' },
-      {
-        bibRecordNo: 'BIB2024003001', standardNo: '', isbn: '', title: '布鲁克纳：第二交响曲', author: '', edition: '', textLanguage: '中文', publisher: '国家大剧院', publishTime: '2015-03', carrier: 'CD', productBarcode: '017685110221', catalogNo: 'CD-1102',
-        holdingTree: [
-          {
-            name: '首都图书馆',
-            children: [
-              {
-                name: '首图华威桥馆',
-                children: [
-                  {
-                    name: '华威桥馆',
-                    children: [
-                      { name: '音像资料外借部', copyCount: 1 }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+      { bibRecordNo: 'BIB2024003001', standardNo: '', isbn: '', title: '布鲁克纳：第二交响曲', author: '', edition: '', textLanguage: '中文', publisher: '国家大剧院', publishTime: '2015-03', carrier: 'CD', productBarcode: '017685110221', catalogNo: 'CD-1102' }
     ];
 
     /**
@@ -2947,40 +2621,14 @@
     }
 
     /**
-     * 判断订单行是否属于指定订户
-     * @param {Object} row - 订单行
-     * @param {string} subscriber - 订户名称
-     * @returns {boolean}
-     */
-    function isOrderLineUnderSubscriber(row, subscriber) {
-      const order = getOrderByOrderId(row.orderId);
-      return order?.subscriber === subscriber;
-    }
-
-    /**
-     * 查找订单重复结果（当前馆员关联订户的全部订单行，不含当前行自身）
+     * 查找订单重复结果
      * @param {Object} row - 订单行
      * @param {string[]} fieldKeys - 查重字段
      * @returns {Object[]}
      */
     function findOrderDuplicateResults(row, fieldKeys) {
-      const subscriber = typeof AppConfig !== 'undefined' ? AppConfig.getCurrentSubscriber() : '';
-      if (!subscriber) return [];
-
-      return orderLineRows.filter(other =>
-        other.orderLineNo !== row.orderLineNo
-        && isOrderLineUnderSubscriber(other, subscriber)
-        && matchesDedupFields(row, other, fieldKeys)
-      );
-    }
-
-    /**
-     * 计算订单查重结果总套数
-     * @param {Object[]} results - 订单查重结果
-     * @returns {number}
-     */
-    function getOrderDedupTotalSets(results) {
-      return results.reduce((total, item) => total + Number(item.sets || 0), 0);
+      return orderLineRows.filter(other => other.orderLineNo !== row.orderLineNo
+        && matchesDedupFields(row, other, fieldKeys));
     }
 
     /**
@@ -3016,309 +2664,66 @@
         : findOrderDuplicateResults(row, fieldKeys);
     }
 
-    /** @type {{ rows: Object[], duplicateType: 'holding'|'order'|'', page: number, pageSize: number, expandedHoldingBibIds: Set<string>, holdingContentTab: 'bib'|'marc', holdingMarcBibRecordNo: string|null }} */
+    /** @type {{ rows: Object[], duplicateType: 'holding'|'order'|'', page: number, pageSize: number }} */
     let dedupResultState = {
       rows: [],
       duplicateType: '',
       page: 1,
-      pageSize: 5,
-      expandedHoldingBibIds: new Set(),
-      holdingContentTab: 'bib',
-      holdingMarcBibRecordNo: null
+      pageSize: 5
     };
 
     /**
-     * 获取馆藏书目的馆藏树
+     * 渲染馆藏查重结果行
      * @param {Object} item - 馆藏书目
-     * @returns {Object[]}
-     */
-    function getHoldingTreeForBib(item) {
-      if (item.holdingTree?.length) return item.holdingTree;
-      return [
-        {
-          name: '首都图书馆',
-          children: [
-            {
-              name: '首图华威桥馆',
-              children: [
-                {
-                  name: '华威桥馆',
-                  children: [
-                    { name: '综合外借部', copyCount: 1 }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ];
-    }
-
-    /**
-     * 累计馆藏树中全部馆藏地复本数
-     * @param {Object[]} nodes - 馆藏树节点
-     * @returns {number}
-     */
-    function sumHoldingTreeCopyCount(nodes) {
-      if (!nodes?.length) return 0;
-      return nodes.reduce((total, node) => {
-        if (typeof node.copyCount === 'number') {
-          return total + node.copyCount;
-        }
-        return total + sumHoldingTreeCopyCount(node.children || []);
-      }, 0);
-    }
-
-    /**
-     * 计算馆藏查重结果总复本数
-     * @param {Object[]} results - 馆藏查重书目结果
-     * @returns {number}
-     */
-    function getHoldingDedupTotalCopyCount(results) {
-      return results.reduce(
-        (total, item) => total + sumHoldingTreeCopyCount(getHoldingTreeForBib(item)),
-        0
-      );
-    }
-
-    /**
-     * 渲染馆藏树节点
-     * @param {Object} node - 树节点
-     * @param {number} depth - 层级（0 机构 / 1 馆区 / 2 分馆 / 3 馆藏地）
-     * @param {string} nodePath - 节点路径标识
      * @returns {string}
      */
-    function renderHoldingTreeNode(node, depth = 0, nodePath = '0') {
-      const isLocation = typeof node.copyCount === 'number';
-      const children = node.children || [];
-      const hasChildren = children.length > 0;
-
-      const toggleHtml = hasChildren
-        ? `<button type="button" class="holding-tree-toggle" data-holding-tree-toggle
-            aria-expanded="true" aria-label="展开或收起">
-            <svg class="holding-tree-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5"
-                stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>`
-        : '<span class="holding-tree-toggle-spacer" aria-hidden="true"></span>';
-
-      const badgeHtml = isLocation
-        ? `<span class="holding-dedup-copy-badge">${node.copyCount}本</span>`
-        : '';
-
-      const childrenHtml = hasChildren
-        ? `<ul class="holding-tree-list holding-tree-children">${children.map((child, index) =>
-          renderHoldingTreeNode(child, depth + 1, `${nodePath}-${index}`)
-        ).join('')}</ul>`
-        : '';
-
+    function renderHoldingDedupResultRow(item) {
       return `
-        <li class="holding-tree-item${hasChildren ? ' is-expanded' : ''}" data-tree-node-path="${nodePath}">
-          <div class="holding-tree-row">
-            ${toggleHtml}
-            <span class="holding-tree-label${isLocation ? ' is-location' : ''}">${node.name}</span>
-            ${badgeHtml}
-          </div>
-          ${childrenHtml}
-        </li>`;
+        <tr class="group hover:bg-gray-50">
+          <td class="px-3 py-2 whitespace-nowrap">${item.bibRecordNo || '—'}</td>
+          <td class="px-3 py-2 max-w-[180px] truncate" title="${item.title || ''}">${item.title || '—'}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${item.isbn || item.standardNo || '—'}</td>
+          <td class="px-3 py-2 max-w-[120px] truncate" title="${item.author || ''}">${item.author || '—'}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${item.edition || '—'}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${item.textLanguage || '—'}</td>
+          <td class="px-3 py-2 max-w-[140px] truncate" title="${item.publisher || ''}">${item.publisher || '—'}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${item.publishTime || '—'}</td>
+          <td class="px-3 py-2 whitespace-nowrap dedup-action-col group-hover:bg-gray-50">
+            <a href="01_01_18_馆藏查重.html" class="text-sky-600 hover:underline">查看</a>
+          </td>
+        </tr>`;
     }
 
     /**
-     * 渲染馆藏书目馆藏树
-     * @param {Object} item - 馆藏书目
+     * 渲染馆藏查重结果表格
+     * @param {Object[]} results - 当前页查重结果
      * @returns {string}
      */
-    function renderHoldingTreeForBib(item) {
-      const tree = getHoldingTreeForBib(item);
-      const bibId = item.bibRecordNo || 'bib';
-      return `
-        <ul class="holding-tree-list holding-tree-root">
-          ${tree.map((node, index) => renderHoldingTreeNode(node, 0, `${bibId}-${index}`)).join('')}
-        </ul>`;
-    }
-
-    /**
-     * 解析馆藏查重书目 MARC 类型标签
-     * @param {Object} item - 馆藏书目
-     * @returns {string}
-     */
-    function getHoldingMarcTypeLabel(item) {
-      if (item.marcType) return item.marcType;
-
-      const carrier = String(item.carrier || '').toUpperCase();
-      if (['DVD', 'VCD', 'V', 'TD'].includes(carrier)) {
-        return 'CNMARC | 中文影像资料';
-      }
-      if (['CD', 'AH', 'AP'].includes(carrier)) {
-        return 'CNMARC | 中文录音资料';
-      }
-      return 'CNMARC | 中文图书';
-    }
-
-    /**
-     * 根据馆藏书目构建 MARC 字段详情（参考书目查询页详细信息）
-     * @param {Object} item - 馆藏书目
-     * @returns {{field: string, indicator: string, content: string}[]}
-     */
-    function buildHoldingMarcDetailFields(item) {
-      const recordNo = item.bibRecordNo || '—';
-      const isbn = item.isbn || item.standardNo || '';
-      const pubYear = item.publishTime || item.pubYear || '';
-      const summary = item.summary
-        || `▼a${item.title || ''}，${item.author ? `${item.author}著，` : ''}${item.publisher || ''}${pubYear ? `，${pubYear}年出版` : ''}。`;
-
-      return [
-        { field: 'LDR', indicator: '', content: '*****njm#22^^^^1a4500' },
-        { field: 'FMT', indicator: '', content: getHoldingMarcTypeLabel(item) },
-        { field: '001', indicator: '', content: recordNo },
-        { field: '010', indicator: '', content: isbn ? `▼a${isbn}▼dCNY${item.price || '0.00'}` : '' },
-        { field: '101', indicator: '0', content: '▼a chi' },
-        { field: '200', indicator: '1', content: `▼a${item.title || ''}▼b专著▼f${item.author || ''}▼c${item.publisher || ''}` },
-        { field: '210', indicator: '', content: `▼c${item.publisher || ''}▼d${pubYear}` },
-        { field: '225', indicator: '', content: item.series ? `▼a${item.series}` : '' },
-        { field: '330', indicator: '', content: summary },
-        { field: '690', indicator: '', content: item.classNo ? `▼a${item.classNo}` : '' }
-      ];
-    }
-
-    /**
-     * 获取馆藏查重当前应展示的 MARC 书目
-     * @returns {Object|null}
-     */
-    function getActiveHoldingMarcBib() {
-      const { rows, holdingMarcBibRecordNo } = dedupResultState;
-      if (!rows.length) return null;
-
-      if (holdingMarcBibRecordNo) {
-        const matched = rows.find(item => item.bibRecordNo === holdingMarcBibRecordNo);
-        if (matched) return matched;
-      }
-
-      return rows[0];
-    }
-
-    /**
-     * 切换馆藏查重结果内容页签
-     * @param {'bib'|'marc'} tab - 页签
-     * @param {string} [bibRecordNo] - 指定 MARC 书目记录号
-     */
-    function switchHoldingDedupContentTab(tab, bibRecordNo) {
-      dedupResultState.holdingContentTab = tab;
-
-      if (tab === 'marc') {
-        dedupResultState.holdingMarcBibRecordNo = bibRecordNo
-          || dedupResultState.rows[0]?.bibRecordNo
-          || null;
-      }
-    }
-
-    /**
-     * 渲染馆藏查重结果页签栏
-     * @param {'bib'|'marc'} activeTab - 当前激活页签
-     * @returns {string}
-     */
-    function renderHoldingDedupTabs(activeTab) {
-      return `
-        <div class="holding-dedup-tabs" role="tablist">
-          <button type="button" class="holding-dedup-tab${activeTab === 'bib' ? ' active' : ''}"
-            data-holding-dedup-tab="bib" role="tab" aria-selected="${activeTab === 'bib' ? 'true' : 'false'}">书目</button>
-          <button type="button" class="holding-dedup-tab${activeTab === 'marc' ? ' active' : ''}"
-            data-holding-dedup-tab="marc" role="tab" aria-selected="${activeTab === 'marc' ? 'true' : 'false'}">MARC信息</button>
-        </div>`;
-    }
-
-    /**
-     * 渲染馆藏查重 MARC 详细信息
-     * @param {Object} item - 馆藏书目
-     * @returns {string}
-     */
-    function renderHoldingMarcDetail(item) {
-      const recordNo = item.bibRecordNo || '—';
-      const fields = buildHoldingMarcDetailFields(item);
-
-      return `
-        <div class="holding-dedup-marc-wrap">
-          <div class="holding-dedup-marc-label text-sm text-gray-700">书目记录号【${recordNo}】</div>
-          <div class="holding-dedup-marc-scroll">
-            <table class="holding-dedup-marc-table w-full text-sm border border-gray-200 rounded overflow-hidden">
-              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
-                <tr>
-                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-20">字段名</th>
-                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap w-16">指示符</th>
-                  <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">字段内容</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                ${fields.map(field => `
-                  <tr class="hover:bg-gray-50">
-                    <td class="px-3 py-2 text-gray-600 whitespace-nowrap">${field.field}</td>
-                    <td class="px-3 py-2 text-gray-600 whitespace-nowrap">${field.indicator || ''}</td>
-                    <td class="px-3 py-2 text-gray-700 break-all leading-relaxed">${field.content || ''}</td>
-                  </tr>`).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>`;
-    }
-
-    /**
-     * 渲染单条馆藏查重书目卡片
-     * @param {Object} item - 馆藏书目
-     * @param {number} index - 当前页序号
-     * @param {boolean} expanded - 是否默认展开
-     * @returns {string}
-     */
-    function renderHoldingDedupBibCard(item, index) {
-      const isbn = item.isbn || item.standardNo || '—';
-      const cardId = item.bibRecordNo || `holding-bib-${index}`;
-      const expanded = dedupResultState.expandedHoldingBibIds.has(cardId);
-      return `
-        <article class="holding-dedup-bib-card${expanded ? ' is-expanded' : ''}" data-bib-record-no="${cardId}">
-          <button type="button" class="holding-dedup-bib-header" data-holding-bib-toggle aria-expanded="${expanded ? 'true' : 'false'}">
-            <svg class="holding-dedup-bib-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <div class="holding-dedup-bib-meta">
-              <div class="holding-dedup-bib-title">${item.title || '—'}</div>
-              <div class="holding-dedup-bib-fields">
-                <span>书目记录号：${item.bibRecordNo || '—'}</span>
-                <span>ISBN：${isbn}</span>
-                <span>作者：${item.author || '—'}</span>
-                <span>出版社：${item.publisher || '—'}</span>
-                <span>出版年：${item.publishTime || '—'}</span>
-              </div>
-            </div>
-            <a href="#" class="holding-dedup-bib-action" data-holding-marc-view data-bib-record-no="${cardId}">查看</a>
-          </button>
-          <div class="holding-dedup-bib-tree">
-            ${renderHoldingTreeForBib(item)}
-          </div>
-        </article>`;
-    }
-
-    /**
-     * 渲染馆藏查重结果（含书目 / MARC 页签）
-     * @param {Object[]} pageRows - 当前页查重结果
-     * @returns {string}
-     */
-    function renderHoldingDedupResultTable(pageRows) {
-      if (!pageRows.length) {
+    function renderHoldingDedupResultTable(results) {
+      if (!results.length) {
         return '<p class="text-gray-400">暂无查重结果</p>';
       }
 
-      const activeTab = dedupResultState.holdingContentTab || 'bib';
-      const marcBib = getActiveHoldingMarcBib();
-
       return `
-        ${renderHoldingDedupTabs(activeTab)}
-        <div class="holding-dedup-tab-panel${activeTab !== 'bib' ? ' hidden' : ''}" data-holding-tab-panel="bib">
-          <div class="holding-dedup-bib-list">
-            ${pageRows.map((item, index) => renderHoldingDedupBibCard(item, index)).join('')}
-          </div>
-        </div>
-        <div class="holding-dedup-tab-panel${activeTab !== 'marc' ? ' hidden' : ''}" data-holding-tab-panel="marc">
-          ${marcBib ? renderHoldingMarcDetail(marcBib) : '<p class="text-gray-400">暂无MARC信息</p>'}
+        <div class="holding-dedup-result-scroll">
+          <table class="holding-dedup-result-table text-sm border border-gray-200 rounded overflow-hidden">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">书目记录号</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap min-w-[140px]">题名</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">ISBN</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap min-w-[100px]">作者</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">版本</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">语种</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap min-w-[120px]">出版社</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap">出版年</th>
+                <th class="px-3 py-2.5 text-left text-gray-600 font-medium whitespace-nowrap dedup-action-col">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              ${results.map(item => renderHoldingDedupResultRow(item)).join('')}
+            </tbody>
+          </table>
         </div>`;
     }
 
@@ -3469,19 +2874,11 @@
      * @returns {string}
      */
     function renderDedupResultTable(duplicateType, results) {
-      const expandedHoldingBibIds = new Set();
-      if (duplicateType === 'holding' && results[0]?.bibRecordNo) {
-        expandedHoldingBibIds.add(results[0].bibRecordNo);
-      }
-
       dedupResultState = {
         rows: results,
         duplicateType,
         page: 1,
-        pageSize: dedupResultState.pageSize || 5,
-        expandedHoldingBibIds,
-        holdingContentTab: 'bib',
-        holdingMarcBibRecordNo: null
+        pageSize: dedupResultState.pageSize || 5
       };
       refreshDedupResultPanel();
       return '';
@@ -3512,21 +2909,11 @@
         .join('、');
 
       titleEl.textContent = `${typeLabel}查重结果`;
-      if (duplicateType === 'holding') {
-        const totalCopyCount = getHoldingDedupTotalCopyCount(results);
-        summaryEl.innerHTML = `
-          <p><span class="text-gray-500">当前订单行：</span>${row.orderLineNo}</p>
-          <p><span class="text-gray-500">查重字段：</span>${fieldLabels || '—'}</p>
-          <p><span class="text-gray-500">重复记录数：</span>${results.length}</p>
-          <p><span class="text-gray-500">总复本数：</span>${totalCopyCount}</p>`;
-      } else {
-        const totalSets = getOrderDedupTotalSets(results);
-        summaryEl.innerHTML = `
-          <p><span class="text-gray-500">当前订单行：</span>${row.orderLineNo}</p>
-          <p><span class="text-gray-500">查重字段：</span>${fieldLabels || '—'}</p>
-          <p><span class="text-gray-500">重复记录数：</span>${results.length}</p>
-          <p><span class="text-gray-500">总套数：</span>${totalSets}</p>`;
-      }
+      summaryEl.innerHTML = `
+        <p><span class="text-gray-500">当前订单行：</span>${row.orderLineNo}</p>
+        <p><span class="text-gray-500">正题名：</span>${row.title || '—'}</p>
+        <p><span class="text-gray-500">查重字段：</span>${fieldLabels || '—'}</p>
+        <p><span class="text-gray-500">重复记录数：</span>${results.length}</p>`;
       renderDedupResultTable(duplicateType, results);
 
       if (orderLineDedupDrawerTimer) {
@@ -3593,64 +2980,10 @@
       });
 
       document.getElementById('order-line-dedup-drawer-content')?.addEventListener('click', event => {
-        const marcViewBtn = event.target.closest('[data-holding-marc-view]');
-        if (marcViewBtn) {
-          event.preventDefault();
-          event.stopPropagation();
-          const bibRecordNo = marcViewBtn.dataset.bibRecordNo;
-          if (!bibRecordNo) return;
-          switchHoldingDedupContentTab('marc', bibRecordNo);
-          refreshDedupResultPanel();
-          return;
-        }
-
-        const tabBtn = event.target.closest('[data-holding-dedup-tab]');
-        if (tabBtn) {
-          const tab = tabBtn.dataset.holdingDedupTab;
-          if (tab === 'bib' || tab === 'marc') {
-            switchHoldingDedupContentTab(tab);
-            refreshDedupResultPanel();
-          }
-          return;
-        }
-
-        const treeToggleBtn = event.target.closest('[data-holding-tree-toggle]');
-        if (treeToggleBtn) {
-          event.stopPropagation();
-          const treeItem = treeToggleBtn.closest('.holding-tree-item');
-          if (!treeItem) return;
-          const expanded = treeItem.classList.toggle('is-expanded');
-          treeToggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-          return;
-        }
-
-        const toggleBtn = event.target.closest('[data-holding-bib-toggle]');
-        if (toggleBtn) {
-          const card = toggleBtn.closest('.holding-dedup-bib-card');
-          if (!card) return;
-          const cardId = card.dataset.bibRecordNo;
-          const expanded = card.classList.toggle('is-expanded');
-          toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-          if (cardId) {
-            if (expanded) {
-              dedupResultState.expandedHoldingBibIds.add(cardId);
-            } else {
-              dedupResultState.expandedHoldingBibIds.delete(cardId);
-            }
-          }
-          return;
-        }
-
         const viewLink = event.target.closest('.order-dedup-result-view-link');
-        if (viewLink) {
-          event.preventDefault();
-          event.stopPropagation();
-          const orderLineNo = viewLink.dataset.orderLineNo;
-          if (!orderLineNo) return;
-          closeOrderLineDedupResultPanel();
-          navigateToOrderLineDetail(orderLineNo);
-          return;
-        }
+        if (!viewLink) return;
+        event.preventDefault();
+        navigateToOrderLineDetail(viewLink.dataset.orderLineNo);
       });
     }
 
@@ -4106,36 +3439,24 @@
     }
 
     /**
-     * 构建订单行详情页 sessionStorage 上下文（剔除查重结果引用，避免循环引用导致序列化失败）
-     * @param {Object} row - 订单行
-     * @returns {Object}
-     */
-    function buildOrderLineDetailContext(row) {
-      const order = getOrderByOrderId(row.orderId);
-      const { holdingDedupResults, orderDedupResults, ...rowForStorage } = row;
-
-      return {
-        row: rowForStorage,
-        order,
-        subscriber: AppConfig.getCurrentSubscriber(),
-        resourceType: order?.resourceType || (row.detailPage?.includes('视听') ? '视听资料' : '纸质书'),
-        relatedLines: buildRelatedOrderLines(row)
-      };
-    }
-
-    /**
      * 跳转至订单行详情页
      * @param {string} orderLineNo - 订单行号
      */
     function navigateToOrderLineDetail(orderLineNo) {
       const row = orderLineRows.find(item => item.orderLineNo === orderLineNo);
-      if (!row?.detailPage) return;
+      if (!row) return;
 
-      sessionStorage.setItem('orderLineDetailContext', JSON.stringify(buildOrderLineDetailContext(row)));
+      const order = getOrderByOrderId(row.orderId);
+      sessionStorage.setItem('orderLineDetailContext', JSON.stringify({
+        row,
+        order,
+        subscriber: AppConfig.getCurrentSubscriber(),
+        resourceType: order?.resourceType || (row.detailPage.includes('视听') ? '视听资料' : '纸质书'),
+        relatedLines: buildRelatedOrderLines(row)
+      }));
 
-      const tabMgr = typeof TabManager !== 'undefined' ? TabManager.getActiveManager() : null;
-      if (tabMgr?.hostPage) {
-        tabMgr.openTab(row.detailPage, '订单行详情', { reload: true });
+      if (typeof TabManager !== 'undefined') {
+        TabManager.openTab(row.detailPage, '订单行详情', { reload: true });
         return;
       }
 
@@ -4208,8 +3529,6 @@
         panel.classList.toggle('hidden', panel.dataset.orderPanel !== tab);
       });
       document.getElementById('prd-spec-trigger')?.classList.toggle('hidden', tab !== 'order-line');
-      window.__prdSetOrderTab?.(tab);
-      PrdSpec.getShellInstance()?.syncActive(document.body.dataset.activePage || '');
       history.replaceState(null, '', `#${tab}`);
     }
 
@@ -4952,43 +4271,108 @@
           {
             id: '01',
             title: '查重操作入口',
-            htmlContent: '<div class="prd-spec-header"><div class="prd-spec-header-title">[01] 查重操作入口</div></div><div id="prd-01-overview"><p class="prd-spec-section-title">功能定位</p><p>待发订状态的订单行支持进行<strong>馆藏查重</strong>和<strong>订单查重</strong>，用于在发订前识别书目是否已在馆藏或其他订单中存在重复。</p><p class="prd-spec-section-title">使用角色</p><ul><li>采访馆员</li><li>采编馆员（具备订单管理权限的用户）</li></ul><p class="prd-spec-section-title">前置条件</p><p>已进入「非连续出版物订单」模块，并切换至「<strong>订单行列表</strong>」页签。</p><p class="prd-spec-section-title">页面入口</p><ul><li>订单行列表页工具栏 → 批量「查重」按钮</li><li>订单行列表操作列 → 单行「查重」文字链</li></ul><p class="prd-spec-section-title">批量查重按钮</p><ul><li>位置：订单行列表工具栏（与「生成催缺单」「撤订」「导出订单行」相邻）</li><li>默认状态：置灰不可用（<code>disabled</code>）</li><li>启用条件：同时满足以下条件时按钮高亮可点击：<ol><li>至少勾选一条订单行</li><li>所勾选订单行均为<strong>待发订</strong>状态（所属订单状态为待发订时，其下所有订单行视为待发订）</li><li>所勾选订单行属于<strong>相同资源类型</strong>（从所属订单获取：纸质书 / 视听资料）</li><li>所勾选订单行属于<strong>相同语种分类</strong>（从所属订单获取：中文 / 外文）</li></ol></li><li>点击后：弹出查重配置弹窗（见需求 02）</li></ul><p class="prd-spec-section-title">单个查重文字链</p><ul><li>位置：订单行列表操作列</li><li>显示条件：仅当该行可进行查重时显示（行状态为待发订，或所属订单状态为待发订）</li><li>非待发订行：不显示查重文字链</li><li>点击后：以当前行为查重对象，弹出查重配置弹窗</li></ul></div><div id="prd-01-rules"><p class="prd-spec-section-title">业务状态</p><table class="prd-spec-table"><thead><tr><th>状态</th><th>说明</th><th>是否可查重</th></tr></thead><tbody><tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#d97706;margin-right:6px;"></span>待发订</td><td>订单/行尚未发订</td><td>是</td></tr><tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#16a34a;margin-right:6px;"></span>已发订</td><td>已发订</td><td>否</td></tr><tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-right:6px;"></span>处理中</td><td>处理中</td><td>否</td></tr><tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#6b7280;margin-right:6px;"></span>已关闭 / 已撤订</td><td>已关闭或已撤订</td><td>否</td></tr></tbody></table></div><div id="prd-01-exception"><p class="prd-spec-section-title">异常处理</p><ul><li>勾选非待发订行进行批量查重：按钮保持置灰；若通过其他方式触发，提示「仅支持行状态为待发订的订单行进行查重」</li><li>勾选不同资源类型或不同语种（中文/外文）混合：批量查重按钮置灰；若触发，提示「请勾选相同资源类型和语种（中文/外文）的待发订订单行进行查重」</li></ul></div>'
+            htmlContent: '<div class="prd-spec-header"><div class="prd-spec-header-title">[01] 查重操作入口</div><div class="prd-spec-anchors"><a href="#prd-01-overview">概述</a><a href="#prd-01-rules">校验规则</a><a href="#prd-01-exception">异常处理</a></div></div><div id="prd-01-overview"><p class="prd-spec-section-title">功能定位</p><p>待发订状态的订单行支持进行<strong>馆藏查重</strong>和<strong>订单查重</strong>，用于在发订前识别书目是否已在馆藏或其他订单中存在重复。</p><p class="prd-spec-section-title">使用角色</p><ul><li>采访馆员</li><li>采编馆员（具备订单管理权限的用户）</li></ul><p class="prd-spec-section-title">前置条件</p><p>已进入「非连续出版物订单」模块，并切换至「<strong>订单行列表</strong>」页签。</p><p class="prd-spec-section-title">页面入口</p><ul><li>订单行列表页工具栏 → 批量「查重」按钮</li><li>订单行列表操作列 → 单行「查重」文字链</li></ul><p class="prd-spec-section-title">批量查重按钮</p><ul><li>位置：订单行列表工具栏（与「生成催缺单」「撤订」「导出订单行」相邻）</li><li>默认状态：置灰不可用（<code>disabled</code>）</li><li>启用条件：同时满足以下条件时按钮高亮可点击：<ol><li>至少勾选一条订单行</li><li>所勾选订单行均为<strong>待发订</strong>状态（所属订单状态为待发订时，其下所有订单行视为待发订）</li><li>所勾选订单行属于<strong>相同资源类型</strong>（从所属订单获取：纸质书 / 视听资料）</li><li>所勾选订单行属于<strong>相同语种分类</strong>（从所属订单获取：中文 / 外文）</li></ol></li><li>点击后：弹出查重配置弹窗（见需求 02）</li></ul><p class="prd-spec-section-title">单个查重文字链</p><ul><li>位置：订单行列表操作列</li><li>显示条件：仅当该行可进行查重时显示（行状态为待发订，或所属订单状态为待发订）</li><li>非待发订行：不显示查重文字链</li><li>点击后：以当前行为查重对象，弹出查重配置弹窗</li></ul></div><div id="prd-01-rules"><p class="prd-spec-section-title">业务状态</p><table class="prd-spec-table"><thead><tr><th>状态</th><th>说明</th><th>是否可查重</th></tr></thead><tbody><tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#d97706;margin-right:6px;"></span>待发订</td><td>订单/行尚未发订</td><td>是</td></tr><tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#16a34a;margin-right:6px;"></span>已发订</td><td>已发订</td><td>否</td></tr><tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-right:6px;"></span>处理中</td><td>处理中</td><td>否</td></tr><tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#6b7280;margin-right:6px;"></span>已关闭 / 已撤订</td><td>已关闭或已撤订</td><td>否</td></tr></tbody></table></div><div id="prd-01-exception"><p class="prd-spec-section-title">异常处理</p><ul><li>勾选非待发订行进行批量查重：按钮保持置灰；若通过其他方式触发，提示「仅支持行状态为待发订的订单行进行查重」</li><li>勾选不同资源类型或不同语种（中文/外文）混合：批量查重按钮置灰；若触发，提示「请勾选相同资源类型和语种（中文/外文）的待发订订单行进行查重」</li></ul></div>'
           },
           {
             id: '02',
             title: '查重配置弹窗',
-            htmlContent: '<div class="prd-spec-header"><div class="prd-spec-header-title">[02] 查重配置弹窗</div></div><div id="prd-02-overview"><p class="prd-spec-section-title">功能描述</p><p>点击查重入口后弹出查重配置弹窗，用户选择重复类型与查重字段后执行查重。</p><p class="prd-spec-section-title">显示样式</p><ul><li>居中模态弹窗，标题「查重」</li><li>底部按钮：「取消」「确定」</li><li>点击遮罩或右上角 × 关闭弹窗</li></ul><p class="prd-spec-section-title">重复类型</p><ul><li>单选，默认选中「<strong>不限</strong>」</li><li>可选值：<ul><li><strong>不限</strong>：同时执行馆藏查重和订单查重</li><li><strong>订单查重</strong>：仅检查与其他订单行的重复</li><li><strong>馆藏查重</strong>：仅检查与馆藏书目的重复</li></ul></li></ul><p class="prd-spec-section-title">查重字段</p><p>根据待查重订单行所属订单的<strong>资源类型</strong>和<strong>语种</strong>动态展示可选字段。顶部提供「<strong>全部</strong>」复选框，勾选/取消时联动全选/全不选所有字段项；各字段项变更时同步更新「全部」勾选状态。</p><table class="prd-spec-table"><thead><tr><th>资源类型</th><th>语种</th><th>可选查重字段</th><th>默认选中</th></tr></thead><tbody><tr><td>纸质书</td><td>中文</td><td>全部、资源标识、题名、作者、出版社、出版年、语种</td><td>资源标识、题名</td></tr><tr><td>纸质书</td><td>外文</td><td>全部、资源标识、题名、作者、出版社、出版年、语种</td><td>资源标识、题名</td></tr><tr><td>视听资料</td><td>中文</td><td>全部、题名、载体、限量编号、出版社</td><td>题名、载体</td></tr><tr><td>视听资料</td><td>外文</td><td>全部、商品条码、目录号</td><td>商品条码、目录号</td></tr></tbody></table></div><div id="prd-02-rules"><p class="prd-spec-section-title">业务规则</p><ul><li>至少选择一个查重字段；未选时点击「确定」，提示「请至少选择一个查重字段」</li><li>所选字段采用 <strong>AND（且）</strong> 逻辑：所有已选字段的值均非空且相等时，判定为重复</li><li><code>资源标识</code> 比对时忽略大小写及连字符（<code>-</code>）</li><li>其他字段比对时忽略大小写</li></ul><p class="prd-spec-section-title">交互</p><ul><li>点击「确定」：按配置执行查重，关闭弹窗，刷新列表「馆藏重复」「订单重复」标识列</li><li>点击「取消」或关闭：不执行查重</li></ul></div><div id="prd-02-exception"><p class="prd-spec-section-title">异常处理</p><ul><li>未选择任何查重字段：阻止提交，提示「请至少选择一个查重字段」</li></ul></div>'
+            htmlContent: '<div class="prd-spec-header"><div class="prd-spec-header-title">[02] 查重配置弹窗</div><div class="prd-spec-anchors"><a href="#prd-02-overview">概述</a><a href="#prd-02-rules">校验规则</a><a href="#prd-02-exception">异常处理</a></div></div><div id="prd-02-overview"><p class="prd-spec-section-title">功能描述</p><p>点击查重入口后弹出查重配置弹窗，用户选择重复类型与查重字段后执行查重。</p><p class="prd-spec-section-title">显示样式</p><ul><li>居中模态弹窗，标题「查重」</li><li>底部按钮：「取消」「确定」</li><li>点击遮罩或右上角 × 关闭弹窗</li></ul><p class="prd-spec-section-title">重复类型</p><ul><li>单选，默认选中「<strong>不限</strong>」</li><li>可选值：<ul><li><strong>不限</strong>：同时执行馆藏查重和订单查重</li><li><strong>订单查重</strong>：仅检查与其他订单行的重复</li><li><strong>馆藏查重</strong>：仅检查与馆藏书目的重复</li></ul></li></ul><p class="prd-spec-section-title">查重字段</p><p>根据待查重订单行所属订单的<strong>资源类型</strong>和<strong>语种</strong>动态展示可选字段。顶部提供「<strong>全部</strong>」复选框，勾选/取消时联动全选/全不选所有字段项；各字段项变更时同步更新「全部」勾选状态。</p><table class="prd-spec-table"><thead><tr><th>资源类型</th><th>语种</th><th>可选查重字段</th><th>默认选中</th></tr></thead><tbody><tr><td>纸质书</td><td>中文</td><td>全部、资源标识、题名、作者、出版社、出版年、语种</td><td>资源标识</td></tr><tr><td>纸质书</td><td>外文</td><td>全部、资源标识、题名、作者、出版社、出版年、语种</td><td>资源标识</td></tr><tr><td>视听资料</td><td>中文</td><td>全部、题名、载体、限量编号、出版社</td><td>题名、载体</td></tr><tr><td>视听资料</td><td>外文</td><td>全部、商品条码、目录号</td><td>全部（默认勾选所有可选字段）</td></tr></tbody></table></div><div id="prd-02-rules"><p class="prd-spec-section-title">业务规则</p><ul><li>至少选择一个查重字段；未选时点击「确定」，提示「请至少选择一个查重字段」</li><li>所选字段采用 <strong>AND（且）</strong> 逻辑：所有已选字段的值均非空且相等时，判定为重复</li><li><code>资源标识</code> 比对时忽略大小写及连字符（<code>-</code>）</li><li>其他字段比对时忽略大小写</li></ul><p class="prd-spec-section-title">交互</p><ul><li>点击「确定」：按配置执行查重，关闭弹窗，刷新列表「馆藏重复」「订单重复」标识列</li><li>点击「取消」或关闭：不执行查重</li></ul></div><div id="prd-02-exception"><p class="prd-spec-section-title">异常处理</p><ul><li>未选择任何查重字段：阻止提交，提示「请至少选择一个查重字段」</li></ul></div>'
           },
           {
             id: '03',
             title: '查重结果展示',
-            htmlContent: '<div class="prd-spec-header"><div class="prd-spec-header-title">[03] 查重结果展示</div></div><div id="prd-03-overview"><p class="prd-spec-section-title">功能描述</p><p>查重完成后，在订单行列表展示重复标识；用户可查看详细查重结果。</p><p class="prd-spec-section-title">列表重复标识列</p><p>列表新增两列：<strong>馆藏重复</strong>、<strong>订单重复</strong>。</p><table class="prd-spec-table"><thead><tr><th>状态</th><th>显示</th></tr></thead><tbody><tr><td>未查重</td><td>空白</td></tr><tr><td>无重复</td><td>「无」</td></tr><tr><td>有重复</td><td>蓝色文字链「<strong>有</strong>」，点击打开查重结果侧滑面板</td></tr></tbody></table><p class="prd-spec-section-title">查重结果侧滑面板</p><ul><li>从页面右侧滑出，宽度约页面 75%（最小 520px，最大 960px）</li><li>标题：「馆藏重复查重结果」或「订单重复查重结果」</li><li>摘要区显示：当前订单行号、查重字段（本次使用的字段）、重复记录数；馆藏重复另显示<strong>总复本数</strong>，订单重复另显示<strong>总套数</strong></li></ul><p class="prd-spec-section-title">馆藏查重结果</p><p>内容区顶部提供「<strong>书目</strong>」「<strong>MARC信息</strong>」两个页签，默认展示「书目」页签。</p><p class="prd-spec-section-title">书目页签</p><ul><li>以<strong>书目卡片</strong>形式展示重复书目；卡片头部展示题名，以及书目记录号、ISBN、作者、出版社、出版年</li><li>卡片头部可点击展开/收起；展开后展示<strong>四层馆藏树</strong>：机构 → 馆区 → 分馆 → 馆藏地</li><li>馆藏地节点以蓝色圆角标签展示复本数，如「1本」「2本」</li><li>默认展开当前页第一条书目卡片</li><li>操作列「查看」：切换至「MARC信息」页签，展示<strong>当前书目</strong>的 MARC 详细信息（不跳转外部页面）</li></ul><p class="prd-spec-section-title">MARC信息页签</p><ul><li>顶部显示书目记录号标签，如「书目记录号【BIB2024002001】」</li><li>下方表格展示 MARC 字段详情，列：字段名、指示符、字段内容（格式与书目查询页 <code>01_01_18_书目查询.html</code> 详细信息侧滑面板一致）</li><li>直接点击「MARC信息」页签：默认展示查重结果<strong>第一条书目</strong>的 MARC 信息</li><li>在书目页签点击某条「查看」：切换至本页签并展示该书目 MARC 信息</li></ul><p class="prd-spec-section-title">订单查重结果</p><ul><li>以表格形式展示，字段：订单行号、馆址、正题名、资源标识、作者、套内册数、套数、行状态、发订时间</li><li><em>操作列暂隐藏，后续版本开放「查看」跳转订单行详情</em></li></ul><p class="prd-spec-section-title">交互与排序</p><ul><li>结果列表支持分页，默认 5 条/页，可选 5 / 10 / 20 / 50 条/页</li><li>分页控件：上一页、页码、下一页、每页条数选择</li><li>无重复记录时，内容区显示「暂无查重结果」</li><li>点击遮罩或关闭按钮关闭侧滑面板</li></ul></div><div id="prd-03-rules"><p class="prd-spec-section-title">业务规则</p><ul><li><strong>订单查重</strong>比对范围：当前登录馆员<strong>关联订户</strong>下的全部订单行（不含当前行自身）</li><li><strong>馆藏查重</strong>比对范围：馆藏書目库</li><li>重复标识按本次查重配置的重复类型分别更新（选择「不限」时同时更新两列）</li></ul><p class="prd-spec-section-title">数据权限</p><blockquote>查重与查重结果均受订户数据隔离约束，仅比对当前用户所属订户可见范围内的订单行与馆藏数据。</blockquote></div><div id="prd-03-exception"><p class="prd-spec-section-title">异常处理</p><ul><li>重复标识为「有」时方可打开结果面板；「无」或未查重时不响应点击</li><li>结果为空时显示「暂无查重结果」，分页显示第 1/1 页</li></ul></div>'
+            htmlContent: '<div class="prd-spec-header"><div class="prd-spec-header-title">[03] 查重结果展示</div><div class="prd-spec-anchors"><a href="#prd-03-overview">概述</a><a href="#prd-03-rules">校验规则</a><a href="#prd-03-exception">异常处理</a></div></div><div id="prd-03-overview"><p class="prd-spec-section-title">功能描述</p><p>查重完成后，在订单行列表展示重复标识；用户可查看详细查重结果。</p><p class="prd-spec-section-title">列表重复标识列</p><p>列表新增两列：<strong>馆藏重复</strong>、<strong>订单重复</strong>。</p><table class="prd-spec-table"><thead><tr><th>状态</th><th>显示</th></tr></thead><tbody><tr><td>未查重</td><td>空白</td></tr><tr><td>无重复</td><td>「无」</td></tr><tr><td>有重复</td><td>蓝色文字链「<strong>有</strong>」，点击打开查重结果侧滑面板</td></tr></tbody></table><p class="prd-spec-section-title">查重结果侧滑面板</p><ul><li>从页面右侧滑出，宽度约页面 75%（最小 520px，最大 960px）</li><li>标题：「馆藏重复查重结果」或「订单重复查重结果」</li><li>摘要区显示：当前订单行号、正题名、查重字段（本次使用的字段）、重复记录数</li></ul><p class="prd-spec-section-title">馆藏查重结果表格字段</p><p>书目记录号、题名、ISBN、作者、版本、语种、出版社、出版年、操作（「查看」→ 跳转馆藏查重页 <code>01_01_18_馆藏查重.html</code>）</p><p class="prd-spec-section-title">订单查重结果表格字段</p><p>订单行号、馆址、正题名、资源标识、作者、套内册数、套数、行状态、发订时间、操作（「查看」→ 跳转订单行详情页）</p><p class="prd-spec-section-title">交互与排序</p><ul><li>结果列表支持分页，默认 5 条/页，可选 5 / 10 / 20 / 50 条/页</li><li>分页控件：上一页、页码、下一页、每页条数选择</li><li>无重复记录时，内容区显示「暂无查重结果」</li><li>点击遮罩或关闭按钮关闭侧滑面板</li></ul></div><div id="prd-03-rules"><p class="prd-spec-section-title">业务规则</p><ul><li><strong>订单查重</strong>比对范围：当前登录用户可见范围内的其他订单行（不含当前行自身）</li><li><strong>馆藏查重</strong>比对范围：馆藏書目库</li><li>重复标识按本次查重配置的重复类型分别更新（选择「不限」时同时更新两列）</li></ul><p class="prd-spec-section-title">数据权限</p><blockquote>查重与查重结果均受订户数据隔离约束，仅比对当前用户所属订户可见范围内的订单行与馆藏数据。</blockquote></div><div id="prd-03-exception"><p class="prd-spec-section-title">异常处理</p><ul><li>重复标识为「有」时方可打开结果面板；「无」或未查重时不响应点击</li><li>结果为空时显示「暂无查重结果」，分页显示第 1/1 页</li></ul></div>'
           }
         ]
       }
     };
 
     /**
-     * 注册 PRD 页面上下文，由壳层统一展示按钮与抽屉
+     * 初始化 PRD 需求说明抽屉
      */
-    (function registerPrdPageContext() {
-      const activePage = document.body.dataset.activePage || '';
-      let prdOrderTab = (location.hash || '').replace('#', '') || 'order-list';
+    (function initPrdSpecDrawer() {
+      const PAGE_ID = '01_01_01_订单行列表';
+      const drawer = document.getElementById('prd-spec-drawer');
+      const trigger = document.getElementById('prd-spec-trigger');
+      const navEl = document.getElementById('prd-spec-item-nav');
+      const contentEl = document.getElementById('prd-spec-content');
+      const titleEl = document.getElementById('prd-spec-drawer-title');
+      const pageData = window.PRD_DATA?.[PAGE_ID];
+      let activeItemId = pageData?.items?.[0]?.id || '01';
+      let drawerOpen = false;
+      let drawerTimer = null;
 
-      window.__prdSetOrderTab = tab => {
-        prdOrderTab = tab;
-      };
+      /**
+       * 渲染当前选中的需求项
+       */
+      function renderActiveItem() {
+        if (!pageData || !contentEl || !navEl) return;
 
-      if (typeof PrdSpec !== 'undefined') {
-        PrdSpec.registerPageContext(activePage, {
-          isVisible() {
-            return prdOrderTab === 'order-line';
-          },
-          getPageData() {
-            return window.PRD_DATA?.['01_01_01_订单行列表'] || null;
-          }
-        });
+        const activeItem = pageData.items.find(item => item.id === activeItemId) || pageData.items[0];
+        if (!activeItem) return;
+
+        activeItemId = activeItem.id;
+        if (titleEl) titleEl.textContent = `${pageData.title} · PRD 需求说明`;
+
+        navEl.innerHTML = pageData.items.map(item => `
+          <button type="button" class="prd-spec-item-btn${item.id === activeItemId ? ' active' : ''}"
+            data-prd-item-id="${item.id}">[${item.id}] ${item.title || ''}</button>`).join('');
+
+        contentEl.innerHTML = activeItem.htmlContent || '';
       }
+
+      /**
+       * 打开 PRD 抽屉
+       */
+      function openPrdDrawer() {
+        if (!drawer || drawerOpen) return;
+        renderActiveItem();
+        drawer.classList.remove('hidden');
+        drawer.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('order-line-dedup-drawer-open');
+        requestAnimationFrame(() => drawer.classList.add('is-open'));
+        drawerOpen = true;
+      }
+
+      /**
+       * 关闭 PRD 抽屉
+       */
+      function closePrdDrawer() {
+        if (!drawer || !drawerOpen) return;
+        drawer.classList.remove('is-open');
+        drawer.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('order-line-dedup-drawer-open');
+        drawerOpen = false;
+        if (drawerTimer) clearTimeout(drawerTimer);
+        drawerTimer = window.setTimeout(() => {
+          drawer.classList.add('hidden');
+          drawerTimer = null;
+        }, 300);
+      }
+
+      trigger?.addEventListener('click', openPrdDrawer);
+      document.getElementById('prd-spec-drawer-close')?.addEventListener('click', closePrdDrawer);
+      document.getElementById('prd-spec-drawer-mask')?.addEventListener('click', closePrdDrawer);
+      document.getElementById('prd-spec-drawer-panel')?.addEventListener('click', event => {
+        event.stopPropagation();
+      });
+
+      navEl?.addEventListener('click', event => {
+        const btn = event.target.closest('[data-prd-item-id]');
+        if (!btn) return;
+        activeItemId = btn.dataset.prdItemId || activeItemId;
+        renderActiveItem();
+      });
+
+      contentEl?.addEventListener('click', event => {
+        const anchor = event.target.closest('a[href^="#"]');
+        if (!anchor) return;
+        const target = contentEl.querySelector(anchor.getAttribute('href'));
+        if (target) {
+          event.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
     })();
   </script>
 </body>
