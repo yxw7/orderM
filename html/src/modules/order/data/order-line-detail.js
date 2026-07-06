@@ -404,6 +404,15 @@ export const orderLineTabs = [
   { key: 'marc', label: 'MARC信息' }
 ];
 
+/** 订单行详情 Tab 列表；单件页签展示为「单件（N）」 */
+export function getOrderLineTabs(itemCount = 0) {
+  return orderLineTabs.map(tab =>
+    tab.key === 'items'
+      ? { ...tab, label: `单件（${itemCount}）` }
+      : tab
+  );
+}
+
 export function parseFlowStats(flowStats) {
   const parts = (flowStats || '0/0/0/0/0').split('/').map(v => parseInt(v, 10) || 0);
   return { issued: parts[0], received: parts[1], exchanged: parts[2], returned: parts[3], cancelled: parts[4] };
@@ -694,6 +703,18 @@ export function resolveActualBibRecordNos(row) {
 function getCatalogItemsByActualBibRecordNo(recordNo) {
   if (!recordNo) return [];
   return catalogItemsByActualBibRecordNo[recordNo] || [];
+}
+
+/** 按单个书目记录号（含实际关联记录号）查编目单件 */
+export function getCatalogItemsByBibRecordNo(recordNo) {
+  const catalogItems = getCatalogItemsByActualBibRecordNo(recordNo);
+  if (!catalogItems.length) return [];
+
+  return catalogItems.map((item, index) => ({
+    id: `${recordNo}-item-${index + 1}`,
+    no: String(index + 1).padStart(2, '0'),
+    ...item
+  }));
 }
 
 function getCatalogItemsForOrderLine(row) {

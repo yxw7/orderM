@@ -44,6 +44,7 @@
     unit="条"
     v-model:page="page"
     v-model:page-size="pageSize"
+    :page-sizes="[50, 100, 200]"
   >
     <template #cell-orderLineNo="{ row }">
       <button type="button" class="text-sky-600 hover:underline" @click="goLineDetail(row.orderLineNo)">{{ row.orderLineNo }}</button>
@@ -51,7 +52,10 @@
     <template #cell-bibRecordNo="{ row }">
       <span class="inline-flex items-center gap-1 max-w-full">
         <span class="truncate">{{ row.bibRecordNo || '' }}</span>
-        <ActualBibRecordNoMarker :record-nos="getActualBibRecordNos(row)" />
+        <ActualBibRecordNoMarker
+          :record-nos="getActualBibRecordNos(row)"
+          @open-record="recordNo => openCatalogRecordWindow(recordNo, row)"
+        />
       </span>
     </template>
     <template #cell-holdingDuplicate="{ row }">
@@ -77,6 +81,12 @@
       <button type="button" class="text-sky-600 hover:underline" @click="store.openModal('cancelOrder', { lineNo: row.orderLineNo })">撤订</button>
     </template>
   </DataTable>
+  <CatalogRecordWindowStack
+    :windows="catalogRecordWindows"
+    @close="closeCatalogRecordWindow"
+    @focus="focusCatalogRecordWindow"
+    @update-layout="onCatalogRecordWindowLayout"
+  />
   </div>
 </template>
 
@@ -88,7 +98,9 @@ import DataTable from '@/components/common/DataTable.vue';
 import DropdownButton from '@/components/common/DropdownButton.vue';
 import DedupBadge from '@/modules/order/components/DedupBadge.vue';
 import ActualBibRecordNoMarker from '@/modules/order/components/ActualBibRecordNoMarker.vue';
+import CatalogRecordWindowStack from '@/modules/order/components/CatalogRecordWindowStack.vue';
 import GenerateShortageSuccessModal from '@/modules/order/components/GenerateShortageSuccessModal.vue';
+import { useCatalogRecordWindows } from '@/modules/order/composables/useCatalogRecordWindows';
 import { useShortageStore } from '@/modules/acceptance/stores/shortage';
 import { useOrderStore } from '@/modules/order/stores/order';
 import {
@@ -109,12 +121,19 @@ const props = defineProps({
 const router = useRouter();
 const store = useOrderStore();
 const shortageStore = useShortageStore();
+const {
+  windows: catalogRecordWindows,
+  openWindow: openCatalogRecordWindowInternal,
+  closeWindow: closeCatalogRecordWindow,
+  focusWindow: focusCatalogRecordWindow,
+  updateLayout: applyCatalogRecordWindowLayout
+} = useCatalogRecordWindows();
 
 const search = ref(createDefaultOrderLineSearch(props.presetOrderId));
-const filteredRows = ref([...store.lines]);
+const filteredRows = ref(filterOrderLineRows(store.lines, search.value));
 const selectedIds = ref([]);
 const page = ref(1);
-const pageSize = ref(10);
+const pageSize = ref(50);
 const shortageSuccessOpen = ref(false);
 const lastGeneratedShortages = ref([]);
 
@@ -150,6 +169,14 @@ function canDedupLine(row) {
 function getActualBibRecordNos(row) {
   if (!Array.isArray(row?.actualBibRecordNos)) return [];
   return row.actualBibRecordNos.filter(Boolean);
+}
+
+function openCatalogRecordWindow(recordNo, orderLineRow) {
+  openCatalogRecordWindowInternal({ recordNo, orderLineRow });
+}
+
+function onCatalogRecordWindowLayout({ recordNo, x, y, width, height }) {
+  applyCatalogRecordWindowLayout(recordNo, { x, y, width, height });
 }
 
 function filterRows() {

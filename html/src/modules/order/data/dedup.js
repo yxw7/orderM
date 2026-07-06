@@ -38,6 +38,143 @@ export const DEDUP_DEFAULT_FIELDS = {
   视听资料: { 中文: ['title', 'carrier'], 外文: ['productBarcode', 'catalogNo'] }
 };
 
+/** 馆藏查重结果书目卡片字段（按资源类型 + 语种） */
+export const HOLDING_BIB_CARD_FIELDS = {
+  纸质书: {
+    中文: [
+      { label: '书目记录号', key: 'bibRecordNo' },
+      { label: '正题名', key: 'title' },
+      { label: 'ISBN', key: 'isbn' },
+      { label: '作者', key: 'author' },
+      { label: '出版社', key: 'publisher' },
+      { label: '出版年', key: 'publishTime' },
+      { label: '版本', key: 'edition' }
+    ],
+    外文: [
+      { label: '书目记录号', key: 'bibRecordNo' },
+      { label: '题名', key: 'title' },
+      { label: 'ISBN', key: 'isbn' },
+      { label: '责任者', key: 'author' },
+      { label: '出版社', key: 'publisher' },
+      { label: '出版日期', key: 'publishTime' },
+      { label: '语种', key: 'textLanguage' }
+    ]
+  },
+  视听资料: {
+    中文: [
+      { label: '书目记录号', key: 'bibRecordNo' },
+      { label: '题名', key: 'title' },
+      { label: '载体', key: 'carrier' },
+      { label: 'ISBN/ISRC', key: 'isbnIsrc' },
+      { label: '出版社', key: 'publisher' },
+      { label: '版本/格式', key: 'edition' },
+      { label: '著者', key: 'author' }
+    ],
+    外文: [
+      { label: '书目记录号', key: 'bibRecordNo' },
+      { label: 'ISRC', key: 'isrc' },
+      { label: '题名', key: 'title' },
+      { label: '载体', key: 'carrier' },
+      { label: '商品条码', key: 'productBarcode' },
+      { label: '目录号', key: 'catalogNo' },
+      { label: '出版方', key: 'publisher' }
+    ]
+  }
+};
+
+/**
+ * 获取馆藏查重书目卡片展示字段
+ * @param {string} resourceType - 资源类型
+ * @param {string} languageCategory - 语种（中文/外文）
+ * @returns {Array<{ label: string, key: string }>}
+ */
+export function getHoldingBibCardFields(resourceType, languageCategory) {
+  const typeConfig = HOLDING_BIB_CARD_FIELDS[resourceType] || HOLDING_BIB_CARD_FIELDS['纸质书'];
+  return typeConfig[languageCategory] || typeConfig['中文'];
+}
+
+/**
+ * 规范化书目语种展示值
+ * @param {string} rawLanguage - 原始语种
+ * @returns {string}
+ */
+function normalizeBibTextLanguage(rawLanguage) {
+  const textLanguageMap = { chi: '中文', eng: '英文', en: '英文', jpn: '日文' };
+  const raw = String(rawLanguage || '').trim();
+  if (!raw) return '';
+  return textLanguageMap[raw.toLowerCase()] || raw;
+}
+
+/**
+ * 获取馆藏查重书目卡片字段展示值
+ * @param {Object} item - 书目记录
+ * @param {string} fieldKey - 字段键
+ * @returns {string}
+ */
+export function getHoldingBibFieldDisplayValue(item, fieldKey) {
+  if (!item) return '—';
+
+  const valueMap = {
+    bibRecordNo: item.bibRecordNo,
+    title: item.title,
+    author: item.author,
+    publisher: item.publisher,
+    publishTime: item.publishTime,
+    carrier: item.carrier,
+    edition: item.edition,
+    productBarcode: item.productBarcode,
+    catalogNo: item.catalogNo,
+    textLanguage: normalizeBibTextLanguage(item.textLanguage),
+    isbn: item.isbn || item.standardNo || item.resourceId,
+    isbnIsrc: item.isbn || item.isrc || item.standardNo || item.resourceId,
+    isrc: item.isrc || item.standardNo
+  };
+
+  const rawValue = valueMap[fieldKey];
+  if (rawValue == null || String(rawValue).trim() === '') return '—';
+  return String(rawValue);
+}
+
+/** 馆藏查重 MARC 页签展示字段规则（按语种） */
+export const HOLDING_DEDUP_MARC_FIELD_PATTERNS = {
+  中文: ['010', '2XX', '3XX', '6XX', '7XX'],
+  外文: ['020', '1XX', '2XX', '3XX', '093']
+};
+
+/**
+ * 判断 MARC 字段 tag 是否匹配展示规则
+ * @param {string} fieldTag - MARC 字段 tag，如 010、200
+ * @param {string} pattern - 规则，如 010、2XX、093
+ * @returns {boolean}
+ */
+function matchesMarcFieldPattern(fieldTag, pattern) {
+  const tag = String(fieldTag || '').trim();
+  if (!tag || !pattern) return false;
+
+  if (pattern.endsWith('XX') && pattern.length === 3) {
+    return tag.length === 3 && tag[0] === pattern[0] && /^\d{3}$/.test(tag);
+  }
+
+  return tag === pattern;
+}
+
+/**
+ * 按语种过滤馆藏查重 MARC 展示字段
+ * @param {Object[]} marcFields - MARC 字段列表
+ * @param {string} languageCategory - 语种（中文/外文）
+ * @returns {Object[]}
+ */
+export function filterHoldingDedupMarcFields(marcFields, languageCategory) {
+  if (!marcFields?.length) return [];
+
+  const patterns = HOLDING_DEDUP_MARC_FIELD_PATTERNS[languageCategory]
+    || HOLDING_DEDUP_MARC_FIELD_PATTERNS['中文'];
+
+  return marcFields.filter(item =>
+    patterns.some(pattern => matchesMarcFieldPattern(item.field, pattern))
+  );
+}
+
 export const HOLDING_DEDUP_CATALOG = [
   {
     bibRecordNo: 'BIB2024002001', standardNo: '9787040456789', isbn: '978-7-04-045678-9', title: '中国现代史纲要',
@@ -74,7 +211,11 @@ export const HOLDING_DEDUP_CATALOG = [
     marcFields: [
       { field: '010', indicator: '', content: '▼a978-7-04-045678-9' },
       { field: '200', indicator: '1 ', content: '▼a中国现代史纲要▼f王顺生著' },
-      { field: '210', indicator: '  ', content: '▼a北京▼c高等教育出版社▼d2024' }
+      { field: '210', indicator: '  ', content: '▼a北京▼c高等教育出版社▼d2024' },
+      { field: '300', indicator: '  ', content: '▼a含教学参考资料' },
+      { field: '690', indicator: '  ', content: '▼aK25' },
+      { field: '701', indicator: '0 ', content: '▼a王顺生▼4著' },
+      { field: '905', indicator: '  ', content: '▼a首图.华威桥馆' }
     ]
   },
   {
@@ -116,7 +257,8 @@ export const HOLDING_DEDUP_CATALOG = [
     ]
   },
   {
-    bibRecordNo: 'BIB2024003001', standardNo: '', isbn: '', title: '布鲁克纳：第二交响曲',
+    bibRecordNo: 'BIB2024003001', standardNo: 'CN-A1234567890', isrc: 'CN-A1234567890', isbn: '',
+    title: '布鲁克纳：第二交响曲', author: '安东·布鲁克纳', edition: 'CD',
     textLanguage: '中文', publisher: '国家大剧院', publishTime: '2015-03', carrier: 'CD',
     productBarcode: '017685110221', catalogNo: 'CD-1102',
     holdingTree: [

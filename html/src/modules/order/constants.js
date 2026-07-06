@@ -107,6 +107,18 @@ export const BIB_CREATE_ORDER_REQUIRED_FIELDS = [
   { key: 'supplier', label: '供应商' }
 ];
 
+/** 采选方式为交换或捐赠时，预算名称非必填 */
+export const BUDGET_OPTIONAL_METHODS = ['交换', '捐赠'];
+
+/**
+ * 判断采选方式下预算名称是否非必填。
+ * @param {string} method
+ * @returns {boolean}
+ */
+export function isBudgetOptionalForMethod(method) {
+  return BUDGET_OPTIONAL_METHODS.includes(method);
+}
+
 export const NEW_ORDER_BUDGET_OPTIONS = [
   '2024年首都图书馆图书购置费中文普通图书(一)',
   '2024年首都图书馆图书购置费中文普通图书(二)',

@@ -6,7 +6,7 @@
     <div class="bg-white rounded border border-gray-200">
       <div class="flex flex-wrap gap-1 px-4 pt-3 border-b border-gray-200">
         <button
-          v-for="tab in orderLineTabs"
+          v-for="tab in detailTabs"
           :key="tab.key"
           type="button"
           class="order-tab px-3 py-2 text-sm border-b-2 border-transparent"
@@ -116,7 +116,7 @@ import { orderLineRows, orderListRows } from '@/modules/order/data/orders';
 import { appConfig } from '@/config/app-config';
 import {
   buildLineDetailContext,
-  orderLineTabs,
+  getOrderLineTabs,
   relatedOrderLineColumns,
   getRelatedOrderLines,
   getOrderLineAcceptanceColumns,
@@ -154,6 +154,7 @@ const acceptanceRecords = computed(() => getOrderLineAcceptanceRecords(row.value
 
 const itemColumns = computed(() => getOrderLineItemColumns());
 const itemRows = computed(() => getOrderLineItems(row.value));
+const detailTabs = computed(() => getOrderLineTabs(itemRows.value.length));
 const pagedItemRows = computed(() => {
   const start = (itemPage.value - 1) * itemPageSize.value;
   return itemRows.value.slice(start, start + itemPageSize.value);

@@ -16,7 +16,7 @@
 
 ### 1.2 目标
 
-1. **加入订单弹窗**：当所选订单含捐赠订单时，增加「来源方」区域，支持检索已有捐赠人或手工录入新捐赠人（姓名、电话、地址），可选同步新增到供应商系统。
+1. **加入订单弹窗**：当所选订单含捐赠订单时，增加「来源方」区域，支持检索已有捐赠人或手工录入新捐赠人（姓名、电话、省份、详细地址），可选同步新增到供应商系统。
 2. **新建订单弹窗**：采选方式为捐赠时，预算名称、供应商、折扣字段**非必填且禁用**，捐赠人信息改在加入订单阶段通过来源方填写。
 
 ### 1.3 非目标（本期不做）
@@ -36,8 +36,8 @@
 | 来源方定位 | 可替代供应商选择；支持检索已有捐赠人或手工录入新捐赠人 |
 | 显示条件 | 所选订单中有任意一条为「捐赠」即显示；提交时仅对捐赠订单写入来源方 |
 | 多选捐赠单 | 共用一份来源方（与币种/定价共用逻辑一致） |
-| 字段规则 | 姓名必填；电话、地址选填 |
-| 已有捐赠人 | 选中后姓名/电话/地址只读，不可修改；界面不展示类型标签 |
+| 字段规则 | 姓名必填；电话、省份、详细地址选填 |
+| 已有捐赠人 | 选中后姓名/电话/省份/详细地址只读，不可修改；界面不展示类型标签 |
 | 新增捐赠人类型 | 类型单选：个人捐赠 / 团体捐赠，默认个人捐赠 |
 | 反向维护 | 「同步新增到供应商系统」复选框，默认勾选；仅对新捐赠人生效 |
 | 反向维护路由 | 个人捐赠 → 个人管理；团体捐赠 → 资源商管理 |
@@ -84,9 +84,10 @@
 │ ───────── 分隔线 ─────────                       │
 │ 【来源方】（仅含捐赠订单时显示）                 │
 │   类型    ○ 个人捐赠  ○ 团体捐赠  （仅新增时）  │
-│   * 姓名  [ 可检索输入框 ▼ ]                     │
-│     电话  [ ____________ ]                       │
-│     地址  [ ____________ ]                       │
+│   * 姓名      [ 可检索输入框 ▼ ]                 │
+│     电话      [ ____________ ]                   │
+│     省份      [ 34省下拉 ▼ ]                     │
+│     详细地址  [ ____________ ]                   │
 │     ☑ 同步新增到供应商系统  （仅新增时）         │
 │ ───────── 分隔线 ─────────                       │
 │ 【下】币种 / 定价 / 套内册数 / 备注              │
@@ -104,14 +105,16 @@
 
 #### 4.3.2 已有捐赠人模式
 
-- 自动填充电话、地址。
-- 姓名、电话、地址均为**只读**（`bg-gray-50`，不可编辑）。
+- 自动填充电话、省份、详细地址。
+- 姓名、电话、省份（下拉禁用）、详细地址均为**只读**（`bg-gray-50`，不可编辑）。
 - **隐藏**类型单选与「同步新增到供应商系统」复选框。
 - `mode = 'existing'`，携带 `donorId` 与 `donorType`（取自记录，界面不展示）。
 
 #### 4.3.3 新增捐赠人模式
 
-- 姓名、电话、地址可编辑。
+- 姓名、电话、省份、详细地址可编辑。
+- 省份为 **34 个省级行政区**下拉（见 §4.3.6），默认空（提示「请选择」）。
+- 详细地址为单行文本输入，**不超过 100 字符**。
 - 显示类型单选：**个人捐赠 / 团体捐赠**，默认「个人捐赠」。
 - 显示「同步新增到供应商系统」复选框，**默认勾选**。
 - `mode = 'new'`。
@@ -119,14 +122,22 @@
 #### 4.3.4 提交校验
 
 - 有捐赠订单时，姓名不能为空。
-- 电话、地址可为空。
-- 姓名 ≤ 50 字，电话 ≤ 20 字，地址 ≤ 200 字。
+- 电话、省份、详细地址可为空。
+- 姓名 ≤ 50 字，电话 ≤ 20 字，详细地址 ≤ 100 字。
 
 #### 4.3.5 提交写入
 
 - 仅对 `method === '捐赠'` 的订单生成订单行并附来源方快照。
 - 非捐赠订单正常加入，忽略来源方。
 - 多笔捐赠订单共用同一份 `sourceParty`。
+
+#### 4.3.6 省份下拉选项
+
+省份字段使用固定的 **34 个省级行政区**下拉，选项如下（按国家标准顺序）：
+
+北京市、天津市、河北省、山西省、内蒙古自治区、辽宁省、吉林省、黑龙江省、上海市、江苏省、浙江省、安徽省、福建省、江西省、山东省、河南省、湖北省、湖南省、广东省、广西壮族自治区、海南省、重庆市、四川省、贵州省、云南省、西藏自治区、陕西省、甘肃省、青海省、宁夏回族自治区、新疆维吾尔自治区、台湾省、香港特别行政区、澳门特别行政区。
+
+前端抽取为常量 `PROVINCE_OPTIONS`（可置于 `html/src/constants/provinces.js` 或 `donors.js` 同级导出）。
 
 ### 4.4 缓存
 
@@ -139,7 +150,8 @@ sourceParty: {
   donorId: string | null,
   name: string,
   phone: string,
-  address: string,
+  province: string,
+  addressDetail: string,
   syncToSupplier: boolean
 }
 ```
@@ -155,7 +167,8 @@ DonorRecord {
   id: string
   name: string
   phone?: string
-  address?: string
+  province?: string       // 省级行政区
+  addressDetail?: string  // 详细地址，≤100字
   type: 'personal' | 'group'   // 个人捐赠 | 团体捐赠
   status: 'active' | 'inactive'
   supplierCode: string
@@ -174,7 +187,8 @@ JoinOrderPayload {
     donorId?: string
     name: string
     phone?: string
-    address?: string
+    province?: string
+    addressDetail?: string
     syncToSupplier: boolean
   }
 }
@@ -182,11 +196,11 @@ JoinOrderPayload {
 
 ### 5.3 订单行扩展字段
 
+订单行仅扩展以下两个字段；电话、省份、详细地址仅在加入订单表单与供应商主数据中维护，**不落库至订单行**。
+
 | 字段 | 说明 |
 |------|------|
 | `sourcePartyName` | 来源方姓名；收货同步单件时映射至单件「来源方」 |
-| `sourcePartyPhone` | 电话（订单行存档） |
-| `sourcePartyAddress` | 地址（订单行存档） |
 | `sourcePartyDonorId` | 关联供应商系统捐赠人 ID；新增未同步时为空 |
 
 ---
@@ -270,6 +284,7 @@ JoinOrderPayload {
 |------|------|
 | `html/src/modules/order/components/BibJoinOrderModal.vue` | 来源方 UI、显示逻辑、校验、payload |
 | `html/src/modules/order/components/BibCreateOrderModal.vue` | 捐赠模式字段禁用与校验跳过 |
+| `html/src/constants/provinces.js`（新建） | 34 省级行政区常量 `PROVINCE_OPTIONS` |
 | `html/src/modules/order/data/donors.js`（新建） | 捐赠人 mock 数据、检索、建档函数 |
 | `html/src/modules/order/data/bib-order-form-cache.js` | 缓存 `sourceParty` |
 | `html/src/modules/order/views/BibQueryView.vue` | `onJoinOrder` 处理来源方写入 |
@@ -280,7 +295,7 @@ JoinOrderPayload {
 
 ```javascript
 searchDonors(keyword): DonorRecord[]
-createDonor({ name, phone, address, type }): { ok: boolean; donor?: DonorRecord; message?: string }
+createDonor({ name, phone, province, addressDetail, type }): { ok: boolean; donor?: DonorRecord; message?: string }
 findDonorByNameAndType(name, type): DonorRecord | null
 ```
 
@@ -291,9 +306,9 @@ findDonorByNameAndType(name, type): DonorRecord | null
 ### 加入订单
 
 - [ ] 勾选含捐赠订单时显示来源方区域；无捐赠订单时不显示。
-- [ ] 检索已有捐赠人：选中后三字段只读，无类型标签、无同步复选框。
+- [ ] 检索已有捐赠人：选中后姓名/电话/省份/详细地址只读，无类型标签、无同步复选框。
 - [ ] 输入新姓名：显示类型单选（默认个人）与同步复选框（默认勾选），字段可编辑。
-- [ ] 姓名必填；电话、地址选填。
+- [ ] 姓名必填；电话、省份、详细地址选填；详细地址不超过 100 字符。
 - [ ] 多笔捐赠订单共用一份来源方；非捐赠订单不写入来源方。
 - [ ] 新增 + 勾选同步：个人 → 个人管理；团体 → 资源商管理。
 - [ ] 新增 + 取消同步：仅写订单行。

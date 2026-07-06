@@ -1,4 +1,5 @@
 import { marcMappingRows, parseMarcTypeLabel, resolveOrderFieldsFromMarcMapping } from '@/modules/marc-mapping/data/marc-mapping-manage';
+import { sortOrderLinesByIssueTimeDesc } from '@/modules/order/data/order-line-sort';
 
 const BIB_DATABASE_ROWS = [
   {
@@ -131,7 +132,8 @@ export function buildMarcDetailFields(row) {
 }
 
 export function getRelatedOrderLines(bibRecordNo) {
-  return bibRelatedOrderLines.filter(line => line.bibRecordNo === bibRecordNo);
+  const lines = bibRelatedOrderLines.filter(line => line.bibRecordNo === bibRecordNo);
+  return sortOrderLinesByIssueTimeDesc(lines);
 }
 
 export function summarizeRelatedOrderFlow(lines) {

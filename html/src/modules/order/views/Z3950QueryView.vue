@@ -42,34 +42,13 @@
         unit="条记录"
       >
         <template #cell-title="{ row }">
-          <button type="button" class="text-sky-600 hover:underline text-left" @click="openDetail(row)">{{ row.title }}</button>
+          <span class="text-gray-900">{{ row.title }}</span>
         </template>
-        <template #cell-actions="{ row }">
-          <button type="button" class="text-sky-600 hover:underline mr-2" @click="openDetail(row)">预览简编</button>
-          <button type="button" class="text-sky-600 hover:underline" @click="alertDemo('导入')">导入</button>
+        <template #cell-actions>
+          <button type="button" class="text-sky-600 hover:underline mr-2" @click="alertDemo('预览简编')">预览简编</button>
+          <button type="button" class="text-sky-600 hover:underline" @click="alertDemo('下载详编')">下载详编</button>
         </template>
       </DataTable>
-    </div>
-
-    <div v-if="detailRow" class="fixed inset-0 z-50 flex justify-end bg-black/40" @click.self="detailRow = null">
-      <div class="w-1/2 h-full bg-white shadow-xl flex flex-col">
-        <div class="flex items-center justify-between px-6 py-4 border-b shrink-0">
-          <h2 class="text-base font-medium">预览简编 — {{ detailRow.title }}</h2>
-          <button type="button" class="text-gray-400 text-xl" @click="detailRow = null">&times;</button>
-        </div>
-        <div class="flex-1 overflow-y-auto p-6 space-y-3 text-sm">
-          <p><span class="text-gray-500">ISBN：</span>{{ detailRow.isbn }}</p>
-          <p><span class="text-gray-500">责任者：</span>{{ detailRow.author }}</p>
-          <p><span class="text-gray-500">出版社：</span>{{ detailRow.publisher }}</p>
-          <p><span class="text-gray-500">出版时间：</span>{{ detailRow.pubYear }}</p>
-          <p><span class="text-gray-500">MARC类型：</span>{{ detailRow.marcType }}</p>
-          <p><span class="text-gray-500">记录号：</span>{{ detailRow.recordNo }}</p>
-        </div>
-        <div class="flex justify-end gap-2 px-6 py-4 border-t shrink-0">
-          <button type="button" class="px-4 py-1.5 border border-gray-300 text-sm rounded" @click="detailRow = null">关闭</button>
-          <button type="button" class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded" @click="alertDemo('导入')">导入</button>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -86,7 +65,6 @@ const allRows = ref([...z3950Rows]);
 const filteredRows = ref([...z3950Rows]);
 const page = ref(1);
 const pageSize = ref(5);
-const detailRow = ref(null);
 
 const serverLabel = appConfig.z3950Servers.join('、');
 
@@ -115,10 +93,6 @@ function filterRows() {
 function resetSearch() {
   searchFields.value = [{ type: 'isbn', value: '' }, { type: 'title', value: '' }, { type: 'publisher', value: '' }];
   filteredRows.value = [...allRows.value];
-}
-
-function openDetail(row) {
-  detailRow.value = row;
 }
 
 function alertDemo(action) {

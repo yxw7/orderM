@@ -18,7 +18,7 @@
             <button type="button" class="px-3 py-1 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50" @click="alertDemo('删除')">删除</button>
             <button type="button" class="px-3 py-1 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50" @click="alertDemo('复制书目')">复制书目</button>
             <button type="button" class="px-3 py-1 text-sm rounded bg-sky-600 text-white hover:bg-sky-700" @click="router.push('/bib-query/new-bib')">新建书目</button>
-            <button type="button" class="px-3 py-1 text-sm rounded bg-teal-500 text-white hover:bg-teal-600" @click="router.push('/bib-query/z3950')">查Z3950</button>
+            <button type="button" class="px-3 py-1 text-sm rounded bg-teal-500 text-white hover:bg-teal-600" @click="goZ3950">查Z3950</button>
             <button type="button" class="p-1.5 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-50" title="刷新" @click="filterRows">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             </button>
@@ -220,23 +220,38 @@
                 </td>
               </tr>
               <tr v-for="(line, index) in relatedLines" :key="line.orderLineNo" class="hover:bg-gray-50">
-                <td class="px-3 py-2">{{ index + 1 }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ index + 1 }}</td>
                 <td class="px-3 py-2 whitespace-nowrap">{{ line.orderId }}</td>
-                <td class="px-3 py-2">{{ line.site }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.site }}</td>
                 <td class="px-3 py-2 whitespace-nowrap">{{ line.orderLineNo }}</td>
-                <td class="px-3 py-2 max-w-[160px] truncate" :title="line.title">{{ line.title }}</td>
-                <td class="px-3 py-2">{{ line.resourceId }}</td>
-                <td class="px-3 py-2">{{ line.carrier }}</td>
-                <td class="px-3 py-2">{{ line.author }}</td>
-                <td class="px-3 py-2">{{ line.publisher }}</td>
-                <td class="px-3 py-2">{{ line.publishTime }}</td>
-                <td class="px-3 py-2">{{ line.price }}</td>
-                <td class="px-3 py-2">{{ line.currency }}</td>
-                <td class="px-3 py-2">{{ line.copiesInSet }}</td>
-                <td class="px-3 py-2">{{ line.sets }}</td>
-                <td class="px-3 py-2">{{ line.lineStatus }}</td>
-                <td class="px-3 py-2">{{ line.acceptanceStatus || '—' }}</td>
-                <td class="px-3 py-2">{{ line.settlementStatus }}</td>
+                <td class="px-3 py-2 whitespace-nowrap max-w-[200px]">
+                  <HoverTooltip v-if="line.title" :text="line.title">
+                    <span class="inline-block max-w-[200px] truncate align-bottom">{{ line.title }}</span>
+                  </HoverTooltip>
+                  <span v-else>—</span>
+                </td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.resourceId }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.carrier }}</td>
+                <td class="px-3 py-2 whitespace-nowrap max-w-[140px]">
+                  <HoverTooltip v-if="line.author" :text="line.author">
+                    <span class="inline-block max-w-[140px] truncate align-bottom">{{ line.author }}</span>
+                  </HoverTooltip>
+                  <span v-else>—</span>
+                </td>
+                <td class="px-3 py-2 whitespace-nowrap max-w-[160px]">
+                  <HoverTooltip v-if="line.publisher" :text="line.publisher">
+                    <span class="inline-block max-w-[160px] truncate align-bottom">{{ line.publisher }}</span>
+                  </HoverTooltip>
+                  <span v-else>—</span>
+                </td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.publishTime }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.price }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.currency }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.copiesInSet }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.sets }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.lineStatus }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.acceptanceStatus || '—' }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ line.settlementStatus }}</td>
                 <td class="px-3 py-2 whitespace-nowrap">{{ line.issueTime || '—' }}</td>
               </tr>
             </tbody>
@@ -266,6 +281,8 @@ import BibSearchPanel from '@/modules/order/components/BibSearchPanel.vue';
 import BibDetailDrawer from '@/modules/order/components/BibDetailDrawer.vue';
 import BibJoinOrderModal from '@/modules/order/components/BibJoinOrderModal.vue';
 import BibCreateOrderModal from '@/modules/order/components/BibCreateOrderModal.vue';
+import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
+import { appConfig } from '@/config/app-config';
 import { createDefaultBibSearch, applyBibSearchFilter } from '@/modules/order/data/bib-search';
 import {
   bibRows,
@@ -428,6 +445,14 @@ function toggleAllColumns(event) {
   columnConfig.value.forEach(col => {
     if (col.key !== 'actions') col.visible = checked;
   });
+}
+
+function goZ3950() {
+  if (!appConfig.z3950Servers?.length) {
+    window.alert('当前系统未配置Z3950地址，请联系管理员');
+    return;
+  }
+  router.push({ name: 'z3950' });
 }
 
 function openJoinOrder() {

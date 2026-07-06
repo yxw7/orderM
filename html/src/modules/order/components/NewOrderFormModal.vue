@@ -48,12 +48,15 @@
       </div>
     </div>
     <div class="flex items-start gap-3">
-      <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0"><span class="text-red-500">*</span> 预算名称</label>
+      <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+        <span v-if="!budgetOptional" class="text-red-500">*</span> 预算名称
+      </label>
       <div class="flex-1">
         <select
           v-model="form.budget"
-          class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
+          class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-400"
           :class="errors.budget ? 'border-red-500' : 'border-gray-300'"
+          :disabled="budgetOptional"
         >
           <option value="">请选择</option>
           <option v-for="opt in NEW_ORDER_BUDGET_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
@@ -80,11 +83,12 @@
       <div class="flex-1">
         <select
           v-model="form.supplier"
-          class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
+          class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-400"
           :class="errors.supplier ? 'border-red-500' : 'border-gray-300'"
+          :disabled="!form.method"
         >
-          <option value="">请选择</option>
-          <option v-for="opt in NEW_ORDER_SUPPLIER_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
+          <option value="">{{ form.method ? '请选择' : '请先选择采选方式' }}</option>
+          <option v-for="opt in supplierOptions" :key="opt" :value="opt">{{ opt }}</option>
         </select>
         <p v-if="errors.supplier" class="text-red-500 text-xs mt-1">{{ errors.supplier }}</p>
       </div>
@@ -117,19 +121,20 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import FormModal from '@/modules/order/components/FormModal.vue';
 import { useSiteSelectOptions } from '@/composables/use-site-options';
 import {
   LANGUAGE_OPTIONS,
   METHOD_OPTIONS,
   NEW_ORDER_BUDGET_OPTIONS,
-  NEW_ORDER_SUPPLIER_OPTIONS,
   RESOURCE_TYPE_OPTIONS,
-  SUBSCRIBER_OPTIONS
+  SUBSCRIBER_OPTIONS,
+  isBudgetOptionalForMethod
 } from '@/modules/order/constants';
 import { defaultNewOrderForm } from '@/modules/order/data/orders';
 import { validateNewOrderForm } from '@/modules/order/data/order-create';
+import { getSupplierOptionsByMethod, getSupplierDiscountByName, isSupplierValidForMethod } from '@/modules/order/data/supplier-sources';
 
 const props = defineProps({
   open: { type: Boolean, default: false }
@@ -142,10 +147,31 @@ const { activeSiteNames } = useSiteSelectOptions();
 const form = ref({ ...defaultNewOrderForm });
 const errors = ref({});
 
+/** @type {import('vue').ComputedRef<string[]>} */
+const supplierOptions = computed(() => getSupplierOptionsByMethod(form.value.method));
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const budgetOptional = computed(() => isBudgetOptionalForMethod(form.value.method));
+
 watch(() => props.open, open => {
   if (!open) return;
   form.value = { ...defaultNewOrderForm };
   errors.value = {};
+});
+
+watch(() => form.value.method, method => {
+  if (isBudgetOptionalForMethod(method)) {
+    form.value.budget = '';
+    delete errors.value.budget;
+  }
+  if (form.value.supplier && !isSupplierValidForMethod(method, form.value.supplier)) {
+    form.value.supplier = '';
+    form.value.discount = '';
+  }
+});
+
+watch(() => form.value.supplier, supplier => {
+  form.value.discount = getSupplierDiscountByName(supplier);
 });
 
 function submit() {

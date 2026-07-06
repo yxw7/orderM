@@ -101,7 +101,7 @@
                   <input type="text" :value="row.site" readonly class="w-full border border-gray-200 rounded px-3 py-2 text-sm bg-gray-50">
                   <p class="mt-1 text-xs text-gray-400">{{ row.orderId }}</p>
                 </div>
-                <input v-model="row.sets" type="number" min="1" placeholder="套数" class="w-28 shrink-0 border border-gray-300 rounded px-3 py-2 text-sm">
+                <input v-model="row.sets" type="number" min="0" placeholder="套数" class="w-28 shrink-0 border border-gray-300 rounded px-3 py-2 text-sm">
               </div>
             </div>
           </div>
@@ -144,6 +144,7 @@
 import { computed, onUnmounted, reactive, ref, watch } from 'vue';
 import { ACQUISITION_METHOD_FILTER_OPTIONS } from '@/constants/acquisition-methods';
 import { ORDER_STATUS_LABELS } from '@/modules/order/data/bib';
+import { loadJoinOrderFormCache, saveJoinOrderFormCache } from '@/modules/order/data/bib-order-form-cache';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -186,20 +187,71 @@ const emptyText = computed(() => {
 watch(() => props.open, val => {
   document.body.style.overflow = val ? 'hidden' : '';
   if (val) {
-    search.orderId = '';
-    search.method = '全部';
-    search.supplier = '全部';
-    activeSearch.orderId = '';
-    activeSearch.method = '全部';
-    activeSearch.supplier = '全部';
+    restoreFromCache();
+  } else {
+    persistCache();
+  }
+});
+
+/**
+ * 从缓存恢复上次输入与选择
+ */
+function restoreFromCache() {
+  const cached = loadJoinOrderFormCache();
+  const defaultSearch = { orderId: '', method: '全部', supplier: '全部' };
+
+  if (!cached) {
+    Object.assign(search, defaultSearch);
+    Object.assign(activeSearch, defaultSearch);
     selectedIds.value = new Set();
     siteRows.value = [];
     form.currency = 'CNY';
     form.price = '';
     form.copiesInSet = '1';
     form.remark = '';
+    return;
   }
-});
+
+  Object.assign(search, cached.search || defaultSearch);
+  Object.assign(activeSearch, cached.activeSearch || cached.search || defaultSearch);
+
+  const validOrderIds = new Set(props.orders.map(order => order.orderId));
+  const cachedIds = (cached.selectedOrderIds || []).filter(id => validOrderIds.has(id));
+  selectedIds.value = new Set(cachedIds);
+
+  form.currency = cached.form?.currency ?? 'CNY';
+  form.price = cached.form?.price ?? '';
+  form.copiesInSet = cached.form?.copiesInSet ?? '1';
+  form.remark = cached.form?.remark ?? '';
+
+  rebuildSiteRows(cached.siteSetsByOrderId || {});
+}
+
+/**
+ * 按当前勾选订单重建馆址分配行
+ * @param {Record<string, string>} [setsByOrderId]
+ */
+function rebuildSiteRows(setsByOrderId = {}) {
+  siteRows.value = props.orders
+    .filter(order => selectedIds.value.has(order.orderId))
+    .sort((a, b) => String(b.createTime || '').localeCompare(String(a.createTime || '')))
+    .map(order => ({
+      orderId: order.orderId,
+      site: order.site,
+      sets: setsByOrderId[order.orderId] ?? '1'
+    }));
+}
+
+/** 缓存当前表单与选择 */
+function persistCache() {
+  saveJoinOrderFormCache({
+    search: { ...search },
+    activeSearch: { ...activeSearch },
+    selectedOrderIds: [...selectedIds.value],
+    siteSetsByOrderId: Object.fromEntries(siteRows.value.map(row => [row.orderId, row.sets])),
+    form: { ...form }
+  });
+}
 
 onUnmounted(() => {
   document.body.style.overflow = '';
@@ -223,13 +275,8 @@ function toggleOrder(orderId) {
   if (next.has(orderId)) next.delete(orderId);
   else next.add(orderId);
   selectedIds.value = next;
-  siteRows.value = props.orders
-    .filter(order => next.has(order.orderId))
-    .sort((a, b) => String(b.createTime || '').localeCompare(String(a.createTime || '')))
-    .map(order => {
-      const existing = siteRows.value.find(row => row.orderId === order.orderId);
-      return { orderId: order.orderId, site: order.site, sets: existing?.sets || '1' };
-    });
+  const setsByOrderId = Object.fromEntries(siteRows.value.map(row => [row.orderId, row.sets]));
+  rebuildSiteRows(setsByOrderId);
 }
 
 /** 应用检索条件 */
@@ -253,8 +300,15 @@ function resetSearch() {
 function submit() {
   if (!siteRows.value.length) return window.alert('请至少选择一个订单');
   if (!form.currency || !form.price || !form.copiesInSet) return window.alert('请填写必填项');
-  if (siteRows.value.some(row => !row.sets || Number(row.sets) <= 0)) return window.alert('请为每个馆址填写有效套数');
-  emit('confirm', { siteRows: siteRows.value, form: { ...form } });
+  if (siteRows.value.some(row => row.sets === '' || row.sets === null || Number(row.sets) < 0)) {
+    return window.alert('请为每个馆址填写有效套数');
+  }
+
+  const activeRows = siteRows.value.filter(row => Number(row.sets) > 0);
+  if (!activeRows.length) return window.alert('请至少为一个馆址填写大于0的套数');
+
+  persistCache();
+  emit('confirm', { siteRows: activeRows, form: { ...form } });
   emit('close');
 }
 </script>

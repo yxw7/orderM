@@ -7,7 +7,8 @@
     "dev": "vite app.html --open /app.html",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "vite preview --port 8080 --strictPort --open /app.html"
+    "start": "vite preview --port 8080 --strictPort --open /app.html",
+    "deploy": "vite build && gh-pages -d dist -b gh-pages"
   },
   "dependencies": {
     "pinia": "^3.0.1",
@@ -17,6 +18,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
     "autoprefixer": "^10.4.20",
+    "gh-pages": "^6.3.0",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.7"

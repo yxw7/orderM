@@ -7,7 +7,7 @@ ${prdSection('', '功能描述')}
 ${prdSection('', '页面要素')}
 <ul>
 <li><strong>折叠标题栏</strong>：左侧「书目信息」，右侧「收起/展开」文字链</li>
-<li><strong>封面区</strong>：100×140px；有 <code>coverUrl</code> 时展示图片，否则展示默认书籍 SVG 占位</li>
+<li><strong>封面区</strong>：100×140px；有<strong>封面图地址</strong>（<code>coverUrl</code>）时展示图片，否则展示默认书籍 SVG 占位</li>
 <li><strong>资源类型 / 语种</strong>：封面下方居中展示</li>
 <li><strong>书目字段</strong>：三列网格；一般性附注、图书简介、备注、书评、作者简介、目次信息、馆藏信息等长文本字段占 3 列宽</li>
 </ul>
@@ -22,7 +22,7 @@ ${prdSection('', '视听资料 · 中文')}
 <p>ISBN、ISRC、题名、载体、出版社、版本/格式、著者、币种、码洋、彩胶颜色、限量编号、厂牌、系列名称、是否签名、是否老唱片、获奖信息、北京出版社、分类、盘号、老唱片品牌、剧种、年代、备注</p>
 ${prdSection('', '视听资料 · 外文')}
 <p>ISRC、题名、载体、商品条码、目录号、外文原文题名、出版方、码洋、币种、备注、厂牌</p>
-<blockquote>语种取自所属订单的 language 字段（中文 / 外文）。</blockquote>
+<blockquote>语种取自所属订单的<strong>语种</strong>字段（<code>language</code>，中文 / 外文）。</blockquote>
 </div>
 <div id="interaction">
 ${prdSection('', '交互逻辑')}
@@ -37,12 +37,13 @@ ${prdSection('', '功能描述')}
 <p>书目信息下方为业务 Tab 容器，用于切换查看订单行关联业务数据。Tab 顺序固定，默认激活<strong>相关订单行</strong>。</p>
 ${prdSection('', 'Tab 列表')}
 <ol>
-<li><strong>相关订单行</strong>（key: related，默认）</li>
-<li><strong>验收记录</strong>（key: acceptance）</li>
-<li><strong>结算记录</strong>（key: settlement）</li>
-<li><strong>单件信息</strong>（key: items）</li>
-<li><strong>MARC信息</strong>（key: marc）</li>
+<li><strong>相关订单行</strong>（默认）</li>
+<li><strong>验收记录</strong></li>
+<li><strong>结算记录</strong></li>
+<li><strong>单件（N）</strong>：N 为合并后单件总行数，无数据时为 0</li>
+<li><strong>MARC信息</strong></li>
 </ol>
+<p>其中「单件（N）」的 N 随单件表格总行数自动刷新；编目无单件时显示「单件（0）」。</p>
 </div>
 <div id="interaction">
 ${prdSection('', '交互逻辑')}
@@ -67,7 +68,7 @@ ${prdTable(['资源类型', '语种', '匹配条件'], [
   ['视听资料', '外文', '商品条码 <strong>且</strong> 目录号均相同']
 ])}
 <ul>
-<li>订户范围：取系统配置 <code>viewableSubscribers</code>，仅展示所属订单订户在范围内的记录</li>
+<li>订户范围：取系统<strong>可查看订户范围</strong>配置（<code>viewableSubscribers</code>），仅展示馆员有权查看的订户订单行</li>
 <li>发订人、发订时间为空时展示空白</li>
 <li><strong>订单行号</strong>为普通文本，<strong>不可点击跳转</strong></li>
 </ul>
@@ -105,14 +106,14 @@ ${prdSection('', '交互逻辑')}
 const item5455 = prdBlock('5.4.5.5', '结算记录', `
 <div id="overview">
 ${prdSection('', '功能描述')}
-<p>展示当前订单行结算明细。从结算模块 <code>settlementListMap</code> 按订单行号匹配；<strong>无匹配时表格展示「暂无数据」</strong>，不使用订单行字段推算。</p>
+<p>展示当前订单行结算明细。从结算模块按<strong>订单行号</strong>（<code>orderLineNo</code>）匹配；<strong>无匹配时表格展示「暂无数据」</strong>，不使用订单行字段推算。</p>
 ${prdSection('', '表格列')}
-<p>复用「已结算」列表字段：序号、订单行号、正题名、资源标识、作者、出版社、定价、币种、实洋、套内册数、结算套数、结算册数、结算金额等（与结算模块 SETTLEMENT_LIST_COLUMNS 一致）</p>
+<p>复用「已结算」列表字段：序号、订单行号、正题名、资源标识、作者、出版社、定价、币种、实洋、套内册数、结算套数、结算册数、结算金额等。</p>
 </div>
 <div id="rules">
 ${prdSection('', '业务规则')}
 <ul>
-<li>从结算模块 <code>settlementListMap</code> 按订单行号精确匹配</li>
+<li>系统在结算模块已结算数据中，按订单行号精确查找当前行的结算记录</li>
 <li>无匹配：表格展示「暂无数据」</li>
 </ul>
 </div>
@@ -123,29 +124,38 @@ ${prdSection('', '异常处理')}
 </ul>
 </div>`);
 
-const item5456 = prdBlock('5.4.5.6', '单件信息', `
+const item5456 = prdBlock('5.4.5.6', '单件（N）', `
 <div id="overview">
 ${prdSection('', '功能描述')}
-<p>按<strong>实际关联书目记录号</strong>从编目系统查询单件（馆藏件）信息并汇总展示，展示编目系统返回的全部单件记录。</p>
+<p>按<strong>实际关联书目记录号</strong>从编目系统查询单件（馆藏件）并汇总展示。页签文案为 <strong>单件（N）</strong>，N 为合并后的单件总行数（表格一行计 1 条）。</p>
+${prdSection('', 'Tab 标签规则')}
+<ul>
+<li>页签文案为「单件（N）」，N 等于下方单件表格的总行数</li>
+<li>编目无单件时显示 <strong>单件（0）</strong></li>
+<li>切换订单行或编目数据变化时，N 随最新查询结果自动刷新</li>
+</ul>
 ${prdSection('', '表格列')}
 <p>序号（01 格式）、条码号、索书号、所属馆、所属馆藏地、所在馆藏地、借阅类型、卷册描述、登到日期</p>
 </div>
 <div id="rules">
-${prdSection('', '查询与数量规则')}
-${prdTable(['字段', '说明'], [
-  ['<code>actualBibRecordNos</code>', '实际关联书目记录号数组；编目拆分/合并后回传，可多值；一般仅多卷书存在'],
-  ['<code>bibRecordNo</code>', '书目记录号；<code>actualBibRecordNos</code> 为空时作为查询回退值'],
-  ['查询逻辑', '遍历实际关联书目记录号（无则回退书目记录号），分别查编目系统后合并列表']
-])}
+${prdSection('', '单件查询逻辑')}
+<ol>
+<li>若订单行存在<strong>实际关联书目记录号</strong>（<code>actualBibRecordNos</code>，可多值），则逐条向编目系统查询单件，合并为一张表格（一般用于多卷书各卷记录）。</li>
+<li>若不存在实际关联书目记录号，则使用<strong>书目记录号</strong>（<code>bibRecordNo</code>）作为唯一条件查询单件。</li>
+<li>合并后的总行数即为页签 N，例如 10 行则显示「单件（10）」。</li>
+</ol>
+${prdSection('', '展示规则')}
 <ul>
-<li>所在馆藏地、卷册描述为空时展示空白</li>
+<li>所在馆藏地、卷册描述为空时单元格留空</li>
+<li>分页：默认 10 条/页，可选 10 / 20 / 50</li>
+<li>无单件数据时表格为空，页签仍为「单件（0）」</li>
 </ul>
 </div>
 <div id="interaction">
 ${prdSection('', '交互与分页')}
 <ul>
-<li>分页：默认 10 条/页，可选 10 / 20 / 50</li>
-<li>无单件数据时表格为空</li>
+<li>切换至本 Tab 时按上述规则加载/刷新单件列表</li>
+<li>分页切换不影响页签 N（N 为全部合并结果的总行数，非当前页条数）</li>
 </ul>
 </div>`);
 
@@ -161,19 +171,24 @@ ${prdSection('', '页面要素')}
 </ul>
 </div>
 <div id="rules">
-${prdSection('', '书目记录号列表规则')}
+${prdSection('', '书目记录号下拉框规则')}
 <ul>
-<li>若 <code>actualBibRecordNos</code> 非空：下拉选项为其全部有效值</li>
-<li>若为空且 <code>bibRecordNo</code> 有值：下拉仅含书目记录号一项</li>
-<li>切换订单行或列表变化时，下拉默认重置为<strong>第一项</strong></li>
+<li>若存在<strong>实际关联书目记录号</strong>（<code>actualBibRecordNos</code>）：下拉框列出其全部有效记录号，供切换查看各卷 MARC</li>
+<li>若不存在实际关联书目记录号，但<strong>书目记录号</strong>（<code>bibRecordNo</code>）有值：下拉框仅含书目记录号一项</li>
+<li>进入详情或切换订单行时，下拉框默认选中<strong>第一项</strong>，并据此刷新 MARC 表格</li>
 </ul>
 <blockquote>下拉框标签文案为「书目记录号」，选项值为实际用于查编目的记录号（含实际关联书目记录号）。</blockquote>
+${prdSection('', 'MARC 展示规则')}
+<ul>
+<li>切换下拉选项后，下方 MARC 表格即时刷新，无需额外确认</li>
+<li>展示格式与书目查询页 MARC 详情一致（如 010、200、210 等 CNMARC 字段）</li>
+<li>无可用记录号或无 MARC 数据时，居中展示「暂无 MARC 信息」</li>
+</ul>
 </div>
 <div id="interaction">
 ${prdSection('', '交互逻辑')}
 <ul>
-<li>切换下拉选项即时刷新下方 MARC 表格，无需额外确认</li>
-<li>展示格式与书目查询页 MARC 详情一致（010/200/210 等 CNMARC 字段）</li>
+<li>用户切换下拉选项即可查看对应记录号的 MARC 著录</li>
 </ul>
 </div>`);
 
@@ -193,7 +208,7 @@ export const orderLineDetailPrdData = {
       itemIds: ['5.4.5.5']
     },
     items: {
-      label: '单件信息',
+      label: '单件（N）',
       itemIds: ['5.4.5.6']
     },
     marc: {
@@ -207,7 +222,7 @@ export const orderLineDetailPrdData = {
     { id: '5.4.5.3', title: '相关订单行', tab: 'related', htmlContent: item5453 },
     { id: '5.4.5.4', title: '验收记录', tab: 'acceptance', htmlContent: item5454 },
     { id: '5.4.5.5', title: '结算记录', tab: 'settlement', htmlContent: item5455 },
-    { id: '5.4.5.6', title: '单件信息', tab: 'items', htmlContent: item5456 },
+    { id: '5.4.5.6', title: '单件（N）', tab: 'items', htmlContent: item5456 },
     { id: '5.4.5.7', title: 'MARC信息', tab: 'marc', htmlContent: item5457 }
   ]
 };

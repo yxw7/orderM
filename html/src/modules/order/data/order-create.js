@@ -1,3 +1,5 @@
+import { isBudgetOptionalForMethod } from '@/modules/order/constants';
+
 export const NEW_ORDER_REQUIRED_FIELDS = [
   { key: 'subscriber', label: '订户' },
   { key: 'resourceType', label: '资源类型' },
@@ -27,6 +29,7 @@ function buildOrderId(existingCount, date = new Date()) {
 export function validateNewOrderForm(form) {
   const errors = {};
   NEW_ORDER_REQUIRED_FIELDS.forEach(field => {
+    if (field.key === 'budget' && isBudgetOptionalForMethod(form.method)) return;
     if (!form[field.key]?.trim?.() && !form[field.key]) {
       errors[field.key] = `请选择${field.label}`;
     }

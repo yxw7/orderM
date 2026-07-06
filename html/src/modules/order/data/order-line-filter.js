@@ -1,3 +1,5 @@
+import { sortOrderLinesByIssueTimeDesc } from '@/modules/order/data/order-line-sort';
+
 export const ORDER_LINE_CRITERION_FIELDS = [
   { value: 'resourceId', label: '资源标识' },
   { value: 'title', label: '正题名' },
@@ -49,13 +51,13 @@ function matchCompositeCriteria(row, criteria = []) {
   return result;
 }
 
-/** 按检索条件过滤订单行列表 */
+/** 按检索条件过滤订单行列表，并按发订时间倒序排序 */
 export function filterOrderLineRows(rows, search = {}) {
   const orderId = search.orderId?.trim();
   const orderLineNo = search.orderLineNo?.trim();
   const bibRecordNo = search.bibRecordNo?.trim();
 
-  return rows.filter(row => {
+  const filtered = rows.filter(row => {
     if (orderId && !row.orderId.includes(orderId)) return false;
     if (orderLineNo && !row.orderLineNo.includes(orderLineNo)) return false;
     if (!isBlankSelect(search.lineStatus) && row.lineStatus !== search.lineStatus) return false;
@@ -73,4 +75,6 @@ export function filterOrderLineRows(rows, search = {}) {
     if (bibRecordNo && !String(row.bibRecordNo || '').includes(bibRecordNo)) return false;
     return true;
   });
+
+  return sortOrderLinesByIssueTimeDesc(filtered);
 }

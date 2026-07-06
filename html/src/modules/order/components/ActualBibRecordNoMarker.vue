@@ -21,40 +21,34 @@
         @mouseleave="scheduleClose"
       >
         <p class="text-xs font-medium text-gray-500 mb-2">实际关联书目记录号</p>
-        <ul class="space-y-1 mb-2 max-h-40 overflow-y-auto">
-          <li
-            v-for="no in recordNos"
-            :key="no"
-            class="font-mono text-xs text-gray-800 break-all"
-          >
-            {{ no }}
+        <ul class="space-y-1 max-h-40 overflow-y-auto">
+          <li v-for="no in recordNos" :key="no">
+            <button
+              type="button"
+              class="font-mono text-xs text-sky-600 hover:underline break-all text-left"
+              @click.stop="onOpenRecord(no)"
+            >
+              {{ no }}
+            </button>
           </li>
         </ul>
-        <button
-          type="button"
-          class="text-sky-600 hover:underline text-xs"
-          @click="copyAll"
-        >
-          {{ copied ? '已复制' : '复制全部' }}
-        </button>
       </div>
     </Teleport>
   </span>
 </template>
 
 <script setup>
-import { computed, nextTick, ref } from 'vue';
+import { nextTick, ref } from 'vue';
 
-const props = defineProps({
+defineProps({
   recordNos: { type: Array, default: () => [] }
 });
 
+const emit = defineEmits(['open-record']);
+
 const popoverOpen = ref(false);
 const popoverStyle = ref({ top: '0px', left: '0px' });
-const copied = ref(false);
 let closeTimer = null;
-
-const copyText = computed(() => props.recordNos.join('\n'));
 
 function openPopover(event) {
   if (closeTimer) {
@@ -82,7 +76,6 @@ function scheduleClose() {
   if (closeTimer) clearTimeout(closeTimer);
   closeTimer = window.setTimeout(() => {
     popoverOpen.value = false;
-    copied.value = false;
     closeTimer = null;
   }, 120);
 }
@@ -94,14 +87,11 @@ function cancelClose() {
   }
 }
 
-async function copyAll() {
-  const text = copyText.value;
-  if (!text) return;
-  try {
-    await navigator.clipboard.writeText(text);
-    copied.value = true;
-  } catch {
-    window.prompt('复制以下内容', text);
+function onOpenRecord(recordNo) {
+  emit('open-record', recordNo);
+  if (closeTimer) {
+    clearTimeout(closeTimer);
+    closeTimer = null;
   }
 }
 </script>
