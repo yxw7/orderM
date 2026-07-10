@@ -149,12 +149,49 @@ export function summarizeRelatedOrderFlow(lines) {
   return stats;
 }
 
-export function getJoinOrderCandidates(bibRow) {
+export function getJoinOrderCandidates(bibRow, storeOrders = []) {
   const mapped = resolveOrderFieldsFromMarcMapping(bibRow);
   if (!mapped) return null;
-  return pendingOrdersForBib.filter(order =>
-    order.resourceType === mapped.resourceType && order.language === mapped.language
+  const merged = mergeJoinOrderPools(storeOrders, pendingOrdersForBib);
+  return merged.filter(order =>
+    order.orderStatus === 'pending'
+    && order.resourceType === mapped.resourceType
+    && order.language === mapped.language
   );
+}
+
+/**
+ * 合并订单 store 与静态 mock，同 orderId 以 store 为准。
+ * @param {Array<Record<string, unknown>>} storeOrders
+ * @param {Array<Record<string, unknown>>} staticOrders
+ * @returns {Array<Record<string, unknown>>}
+ */
+function mergeJoinOrderPools(storeOrders, staticOrders) {
+  const byId = new Map();
+  staticOrders.forEach(order => byId.set(order.orderId, normalizeJoinOrderCandidate(order)));
+  storeOrders.forEach(order => byId.set(order.orderId, normalizeJoinOrderCandidate(order)));
+  return [...byId.values()];
+}
+
+/**
+ * 加入订单弹窗候选订单字段归一化。
+ * @param {Record<string, unknown>} order
+ * @returns {Record<string, unknown>}
+ */
+function normalizeJoinOrderCandidate(order) {
+  return {
+    orderId: order.orderId,
+    subscriber: order.subscriber,
+    site: order.site,
+    method: order.method,
+    resourceType: order.resourceType,
+    language: order.language,
+    supplier: order.supplier,
+    budget: order.budget || '',
+    discount: order.discount || '',
+    orderStatus: order.orderStatus,
+    createTime: order.createTime || order.orderTime || ''
+  };
 }
 
 export const ORDER_STATUS_LABELS = {

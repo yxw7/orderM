@@ -34,7 +34,7 @@ export const DEDUP_FIELDS_BY_RESOURCE_TYPE = {
 };
 
 export const DEDUP_DEFAULT_FIELDS = {
-  纸质书: { 中文: ['resourceId', 'title'], 外文: ['resourceId', 'title'] },
+  纸质书: { 中文: ['resourceId'], 外文: ['resourceId'] },
   视听资料: { 中文: ['title', 'carrier'], 外文: ['productBarcode', 'catalogNo'] }
 };
 
@@ -208,6 +208,7 @@ export const HOLDING_DEDUP_CATALOG = [
         ]
       }
     ],
+    unassignedCopyCount: 2,
     marcFields: [
       { field: '010', indicator: '', content: '▼a978-7-04-045678-9' },
       { field: '200', indicator: '1 ', content: '▼a中国现代史纲要▼f王顺生著' },
@@ -231,7 +232,8 @@ export const HOLDING_DEDUP_CATALOG = [
           }
         ]
       }
-    ]
+    ],
+    unassignedCopyCount: 1
   },
   {
     bibRecordNo: 'BIB2024002003', standardNo: '9787501345678', isbn: '978-7-5013-4567-8', title: '图书馆学概论',
@@ -271,6 +273,18 @@ export const HOLDING_DEDUP_CATALOG = [
           }
         ]
       }
+    ],
+    unassignedCopyCount: 1
+  },
+  {
+    bibRecordNo: 'BIB2024002004', standardNo: '9787040478912', isbn: '978-7-04-0478912', title: '信息资源管理',
+    author: '马费成著', textLanguage: '中文', publisher: '高等教育出版社', publishTime: '2023',
+    holdingTree: [],
+    unassignedCopyCount: 0,
+    marcFields: [
+      { field: '010', indicator: '', content: '▼a978-7-04-0478912' },
+      { field: '200', indicator: '1 ', content: '▼a信息资源管理▼f马费成著' },
+      { field: '210', indicator: '  ', content: '▼a北京▼c高等教育出版社▼d2023' }
     ]
   }
 ];
@@ -370,7 +384,24 @@ export function performOrderLineDedup(lines, orders, orderLineNos, config) {
 }
 
 /**
- * 统计馆藏树复本总数
+ * 异步执行订单行查重（模拟接口请求，便于展示加载态）
+ * @param {Object[]} lines - 订单行列表
+ * @param {Object[]} orders - 订单列表
+ * @param {string[]} orderLineNos - 待查重订单行号
+ * @param {Object} config - 查重配置
+ * @returns {Promise<void>}
+ */
+export function performOrderLineDedupAsync(lines, orders, orderLineNos, config) {
+  return new Promise(resolve => {
+    window.setTimeout(() => {
+      performOrderLineDedup(lines, orders, orderLineNos, config);
+      resolve();
+    }, 400);
+  });
+}
+
+/**
+ * 统计馆藏树复本总数（含未关联馆藏）
  * @param {Object[]} nodes - 馆藏树节点
  * @returns {number}
  */
@@ -382,8 +413,48 @@ export function countHoldingTreeCopies(nodes) {
   }, 0);
 }
 
+/**
+ * 统计书目全部馆藏复本数（已分配馆藏地 + 未关联馆藏）
+ * @param {Object} item - 馆藏查重书目
+ * @returns {number}
+ */
+export function countBibHoldingCopies(item) {
+  if (!item) return 0;
+  const assigned = countHoldingTreeCopies(item.holdingTree);
+  const unassigned = Number(item.unassignedCopyCount) || 0;
+  return assigned + unassigned;
+}
+
+/**
+ * 构建含「未关联馆藏」节点的展示用馆藏树
+ * @param {Object[]} [holdingTree=[]] - 已分配馆藏地的树
+ * @param {number} [unassignedCopyCount=0] - 未分配馆藏地的单件数
+ * @returns {Object[]}
+ */
+export function buildDisplayHoldingTree(holdingTree = [], unassignedCopyCount = 0) {
+  const count = Number(unassignedCopyCount) || 0;
+  const nodes = [...(holdingTree || [])];
+  if (count > 0) {
+    nodes.push({
+      name: '未关联馆藏',
+      unassigned: true,
+      copyCount: count
+    });
+  }
+  return nodes;
+}
+
+/**
+ * 书目是否有馆藏分布（总复本数大于 0）
+ * @param {Object} [item] - 馆藏查重书目
+ * @returns {boolean}
+ */
+export function hasHoldingDistribution(item) {
+  return countBibHoldingCopies(item) > 0;
+}
+
 export function getHoldingDedupTotalCopies(results) {
-  return results.reduce((total, item) => total + countHoldingTreeCopies(item.holdingTree), 0);
+  return results.reduce((total, item) => total + countBibHoldingCopies(item), 0);
 }
 
 export function getOrderDedupTotalSets(results) {
@@ -400,6 +471,7 @@ export function applyDedupSampleData(lines) {
   const holdingLibraryScience = HOLDING_DEDUP_CATALOG.find(item => item.standardNo === '9787501345678');
   const holdingGeology = HOLDING_DEDUP_CATALOG.find(item => item.standardNo === '9787565855375');
   const holdingBruckner = HOLDING_DEDUP_CATALOG.find(item => item.bibRecordNo === 'BIB2024003001');
+  const holdingZeroCopy = HOLDING_DEDUP_CATALOG.find(item => item.bibRecordNo === 'BIB2024002004');
 
   const samples = [
     {
@@ -437,10 +509,10 @@ export function applyDedupSampleData(lines) {
     {
       orderLineNo: 'PG001B202406030001-3',
       sample: {
-        holdingDuplicate: false,
+        holdingDuplicate: true,
         orderDuplicate: false,
         lastDedupFieldKeys: ['resourceId', 'title'],
-        holdingDedupResults: [],
+        holdingDedupResults: holdingZeroCopy ? [holdingZeroCopy] : [],
         orderDedupResults: []
       }
     },

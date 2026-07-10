@@ -149,8 +149,21 @@ const row = computed(() => detailContext.value.row);
 const resourceType = computed(() => detailContext.value.resourceType);
 const language = computed(() => detailContext.value.language);
 
+const relatedLines = computed(() =>
+  getRelatedOrderLines(
+    row.value,
+    resourceType.value,
+    language.value,
+    orderLineRows,
+    orderListRows,
+    appConfig.viewableSubscribers
+  )
+);
+
 const acceptanceColumns = computed(() => getOrderLineAcceptanceColumns(resourceType.value));
-const acceptanceRecords = computed(() => getOrderLineAcceptanceRecords(row.value, resourceType.value));
+const acceptanceRecords = computed(() =>
+  getOrderLineAcceptanceRecords(row.value, resourceType.value, relatedLines.value)
+);
 
 const itemColumns = computed(() => getOrderLineItemColumns());
 const itemRows = computed(() => getOrderLineItems(row.value));
@@ -161,7 +174,9 @@ const pagedItemRows = computed(() => {
 });
 
 const settlementColumns = computed(() => getOrderLineSettlementColumns());
-const settlementRecords = computed(() => getOrderLineSettlementRecords(row.value));
+const settlementRecords = computed(() =>
+  getOrderLineSettlementRecords(row.value, relatedLines.value)
+);
 
 const marcRecordNos = computed(() => getOrderLineMarcRecordNos(row.value));
 const selectedMarcRecordNo = ref('');
@@ -173,17 +188,6 @@ watch(
   { immediate: true }
 );
 const marcFields = computed(() => getOrderLineMarcFields(row.value, selectedMarcRecordNo.value));
-
-const relatedLines = computed(() =>
-  getRelatedOrderLines(
-    row.value,
-    resourceType.value,
-    language.value,
-    orderLineRows,
-    orderListRows,
-    appConfig.viewableSubscribers
-  )
-);
 
 const pagedRelatedLines = computed(() => {
   const start = (relatedPage.value - 1) * relatedPageSize.value;

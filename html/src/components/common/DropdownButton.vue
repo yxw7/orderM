@@ -1,6 +1,7 @@
 <template>
-  <div class="relative inline-block">
+  <div ref="rootRef" class="relative inline-block">
     <button
+      ref="triggerRef"
       type="button"
       class="flex items-center gap-1 px-4 py-1.5 text-sm rounded"
       :class="variantClass"
@@ -11,25 +12,29 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </button>
-    <div
-      v-if="open && items.length"
-      class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-10 min-w-[120px]"
-    >
-      <button
-        v-for="item in items"
-        :key="item.label"
-        type="button"
-        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-        @click="select(item)"
+    <Teleport to="body">
+      <div
+        v-if="open && items.length"
+        ref="dropdownRef"
+        class="fixed bg-white border border-gray-200 rounded shadow-lg z-[110] min-w-[120px]"
+        :style="dropdownStyle"
       >
-        {{ item.label }}
-      </button>
-    </div>
+        <button
+          v-for="item in items"
+          :key="item.label"
+          type="button"
+          class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          @click="select(item)"
+        >
+          {{ item.label }}
+        </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({
   label: { type: String, required: true },
@@ -40,6 +45,10 @@ const props = defineProps({
 const emit = defineEmits(['select']);
 
 const open = ref(false);
+const rootRef = ref(null);
+const triggerRef = ref(null);
+const dropdownRef = ref(null);
+const dropdownStyle = ref({ top: '0px', left: '0px' });
 
 const variantClasses = {
   emerald: 'bg-emerald-500 text-white hover:bg-emerald-600',
@@ -52,8 +61,24 @@ const variantClasses = {
 
 const variantClass = computed(() => variantClasses[props.variant] || variantClasses.emerald);
 
-function toggle() {
+function updateDropdownPosition() {
+  const trigger = triggerRef.value;
+  if (!trigger) return;
+
+  const rect = trigger.getBoundingClientRect();
+  const gap = 4;
+  dropdownStyle.value = {
+    top: `${rect.bottom + gap}px`,
+    left: `${rect.left}px`
+  };
+}
+
+async function toggle() {
   open.value = !open.value;
+  if (open.value) {
+    await nextTick();
+    updateDropdownPosition();
+  }
 }
 
 function select(item) {
@@ -61,10 +86,30 @@ function select(item) {
   emit('select', item);
 }
 
-function onDocClick(e) {
-  if (!e.target.closest('.relative')) open.value = false;
+function onDocClick(event) {
+  const target = event.target;
+  if (rootRef.value?.contains(target) || dropdownRef.value?.contains(target)) return;
+  open.value = false;
 }
 
+function onViewportChange() {
+  if (open.value) updateDropdownPosition();
+}
+
+watch(open, isOpen => {
+  if (isOpen) {
+    window.addEventListener('scroll', onViewportChange, true);
+    window.addEventListener('resize', onViewportChange);
+  } else {
+    window.removeEventListener('scroll', onViewportChange, true);
+    window.removeEventListener('resize', onViewportChange);
+  }
+});
+
 onMounted(() => document.addEventListener('click', onDocClick));
-onUnmounted(() => document.removeEventListener('click', onDocClick));
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick);
+  window.removeEventListener('scroll', onViewportChange, true);
+  window.removeEventListener('resize', onViewportChange);
+});
 </script>

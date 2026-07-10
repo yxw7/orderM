@@ -107,6 +107,27 @@
               >
             </div>
           </div>
+
+          <div v-show="expanded" class="grid grid-cols-3 gap-4">
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0 w-20">馆藏重复</label>
+              <select
+                v-model="model.holdingDuplicate"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500"
+              >
+                <option v-for="opt in dedupFilterOptions" :key="opt" :value="opt">{{ opt }}</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0 w-20">订单重复</label>
+              <select
+                v-model="model.orderDuplicate"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500"
+              >
+                <option v-for="opt in dedupFilterOptions" :key="opt" :value="opt">{{ opt }}</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
@@ -134,6 +155,7 @@
 import { computed, ref } from 'vue';
 import {
   ORDER_LINE_CRITERION_FIELDS,
+  ORDER_LINE_DEDUP_FILTER_OPTIONS,
   ORDER_LINE_LOGIC_OPTIONS
 } from '@/modules/order/data/order-line-filter';
 import SearchExpandToggle from '@/components/common/SearchExpandToggle.vue';
@@ -159,6 +181,10 @@ const props = defineProps({
   isShortageOptions: {
     type: Array,
     default: () => ['全部', '是', '否']
+  },
+  dedupFilterOptions: {
+    type: Array,
+    default: () => ORDER_LINE_DEDUP_FILTER_OPTIONS
   }
 });
 

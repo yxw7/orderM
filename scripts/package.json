@@ -1,8 +1,7 @@
 {
   "name": "scripts",
   "version": "1.0.0",
-  "description": "",
-  "main": "generate-pages.js",
+  "description": "需求文档生成等工具脚本",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

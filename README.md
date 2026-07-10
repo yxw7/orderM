@@ -22,10 +22,9 @@ OrderM/
 │   │   ├── stores/         # 全局 Pinia store
 │   │   ├── data/           # Mock 数据
 │   │   └── styles/         # 全局样式
-│   ├── dist/               # 构建产物（npm run build）
-│   └── pages/              # 已清空（原 Axure 静态页，不再使用）
+│   └── dist/               # 构建产物（npm run build）
 ├── prototype/              # Axure 原型源文件
-└── scripts/                # 页面生成、PRD 生成等脚本
+└── scripts/                # 需求文档生成等工具脚本
 ```
 
 ## 打开原型（推荐）
@@ -84,5 +83,4 @@ npm run start    # 等同于双击「打开原型.bat」
 ## 原型与文档
 
 - Axure 原型源文件位于 `prototype/`
-- 产品需求见 `docs/prd.md`
-- 从原型重新生成静态 HTML 可使用 `node scripts/generate-pages.js`（输出至 `html/pages/`，当前目录已不使用静态页）
+- 产品需求见 `docs/prd.md`；页面内规格抽屉数据见 `html/src/prd/`

@@ -3,17 +3,17 @@ import { ACQUISITION_METHOD_OPTIONS } from '@/constants/acquisition-methods';
 export { ORDER_STATUS_MAP } from '@/modules/order/data/orders';
 
 export const ORDER_LIST_COLUMNS = [
-  { key: 'no', label: '序号' },
-  { key: 'subscriber', label: '订户' },
-  { key: 'site', label: '馆址' },
-  { key: 'orderId', label: '订单号' },
+  { key: 'no', label: '序号', pin: 'left' },
+  { key: 'subscriber', label: '订户', minWidth: 'min-w-[120px]', pin: 'left' },
+  { key: 'site', label: '馆址', minWidth: 'min-w-[100px]', pin: 'left' },
+  { key: 'orderId', label: '订单号', pin: 'left' },
   { key: 'method', label: '采选方式' },
   { key: 'resourceType', label: '资源类型' },
   { key: 'language', label: '语种' },
-  { key: 'supplier', label: '供应商' },
-  { key: 'orderTime', label: '订单时间' },
+  { key: 'supplier', label: '供应商', minWidth: 'min-w-[140px]' },
+  { key: 'orderTime', label: '订单时间', minWidth: 'min-w-[110px]' },
   { key: 'issuer', label: '发订人' },
-  { key: 'issueTime', label: '发订时间', format: v => v || '—' },
+  { key: 'issueTime', label: '发订时间', minWidth: 'min-w-[110px]' },
   { key: 'orderVolumes', label: '发订册数' },
   { key: 'orderSpecies', label: '发订种数' },
   { key: 'budget', label: '预算名称', minWidth: 'min-w-[180px]' },
@@ -23,13 +23,14 @@ export const ORDER_LIST_COLUMNS = [
   { key: 'issueRemark', label: '发订备注' },
   { key: 'orderStatus', label: '订单状态' },
   { key: 'settlementStatus', label: '结算状态' },
-  { key: 'actions', label: '操作', sticky: true }
+  { key: 'actions', label: '操作', pin: 'right' }
 ];
 
 export const ORDER_LINE_COLUMNS = [
-  { key: 'orderId', label: '订单号' },
-  { key: 'site', label: '馆址' },
-  { key: 'orderLineNo', label: '订单行号' },
+  { key: 'no', label: '序号', pin: 'left' },
+  { key: 'orderId', label: '订单号', pin: 'left' },
+  { key: 'site', label: '馆址', pin: 'left' },
+  { key: 'orderLineNo', label: '订单行号', pin: 'left' },
   { key: 'bibRecordNo', label: '书目记录号' },
   { key: 'title', label: '正题名', minWidth: 'min-w-[140px]' },
   { key: 'resourceId', label: '资源标识' },
@@ -52,7 +53,7 @@ export const ORDER_LINE_COLUMNS = [
   { key: 'holdingDuplicate', label: '馆藏重复' },
   { key: 'orderDuplicate', label: '订单重复' },
   { key: 'remark', label: '备注' },
-  { key: 'actions', label: '操作', sticky: true }
+  { key: 'actions', label: '操作', pin: 'right' }
 ];
 
 export const BUDGET_OPTIONS = [

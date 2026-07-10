@@ -27,7 +27,6 @@ const { readFile: readXlsx, utils: xlsxUtils } = pkg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const PROTOTYPE_DIR = path.join(ROOT, 'prototype');
-const HTML_PAGES_DIR = path.join(ROOT, 'html', 'pages');
 const OUTPUT_PATH = path.join(ROOT, 'docs', '订单管理系统需求规格说明.docx');
 
 /** @typedef {{ name: string, url?: string, type: 'folder'|'page', children?: Node[] }} Node */
@@ -375,24 +374,7 @@ function extractHtmlPageCode(filename) {
 }
 
 /**
- * 规范化原型/HTML 文件名用于匹配
- * @param {string} name
- * @returns {string}
- */
-function normalizeHtmlMatchKey(name) {
-  return name
-    .replace(/\.html$/i, '')
-    .replace(/[（(][^）)]*[）)]/g, '')
-    .replace(/_\d+更新_?/gi, '')
-    .replace(/__+/g, '_')
-    .replace(/_$/g, '')
-    .replace(/-/g, '_')
-    .replace(/\s+/g, '')
-    .toLowerCase();
-}
-
-/**
- * 由原型文件名推导 HTML 输出文件名（与 generate-pages.js 一致）
+ * 由原型文件名推导页面编码文件名
  * @param {string} filename
  * @returns {string}
  */
@@ -410,56 +392,13 @@ function toHtmlOutputFilename(filename) {
 }
 
 /**
- * 加载原型页面 URL → HTML 页面编码映射
- * @returns {Map<string, string>}
- */
-function loadHtmlPageCodeMap() {
-  /** @type {Map<string, string>} */
-  const map = new Map();
-
-  const indexPath = path.join(HTML_PAGES_DIR, '_index.json');
-  if (fs.existsSync(indexPath)) {
-    const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
-    for (const item of index) {
-      const code = extractHtmlPageCode(item.output);
-      map.set(item.prototype.toLowerCase(), code);
-      map.set(normalizeHtmlMatchKey(item.prototype), code);
-      map.set(normalizeHtmlMatchKey(item.output), code);
-    }
-  }
-
-  if (fs.existsSync(HTML_PAGES_DIR)) {
-    for (const file of fs.readdirSync(HTML_PAGES_DIR)) {
-      if (!file.endsWith('.html')) continue;
-      const code = extractHtmlPageCode(file);
-      map.set(normalizeHtmlMatchKey(file), code);
-    }
-  }
-
-  return map;
-}
-
-/**
- * 根据原型节点查找对应 HTML 前端页面编码
+ * 根据原型节点推导页面编码
  * @param {Node} node
- * @param {Map<string, string>} codeMap
  * @returns {string}
  */
-function getHtmlPageCode(node, codeMap) {
+function getHtmlPageCode(node) {
   if (!node?.url) return '';
-  const url = node.url;
-  const direct = codeMap.get(url.toLowerCase()) ?? codeMap.get(normalizeHtmlMatchKey(url));
-  if (direct) return direct;
-
-  const output = toHtmlOutputFilename(url);
-  const fromOutput = codeMap.get(normalizeHtmlMatchKey(output));
-  if (fromOutput) return fromOutput;
-
-  if (fs.existsSync(path.join(HTML_PAGES_DIR, output))) {
-    return extractHtmlPageCode(output);
-  }
-
-  return '';
+  return extractHtmlPageCode(toHtmlOutputFilename(node.url));
 }
 
 /**
@@ -601,10 +540,9 @@ function isAnalysisSection(name) {
  * 收集子模块下全部功能页面（扁平化为 4.X.Y.Z）
  * @param {Node} subModule
  * @param {string} subNum
- * @param {Map<string, string>} codeMap
  * @returns {TocEntry[]}
  */
-function collectFeaturePages(subModule, subNum, codeMap) {
+function collectFeaturePages(subModule, subNum) {
   /** @type {TocEntry[]} */
   const entries = [];
   let idx = 1;
@@ -614,7 +552,7 @@ function collectFeaturePages(subModule, subNum, codeMap) {
    * @param {string} rawTitle
    */
   function pushPage(node, rawTitle) {
-    const code = getHtmlPageCode(node, codeMap);
+    const code = getHtmlPageCode(node);
     entries.push({
       num: `${subNum}.${idx++}`,
       title: formatTitleWithHtmlCode(rawTitle, code),
@@ -660,10 +598,9 @@ function collectFeaturePages(subModule, subNum, codeMap) {
 /**
  * 构建功能需求章节目录
  * @param {Node[]} sitemap
- * @param {Map<string, string>} codeMap
  * @returns {{ analysis: Node[], functional: Node[], toc: TocEntry[], featureList: { module: string, feature: string, page: string }[] }}
  */
-function buildChapterOutline(sitemap, codeMap) {
+function buildChapterOutline(sitemap) {
   /** @type {Node[]} */
   const analysis = [];
   /** @type {Node[]} */
@@ -701,7 +638,7 @@ function buildChapterOutline(sitemap, codeMap) {
 
       if (sub.type === 'page') {
         const rawTitle = cleanDisplayName(sub.name);
-        const code = getHtmlPageCode(sub, codeMap);
+        const code = getHtmlPageCode(sub);
         toc.push({
           num: `${subNum}.1`,
           title: formatTitleWithHtmlCode(rawTitle, code),
@@ -716,7 +653,7 @@ function buildChapterOutline(sitemap, codeMap) {
         return;
       }
 
-      const pageEntries = collectFeaturePages(sub, subNum, codeMap);
+      const pageEntries = collectFeaturePages(sub, subNum);
       for (const pe of pageEntries) {
         if (pe.node?.type === 'page') {
           toc.push(pe);
@@ -897,9 +834,7 @@ async function buildDocument(sitemap) {
   const children = [];
   const featureRows = loadFeatureRows();
   console.log(`功能清单条目: ${featureRows.length}`);
-  const htmlPageCodeMap = loadHtmlPageCodeMap();
-  console.log(`HTML 页面编码映射: ${htmlPageCodeMap.size}`);
-  const { analysis, functional, toc, featureList } = buildChapterOutline(sitemap, htmlPageCodeMap);
+  const { analysis, functional, toc, featureList } = buildChapterOutline(sitemap);
 
   // 封面
   children.push(
@@ -991,7 +926,7 @@ async function buildDocument(sitemap) {
 
       if (sub.type === 'page') {
         const rawTitle = cleanDisplayName(sub.name);
-        const code = getHtmlPageCode(sub, htmlPageCodeMap);
+        const code = getHtmlPageCode(sub);
         const pageNum = `${subNum}.1`;
         children.push(
           makeNumberedHeading(pageNum, formatTitleWithHtmlCode(rawTitle, code), HeadingLevel.HEADING_4)

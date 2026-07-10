@@ -20,10 +20,6 @@
           <input v-model="form.title" type="text" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm">
         </div>
         <div class="grid grid-cols-3 gap-4">
-          <div v-if="isForeign" class="flex items-center gap-3">
-            <label class="text-sm text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 原定价</label>
-            <input v-model="form.originalPrice" type="text" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm">
-          </div>
           <div class="flex items-center gap-3">
             <label class="text-sm text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 定价</label>
             <input v-model="form.price" type="text" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm">
@@ -77,7 +73,7 @@
 
 <script setup>
 import { computed, reactive, watch } from 'vue';
-import { convertToRmbPrice, isChineseAcceptanceLang, parseReceiveCounts } from '@/modules/acceptance/data/receive-by-item';
+import { isChineseAcceptanceLang, parseReceiveCounts } from '@/modules/acceptance/data/receive-by-item';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -92,7 +88,7 @@ const isForeign = computed(() => !isChineseAcceptanceLang(props.acceptanceLang))
 const form = reactive({
   orderedSets: '', receivedSets: '', pendingSets: '',
   isbn: '', author: '', title: '',
-  originalPrice: '', price: '', currency: 'CNY', actualPrice: '',
+  price: '', currency: 'CNY', actualPrice: '',
   volumesPerSet: '', receiveSets: '', barcodeStart: '', remark: ''
 });
 
@@ -110,12 +106,10 @@ watch(() => [props.open, props.row], ([open, row]) => {
   form.barcodeStart = row.barcodeStart || '';
   form.remark = '';
   if (isForeign.value) {
-    form.originalPrice = row.originalPrice || row.price || '';
+    form.price = row.originalPrice || row.price || '';
     form.currency = row.currency || 'USD';
-    form.price = row.price || convertToRmbPrice(form.originalPrice, form.currency);
     form.actualPrice = row.actualPrice || '';
   } else {
-    form.originalPrice = '';
     form.price = row.price || '';
     form.currency = row.currency || 'CNY';
     form.actualPrice = row.actualPrice || row.price || '';

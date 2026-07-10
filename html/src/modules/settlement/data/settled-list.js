@@ -32,6 +32,16 @@ export const settlementListMap = {
       no: 1, orderLineNo: 'PG00120260602002-1', title: '图书馆学概论', resourceId: '9787115123456',
       author: '吴慰慈', publisher: '国家图书馆出版社', price: '56.00', currency: 'CNY', actualPrice: '44.80',
       volumesInSet: 1, settledSets: 3, settledVolumes: 3, settlementAmount: '134.40'
+    },
+    {
+      no: 2, orderLineNo: 'PG001B20260601003-1', title: '图书馆学概论', resourceId: '9787501345678',
+      author: '吴慰慈著', publisher: '国家图书馆出版社', price: '68.00', currency: 'CNY', actualPrice: '54.40',
+      volumesInSet: 1, settledSets: 1, settledVolumes: 1, settlementAmount: '54.40'
+    },
+    {
+      no: 3, orderLineNo: 'PG001B20260601003-3', title: '图书馆学概论', resourceId: '9787501345678',
+      author: '吴慰慈著', publisher: '国家图书馆出版社', price: '68.00', currency: 'CNY', actualPrice: '54.40',
+      volumesInSet: 1, settledSets: 1, settledVolumes: 1, settlementAmount: '54.40'
     }
   ],
   jsPG09120260602003: [

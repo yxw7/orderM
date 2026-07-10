@@ -269,6 +269,11 @@
       @close="createOrderOpen = false"
       @confirm="onCreateOrder"
     />
+    <PrdSpecDrawer
+      page-id="bib-query"
+      :active-tab="activeItemTab"
+      :visible="activeItemTab === 'related-order'"
+    />
   </div>
 </template>
 
@@ -281,6 +286,7 @@ import BibSearchPanel from '@/modules/order/components/BibSearchPanel.vue';
 import BibDetailDrawer from '@/modules/order/components/BibDetailDrawer.vue';
 import BibJoinOrderModal from '@/modules/order/components/BibJoinOrderModal.vue';
 import BibCreateOrderModal from '@/modules/order/components/BibCreateOrderModal.vue';
+import PrdSpecDrawer from '@/components/common/PrdSpecDrawer.vue';
 import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import { appConfig } from '@/config/app-config';
 import { createDefaultBibSearch, applyBibSearchFilter } from '@/modules/order/data/bib-search';
@@ -294,10 +300,12 @@ import {
   getHoldingRecordsForBib,
   getPhysicalItemsForBib
 } from '@/modules/order/data/bib';
+import { useOrderStore } from '@/modules/order/stores/order';
 
 defineOptions({ name: 'BibQueryView' });
 
 const router = useRouter();
+const orderStore = useOrderStore();
 
 const allRows = ref([...bibRows]);
 const filteredRows = ref([]);
@@ -460,7 +468,7 @@ function openJoinOrder() {
     window.alert('请先选中书目');
     return;
   }
-  const candidates = getJoinOrderCandidates(selectedBib.value);
+  const candidates = getJoinOrderCandidates(selectedBib.value, orderStore.orders);
   if (candidates === null) {
     window.alert('无法根据当前书目 MARC 类型匹配订单资源类型与语种');
     return;
@@ -482,7 +490,8 @@ function openCreateOrder(bibRow) {
   createOrderOpen.value = true;
 }
 
-function onCreateOrder() {
+function onCreateOrder(payload) {
+  orderStore.addBibCreateOrders(payload);
   createOrderOpen.value = false;
   createOrderBib.value = null;
 }

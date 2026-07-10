@@ -1,5 +1,5 @@
 /**
- * 解析参考 PRD docx，输出结构样例供 generate-prd 参考
+ * 解析参考 PRD docx，输出结构样例
  */
 const fs = require('fs');
 const path = require('path');

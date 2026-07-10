@@ -601,16 +601,9 @@ function findAcceptanceSpeciesRecord(orderLineNo, resourceType) {
   return rows.find(r => r.orderLine === orderLineNo) || null;
 }
 
-/** 获取当前订单行验收记录（仅验收模块有匹配时返回，无匹配为空） */
-export function getOrderLineAcceptanceRecords(row, resourceType) {
-  if (!row) return [];
-
-  const matched = findAcceptanceSpeciesRecord(row.orderLineNo, resourceType);
-  if (!matched) return [];
-
-  return [{
-    id: row.orderLineNo,
-    no: 1,
+function mapAcceptanceSpeciesRecord(matched, orderLineNo) {
+  return {
+    id: orderLineNo,
     orderLineNo: matched.orderLine,
     isbn: matched.isbn || '',
     title: matched.title || '',
@@ -620,7 +613,28 @@ export function getOrderLineAcceptanceRecords(row, resourceType) {
     counts: matched.counts || '',
     lastTime: matched.lastTime || '',
     lastInspector: matched.lastInspector || ''
-  }];
+  };
+}
+
+function getRelatedOrderLineNos(row, relatedOrderLines) {
+  if (relatedOrderLines?.length) {
+    return relatedOrderLines.map(line => line.orderLineNo).filter(Boolean);
+  }
+  return row?.orderLineNo ? [row.orderLineNo] : [];
+}
+
+/** 获取书目关联订单行的验收记录（按订单行号匹配验收模块，无匹配为空） */
+export function getOrderLineAcceptanceRecords(row, resourceType, relatedOrderLines = []) {
+  if (!row) return [];
+
+  const records = getRelatedOrderLineNos(row, relatedOrderLines)
+    .map(orderLineNo => {
+      const matched = findAcceptanceSpeciesRecord(orderLineNo, resourceType);
+      return matched ? mapAcceptanceSpeciesRecord(matched, orderLineNo) : null;
+    })
+    .filter(Boolean);
+
+  return records.map((item, index) => ({ ...item, no: index + 1 }));
 }
 
 export function getOrderLineItemColumns() {
@@ -700,6 +714,20 @@ export function resolveActualBibRecordNos(row) {
   return row.bibRecordNo ? [row.bibRecordNo] : [];
 }
 
+/**
+ * 订单行列表「实」标记：仅当实际关联书目记录号非空，且与书目记录号不完全相同时返回列表
+ */
+export function getOrderLineListActualBibRecordNos(row) {
+  if (!row) return [];
+  const actual = Array.isArray(row.actualBibRecordNos)
+    ? row.actualBibRecordNos.filter(Boolean)
+    : [];
+  if (!actual.length) return [];
+  const bibRecordNo = row.bibRecordNo || '';
+  if (!actual.some(recordNo => recordNo !== bibRecordNo)) return [];
+  return actual;
+}
+
 function getCatalogItemsByActualBibRecordNo(recordNo) {
   if (!recordNo) return [];
   return catalogItemsByActualBibRecordNo[recordNo] || [];
@@ -751,14 +779,18 @@ function findSettlementRecordByOrderLineNo(orderLineNo) {
   return null;
 }
 
-/** 获取当前订单行结算明细（仅结算模块有匹配时返回，无匹配为空） */
-export function getOrderLineSettlementRecords(row) {
+/** 获取书目关联订单行的结算明细（按订单行号匹配结算模块，无匹配为空） */
+export function getOrderLineSettlementRecords(row, relatedOrderLines = []) {
   if (!row) return [];
 
-  const fromMap = findSettlementRecordByOrderLineNo(row.orderLineNo);
-  if (!fromMap) return [];
+  const records = getRelatedOrderLineNos(row, relatedOrderLines)
+    .map(orderLineNo => {
+      const fromMap = findSettlementRecordByOrderLineNo(orderLineNo);
+      return fromMap ? { ...fromMap, id: orderLineNo } : null;
+    })
+    .filter(Boolean);
 
-  return [{ ...fromMap, id: row.orderLineNo }];
+  return records.map((item, index) => ({ ...item, no: index + 1 }));
 }
 
 /** 编目系统 MARC 书目元数据（按书目记录号 / 实际关联书目记录号索引） */

@@ -60,6 +60,11 @@ export const ACCEPTANCE_LIST_COLUMNS = [
   { key: 'actions', label: '操作', sticky: true }
 ];
 
+export const ACCEPTANCE_LIST_EXPORT_FIELDS = [
+  '验收单号', '验收单名称', '资源类型', '语种', '采选方式', '供应商', '发货单号',
+  '验收单状态', '收/换/退书数', '验收备注', '分配条码', '创建时间', '创建人', '结算状态'
+];
+
 export const SPECIES_EXPORT_FIELDS = [
   '验收单号', '验收单名称', '资源类型', '语种', '供应商', '发货单号',
   '订单行号', 'ISBN', '正题名', '作者', '出版社', '定价', '币种',

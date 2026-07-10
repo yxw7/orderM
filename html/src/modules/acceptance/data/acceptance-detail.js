@@ -3,7 +3,10 @@ export const acceptanceSpeciesRows = [
   { id: 2, orderLine: 'PG001B20260602003-6', isbn: '9787565855375', title: '地质勘查工程与生态修复', author: '张昕, 冯红彬, 张海燕主编', price: '¥58.00', currency: 'CNY', counts: '3 / 1 / 1 / 0', lastTime: '2026-06-01 14:20:10', lastInspector: '王二小', reason: '换：残缺损' },
   { id: 3, orderLine: 'PG001B20260602003-7', isbn: '9787559826398', title: 'Python从入门到实践', author: '[美] 埃里克·马瑟斯', price: '¥89.00', currency: 'CNY', counts: '2 / 0 / 0 / 1', lastTime: '2026-05-30 16:05:33', lastInspector: '赵付', reason: '退：损坏退货' },
   { id: 4, orderLine: 'PG001B20260602003-8', isbn: '9787518359067', title: '石油勘探技术', author: '李明', price: '¥66.00', currency: 'CNY', counts: '2 / 0 / 0 / 0', lastTime: '2026-05-29 11:20:00', lastInspector: '杨晓购', reason: '撤：录入错误' },
-  { id: 5, orderLine: 'PG001B20260602003-9', isbn: '9787518359068', title: '油气田开发综合示例', author: '示例作者', price: '¥88.00', currency: 'CNY', counts: '4 / 0 / 1 / 1', lastTime: '2026-05-28 10:00:00', lastInspector: '杨晓购', reason: '换：破损换货；退：破损退货' }
+  { id: 5, orderLine: 'PG001B20260602003-9', isbn: '9787518359068', title: '油气田开发综合示例', author: '示例作者', price: '¥88.00', currency: 'CNY', counts: '4 / 0 / 1 / 1', lastTime: '2026-05-28 10:00:00', lastInspector: '杨晓购', reason: '换：破损换货；退：破损退货' },
+  { id: 6, orderLine: 'PG001B20260601003-1', isbn: '9787501345678', title: '图书馆学概论', author: '吴慰慈著', price: '¥68.00', currency: 'CNY', counts: '1 / 1 / 0 / 0', lastTime: '2026-05-28 15:06:37', lastInspector: '赵付', reason: '' },
+  { id: 7, orderLine: 'PG001B20260601003-3', isbn: '9787501345678', title: '图书馆学概论', author: '吴慰慈著', price: '¥68.00', currency: 'CNY', counts: '2 / 1 / 0 / 0', lastTime: '2026-05-27 10:20:15', lastInspector: '杨晓购', reason: '' },
+  { id: 8, orderLine: 'PG001B20260601003-5', isbn: '9787501345678', title: '图书馆学概论', author: '吴慰慈著', price: '¥68.00', currency: 'CNY', counts: '1 / 0 / 0 / 0', lastTime: '2026-05-26 09:15:42', lastInspector: '王二小', reason: '撤：录入错误' }
 ];
 
 export const acceptanceSpeciesSearchFields = [
@@ -77,7 +80,7 @@ export const acceptanceAvSpeciesColumns = [
   { key: 'price', label: '定价' },
   { key: 'currency', label: '币种' },
   { key: 'piecesInSet', label: '套内件数' },
-  { key: 'counts', label: '发/收/损/退套数' },
+  { key: 'counts', label: '发/收/换/退套数' },
   { key: 'lastTime', label: '最近一次验收时间' },
   { key: 'lastInspector', label: '最近一次验收人' },
   { key: 'reason', label: '换/退/撤销收货原因' },

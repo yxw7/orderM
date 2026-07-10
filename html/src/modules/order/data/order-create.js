@@ -1,4 +1,5 @@
 import { isBudgetOptionalForMethod } from '@/modules/order/constants';
+import { validateOrderDiscount } from '@/modules/order/data/order-field-input';
 
 export const NEW_ORDER_REQUIRED_FIELDS = [
   { key: 'subscriber', label: '订户' },
@@ -34,6 +35,10 @@ export function validateNewOrderForm(form) {
       errors[field.key] = `请选择${field.label}`;
     }
   });
+  const discountResult = validateOrderDiscount(form.discount);
+  if (!discountResult.valid) {
+    errors.discount = discountResult.message;
+  }
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
@@ -63,7 +68,46 @@ export function buildNewOrderRow(form, existingOrders) {
     netPrice: '0.00',
     issueRemark: '',
     orderStatus: 'pendingImport',
-    settlementStatus: 'unsettled'
+    settlementStatus: 'unsettled',
+    source: ''
+  };
+}
+
+/**
+ * 书目查询新建订单：状态待发订，来源标记为元数据。
+ * @param {Record<string, string>} form
+ * @param {string} site
+ * @param {string} orderId
+ * @param {number} existingCount
+ * @returns {Record<string, unknown>}
+ */
+export function buildBibCreateOrderRow(form, site, orderId, existingCount) {
+  const now = new Date();
+  const discount = (form.discount || '').trim();
+
+  return {
+    id: orderId,
+    no: existingCount + 1,
+    subscriber: form.subscriber,
+    site,
+    orderId,
+    method: form.method,
+    resourceType: form.resourceType,
+    language: form.language,
+    supplier: form.supplier,
+    orderTime: formatDateTime(now),
+    issuer: '系统',
+    issueTime: '',
+    orderVolumes: 0,
+    orderSpecies: 0,
+    budget: form.budget || '',
+    listPrice: '0.00',
+    discount: discount || '—',
+    netPrice: '0.00',
+    issueRemark: '',
+    orderStatus: 'pending',
+    settlementStatus: 'unsettled',
+    source: '元数据'
   };
 }
 

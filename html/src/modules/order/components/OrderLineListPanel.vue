@@ -5,7 +5,7 @@
       @search="filterRows"
       @reset="resetSearch"
     />
-    <div class="flex items-center gap-2 mb-4 shrink-0 flex-wrap">
+    <div class="relative z-20 flex items-center gap-2 mb-4 shrink-0 flex-wrap">
     <button
       type="button"
       class="px-4 py-1.5 text-sm rounded border"
@@ -28,6 +28,18 @@
       撤订
     </button>
     <DropdownButton label="导出订单行" :items="exportItems" @select="onExport" />
+    <ColumnDisplayPopover
+      class="ml-auto"
+      :unpinned-columns="unpinnedColumns"
+      :left-pinned-columns="leftPinnedColumns"
+      :right-pinned-columns="rightPinnedColumns"
+      :select-all-checked="selectAllChecked"
+      :select-all-indeterminate="selectAllIndeterminate"
+      @reset="resetColumns"
+      @toggle-all="toggleAllColumns"
+      @move="moveColumn"
+      @pin="setColumnPin"
+    />
     <GenerateShortageSuccessModal
       :open="shortageSuccessOpen"
       @cancel="shortageSuccessOpen = false"
@@ -37,32 +49,57 @@
   <DataTable
     v-model:selected-keys="selectedIds"
     class="flex-1 min-h-0"
-    :columns="ORDER_LINE_COLUMNS"
+    :columns="visibleColumns"
     :rows="pagedRows"
     :total="filteredRows.length"
     row-id-key="id"
     unit="条"
+    cell-nowrap
+    :select-on-row-click="false"
     v-model:page="page"
     v-model:page-size="pageSize"
     :page-sizes="[50, 100, 200]"
   >
+    <template #cell-no="{ row }">{{ row.no }}</template>
     <template #cell-orderLineNo="{ row }">
-      <button type="button" class="text-sky-600 hover:underline" @click="goLineDetail(row.orderLineNo)">{{ row.orderLineNo }}</button>
+      <button
+        type="button"
+        class="text-sky-600 hover:underline"
+        @click.stop="goLineDetail(row.orderLineNo)"
+      >
+        {{ row.orderLineNo }}
+      </button>
+    </template>
+    <template #cell-site="{ row }">
+      <EllipsisCell :text="row.site" max-width-class="max-w-[120px]" />
+    </template>
+    <template #cell-title="{ row }">
+      <EllipsisCell :text="row.title" max-width-class="max-w-[180px]" />
+    </template>
+    <template #cell-author="{ row }">
+      <EllipsisCell :text="row.author" max-width-class="max-w-[140px]" />
+    </template>
+    <template #cell-publisher="{ row }">
+      <EllipsisCell :text="row.publisher" max-width-class="max-w-[160px]" />
     </template>
     <template #cell-bibRecordNo="{ row }">
       <span class="inline-flex items-center gap-1 max-w-full">
         <span class="truncate">{{ row.bibRecordNo || '' }}</span>
         <ActualBibRecordNoMarker
-          :record-nos="getActualBibRecordNos(row)"
+          :record-nos="getOrderLineListActualBibRecordNos(row)"
           @open-record="recordNo => openCatalogRecordWindow(recordNo, row)"
         />
       </span>
     </template>
     <template #cell-holdingDuplicate="{ row }">
-      <DedupBadge :value="row.holdingDuplicate" @view="store.openDedupDrawer(row, 'holding')" />
+      <span @click.stop>
+        <DedupBadge :value="row.holdingDuplicate" @view="store.openDedupDrawer(row, 'holding')" />
+      </span>
     </template>
     <template #cell-orderDuplicate="{ row }">
-      <DedupBadge :value="row.orderDuplicate" @view="store.openDedupDrawer(row, 'order')" />
+      <span @click.stop>
+        <DedupBadge :value="row.orderDuplicate" @view="store.openDedupDrawer(row, 'order')" />
+      </span>
     </template>
     <template #cell-remark="{ row }">
       <span v-if="row.hasRemark" class="text-sky-600 hover:underline cursor-pointer">查看</span>
@@ -73,12 +110,12 @@
         v-if="canDedupLine(row)"
         type="button"
         class="text-sky-600 hover:underline mr-2"
-        @click="store.openDedupModal([row.orderLineNo])"
+        @click.stop="store.openDedupModal([row.orderLineNo])"
       >
         查重
       </button>
-      <button type="button" class="text-sky-600 hover:underline mr-2" @click="store.openModal('editLine', { lineNo: row.orderLineNo, line: row })">编辑</button>
-      <button type="button" class="text-sky-600 hover:underline" @click="store.openModal('cancelOrder', { lineNo: row.orderLineNo })">撤订</button>
+      <button type="button" class="text-sky-600 hover:underline mr-2" @click.stop="store.openModal('editLine', { lineNo: row.orderLineNo, line: row })">编辑</button>
+      <button type="button" class="text-sky-600 hover:underline" @click.stop="store.openModal('cancelOrder', { lineNo: row.orderLineNo })">撤订</button>
     </template>
   </DataTable>
   <CatalogRecordWindowStack
@@ -95,7 +132,10 @@ import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import OrderLineSearchPanel from '@/modules/order/components/OrderLineSearchPanel.vue';
 import DataTable from '@/components/common/DataTable.vue';
+import EllipsisCell from '@/components/common/EllipsisCell.vue';
 import DropdownButton from '@/components/common/DropdownButton.vue';
+import ColumnDisplayPopover from '@/components/common/ColumnDisplayPopover.vue';
+import { useColumnDisplay } from '@/composables/useColumnDisplay';
 import DedupBadge from '@/modules/order/components/DedupBadge.vue';
 import ActualBibRecordNoMarker from '@/modules/order/components/ActualBibRecordNoMarker.vue';
 import CatalogRecordWindowStack from '@/modules/order/components/CatalogRecordWindowStack.vue';
@@ -113,10 +153,24 @@ import {
   filterOrderLineRows
 } from '@/modules/order/data/order-line-filter';
 import { canDedupOrderLine } from '@/modules/order/data/dedup';
+import { getOrderLineListActualBibRecordNos } from '@/modules/order/data/order-line-detail';
 
 const props = defineProps({
   presetOrderId: { type: String, default: '' }
 });
+
+const {
+  unpinnedColumns,
+  leftPinnedColumns,
+  rightPinnedColumns,
+  visibleColumns,
+  selectAllChecked,
+  selectAllIndeterminate,
+  resetColumns,
+  toggleAllColumns,
+  moveColumn,
+  setColumnPin
+} = useColumnDisplay('order-line-columns-v2', ORDER_LINE_COLUMNS);
 
 const router = useRouter();
 const store = useOrderStore();
@@ -141,7 +195,10 @@ const exportItems = [{ label: '导出配置' }, { label: '导出清单' }];
 
 const pagedRows = computed(() => {
   const start = (page.value - 1) * pageSize.value;
-  return filteredRows.value.slice(start, start + pageSize.value);
+  return filteredRows.value.slice(start, start + pageSize.value).map((row, index) => ({
+    ...row,
+    no: start + index + 1
+  }));
 });
 
 const canDedup = computed(() => canBatchDedup(store.lines, selectedIds.value, store.orders));
@@ -164,11 +221,6 @@ watch(() => props.presetOrderId, id => {
 
 function canDedupLine(row) {
   return canDedupOrderLine(row, store.orders);
-}
-
-function getActualBibRecordNos(row) {
-  if (!Array.isArray(row?.actualBibRecordNos)) return [];
-  return row.actualBibRecordNos.filter(Boolean);
 }
 
 function openCatalogRecordWindow(recordNo, orderLineRow) {

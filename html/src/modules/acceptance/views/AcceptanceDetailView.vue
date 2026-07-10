@@ -53,7 +53,7 @@
       @reset="resetSearch"
     />
 
-    <div class="flex items-center gap-2 mb-4 shrink-0">
+    <div class="relative z-20 flex items-center gap-2 mb-4 shrink-0">
       <DropdownButton :label="detailConfig.exportLabel" :items="exportItems" @select="onExport" />
       <span v-if="viewMode === 'volume'" class="text-sm text-gray-700">仅提供收货详情</span>
     </div>
@@ -309,11 +309,11 @@ function openRevoke(row) {
   revokeOpen.value = true;
 }
 
-function submitRevoke(reasons) {
+function submitRevoke(reason) {
   const row = revokeTarget.value;
   if (!row) return;
   updateSpeciesCounts(row, { received: 0 });
-  row.revokeReceiveReasons = reasons;
+  row.revokeReceiveReasons = [reason];
   row.reason = formatSpeciesReason(row);
   persistContext();
   filterRows();

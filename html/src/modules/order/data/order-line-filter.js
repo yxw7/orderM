@@ -12,8 +12,24 @@ export const ORDER_LINE_LOGIC_OPTIONS = [
   { value: 'or', label: '或' }
 ];
 
+/** 馆藏/订单重复检索选项 */
+export const ORDER_LINE_DEDUP_FILTER_OPTIONS = ['全部', '有', '无'];
+
 function isBlankSelect(value) {
   return !value || value === '全部';
+}
+
+/**
+ * 匹配馆藏/订单重复检索条件
+ * @param {boolean|null|undefined} duplicateValue 行上的重复标识
+ * @param {string} filterValue 检索选值：全部 / 有 / 无
+ * @returns {boolean}
+ */
+function matchDedupFilter(duplicateValue, filterValue) {
+  if (isBlankSelect(filterValue)) return true;
+  if (filterValue === '有') return duplicateValue === true;
+  if (filterValue === '无') return duplicateValue === false;
+  return true;
 }
 
 /** 默认检索表单（含组合条件行） */
@@ -31,6 +47,8 @@ export function createDefaultOrderLineSearch(presetOrderId = '') {
     acceptanceStatus: '全部',
     settlementStatus: '全部',
     isShortage: '全部',
+    holdingDuplicate: '全部',
+    orderDuplicate: '全部',
     bibRecordNo: ''
   };
 }
@@ -72,6 +90,8 @@ export function filterOrderLineRows(rows, search = {}) {
     }
     if (!isBlankSelect(search.settlementStatus) && row.settlementStatus !== search.settlementStatus) return false;
     if (!isBlankSelect(search.isShortage) && row.isShortage !== search.isShortage) return false;
+    if (!matchDedupFilter(row.holdingDuplicate, search.holdingDuplicate)) return false;
+    if (!matchDedupFilter(row.orderDuplicate, search.orderDuplicate)) return false;
     if (bibRecordNo && !String(row.bibRecordNo || '').includes(bibRecordNo)) return false;
     return true;
   });

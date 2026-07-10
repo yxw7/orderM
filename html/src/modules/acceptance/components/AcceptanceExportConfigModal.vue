@@ -1,6 +1,6 @@
 <template>
   <FormModal
-    v-if="open"
+    :open="open"
     title="导出配置"
     width-class="w-full max-w-3xl max-h-[90vh]"
     @close="emit('close')"

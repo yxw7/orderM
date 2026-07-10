@@ -12,9 +12,9 @@ import {
   canDedupOrderLine,
   getOrderLineLanguageCategory,
   getOrderLineResourceType,
-  performOrderLineDedup
+  performOrderLineDedupAsync
 } from '@/modules/order/data/dedup';
-import { buildNewOrderRow, renumberOrderRows } from '@/modules/order/data/order-create';
+import { buildNewOrderRow, buildBibCreateOrderRow, renumberOrderRows } from '@/modules/order/data/order-create';
 import { issueOrder as performIssueOrder } from '@/modules/order/data/order-issue';
 import { applyOrderImport } from '@/modules/order/data/order-import';
 import { deletePendingOrder } from '@/modules/order/data/order-delete';
@@ -135,8 +135,18 @@ export const useOrderStore = defineStore('order', {
       this.dedupTargetLineNos = [];
     },
 
-    submitDedup(config) {
-      performOrderLineDedup(this.lines, this.orders, this.dedupTargetLineNos, config);
+    /**
+     * 提交查重配置并等待查重结果
+     * @param {Object} config - 查重配置
+     * @returns {Promise<void>}
+     */
+    async submitDedup(config) {
+      await performOrderLineDedupAsync(
+        this.lines,
+        this.orders,
+        this.dedupTargetLineNos,
+        config
+      );
       this.closeDedupModal();
     },
 
@@ -155,6 +165,19 @@ export const useOrderStore = defineStore('order', {
     addOrder(form) {
       const row = buildNewOrderRow(form, this.orders);
       this.orders.unshift(row);
+      renumberOrderRows(this.orders);
+    },
+
+    /**
+     * 书目查询新建订单：按馆址批量创建，来源为元数据，状态待发订。
+     * @param {{ sites: string[], orderIds: string[] } & Record<string, string>} payload
+     */
+    addBibCreateOrders(payload) {
+      const { sites, orderIds, ...form } = payload;
+      sites.forEach((site, index) => {
+        const row = buildBibCreateOrderRow(form, site, orderIds[index], this.orders.length);
+        this.orders.unshift(row);
+      });
       renumberOrderRows(this.orders);
     },
 

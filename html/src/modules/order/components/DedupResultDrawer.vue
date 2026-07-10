@@ -7,7 +7,7 @@
         @click="$emit('close')"
       />
       <section
-        class="dedup-result-panel absolute top-0 inset-x-0 bg-white flex flex-col transition-transform duration-300 ease-out shadow-[0_8px_24px_rgba(15,23,42,0.12)] max-h-[85vh] overflow-hidden"
+        class="dedup-result-panel absolute top-0 inset-x-0 bg-white flex flex-col transition-transform duration-300 ease-out shadow-[0_8px_24px_rgba(15,23,42,0.12)] h-[60vh] overflow-hidden"
         :class="open ? 'translate-y-0' : '-translate-y-full'"
         role="dialog"
         aria-modal="true"
@@ -47,17 +47,25 @@
           </div>
           <div
             ref="panelBodyRef"
-            class="dedup-result-panel__body flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 min-h-0 min-w-0"
+            class="dedup-result-panel__body relative flex-1 min-h-0 overflow-hidden"
           >
             <template v-if="!results.length">
-              <p class="text-gray-400 text-sm">暂无查重结果</p>
+              <div class="absolute inset-0 overflow-y-auto overflow-x-hidden px-5 py-4">
+                <p class="text-gray-400 text-sm">暂无查重结果</p>
+              </div>
             </template>
             <template v-else-if="duplicateType === 'holding'">
-              <div v-if="holdingTab === 'bib'" key="holding-bib" class="overflow-x-auto w-full max-w-full">
+              <div
+                v-show="holdingTab === 'bib'"
+                ref="bibPanelRef"
+                class="dedup-result-panel__tab absolute inset-0 overflow-y-auto overflow-x-hidden px-5 py-4 bg-white"
+              >
+                <div class="overflow-x-auto w-full max-w-full">
                 <table class="text-sm border border-gray-200 min-w-full w-max">
                   <thead class="bg-gray-50 border-b sticky top-0 z-10">
                     <tr>
                       <th class="px-2 py-2 w-10 shrink-0" aria-label="展开" />
+                      <th class="px-3 py-2 text-left text-gray-600 whitespace-nowrap">单件数量</th>
                       <th
                         v-for="field in holdingBibCardFields"
                         :key="field.key"
@@ -65,7 +73,7 @@
                       >
                         {{ field.label }}
                       </th>
-                      <th class="px-3 py-2 text-left text-gray-600 whitespace-nowrap w-20">操作</th>
+                      <th class="px-3 py-2 text-left text-gray-600 whitespace-nowrap min-w-[120px]">操作</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y">
@@ -80,6 +88,14 @@
                             <TreeExpandIcon :expanded="expandedIds.has(item.bibRecordNo)" />
                           </button>
                         </td>
+                        <td class="px-3 py-2 align-middle whitespace-nowrap">
+                          <span
+                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                            :class="getBibCopyCount(item) > 0 ? 'bg-sky-50 text-sky-600' : 'bg-gray-100 text-gray-500'"
+                          >
+                            {{ getBibCopyCount(item) }}本
+                          </span>
+                        </td>
                         <td
                           v-for="field in holdingBibCardFields"
                           :key="field.key"
@@ -89,28 +105,53 @@
                           {{ getHoldingBibFieldDisplayValue(item, field.key) }}
                         </td>
                         <td class="px-3 py-2 align-middle whitespace-nowrap">
-                          <button type="button" class="text-sky-600 hover:underline" @click="viewMarc(item)">
+                          <button type="button" class="text-sky-600 hover:underline mr-2" @click="viewMarc(item)">
                             查看
+                          </button>
+                          <button
+                            v-if="isBibAssociated(item)"
+                            type="button"
+                            class="text-sky-600 hover:underline"
+                            @click="disassociateBib"
+                          >
+                            取消关联
+                          </button>
+                          <button
+                            v-else
+                            type="button"
+                            class="text-sky-600 hover:underline"
+                            @click="associateBib(item)"
+                          >
+                            关联
                           </button>
                         </td>
                       </tr>
                       <tr v-if="expandedIds.has(item.bibRecordNo)">
-                        <td :colspan="holdingBibCardFields.length + 2" class="px-3 py-3 bg-gray-50/50">
-                          <HoldingTree v-if="item.holdingTree?.length" :nodes="item.holdingTree" />
+                        <td :colspan="holdingBibCardFields.length + 3" class="px-3 py-3 bg-gray-50/50">
+                          <HoldingTree
+                            v-if="hasHoldingDistribution(item)"
+                            :nodes="buildDisplayHoldingTree(item.holdingTree, item.unassignedCopyCount)"
+                          />
                           <p v-else class="text-gray-400 text-sm">暂无馆藏分布</p>
                         </td>
                       </tr>
                     </template>
                   </tbody>
                 </table>
+                </div>
               </div>
-              <div v-else-if="holdingTab === 'marc'" key="holding-marc" class="relative z-0 bg-white">
+              <div
+                v-show="holdingTab === 'marc'"
+                ref="marcPanelRef"
+                class="dedup-result-panel__tab absolute inset-0 overflow-y-auto overflow-x-hidden px-5 py-4 bg-white"
+              >
                 <MarcTable v-if="activeMarcFields.length" :fields="activeMarcFields" />
                 <p v-else class="text-gray-400 text-sm">暂无MARC信息</p>
               </div>
             </template>
             <template v-else>
-              <div class="overflow-x-auto w-full max-w-full">
+              <div class="dedup-result-panel__tab absolute inset-0 overflow-y-auto overflow-x-hidden px-5 py-4 bg-white">
+                <div class="overflow-x-auto w-full max-w-full">
                 <table class="text-sm border border-gray-200 min-w-[1400px] w-max">
                   <thead class="bg-gray-50 border-b sticky top-0 z-10">
                     <tr>
@@ -145,12 +186,15 @@
                     </tr>
                   </tbody>
                 </table>
+                </div>
               </div>
             </template>
           </div>
           <div
-            v-if="results.length && !(duplicateType === 'holding' && holdingTab === 'marc')"
+            v-if="results.length"
             class="flex items-center justify-between px-5 py-3 border-t shrink-0 bg-white text-sm text-gray-600"
+            :class="{ 'invisible pointer-events-none': duplicateType === 'holding' && holdingTab === 'marc' }"
+            :aria-hidden="duplicateType === 'holding' && holdingTab === 'marc'"
           >
             <span class="text-gray-500">共 {{ results.length }} 条记录</span>
             <div class="flex items-center gap-2">
@@ -174,10 +218,13 @@ import HoldingTree from '@/modules/order/components/HoldingTree.vue';
 import MarcTable from '@/modules/order/components/MarcTable.vue';
 import TreeExpandIcon from '@/modules/order/components/TreeExpandIcon.vue';
 import {
+  buildDisplayHoldingTree,
+  countBibHoldingCopies,
   filterHoldingDedupMarcFields,
   formatDedupFieldLabels,
   getHoldingBibCardFields,
   getHoldingBibFieldDisplayValue,
+  hasHoldingDistribution,
   getOrderLineLanguageCategory,
   getOrderLineResourceType
 } from '@/modules/order/data/dedup';
@@ -199,6 +246,8 @@ const holdingTab = ref('bib');
 const expandedIds = ref(new Set());
 const activeMarc = ref(null);
 const panelBodyRef = ref(null);
+const bibPanelRef = ref(null);
+const marcPanelRef = ref(null);
 const page = ref(1);
 const pageSize = ref(50);
 
@@ -250,14 +299,22 @@ watch(() => props.results, val => {
 
 watch(holdingTab, async () => {
   await nextTick();
-  panelBodyRef.value?.scrollTo({ top: 0 });
+  resetPanelScroll();
+  if (holdingTab.value === 'marc' && !activeMarc.value && props.results.length) {
+    activeMarc.value = props.results[0];
+  }
 });
 
 /**
- * 重置结果内容区滚动位置
+ * 重置当前页签内容区滚动位置
  */
 function resetPanelScroll() {
-  panelBodyRef.value?.scrollTo({ top: 0 });
+  const panel = props.duplicateType === 'holding' && holdingTab.value === 'marc'
+    ? marcPanelRef.value
+    : props.duplicateType === 'holding'
+      ? bibPanelRef.value
+      : panelBodyRef.value;
+  panel?.scrollTo({ top: 0 });
 }
 
 function toggleExpand(id) {
@@ -272,13 +329,52 @@ function viewMarc(item) {
   holdingTab.value = 'marc';
   resetPanelScroll();
 }
+
+/**
+ * 获取书目单件数量（已分配馆藏地 + 未关联馆藏）
+ * @param {Object} item 馆藏查重书目
+ * @returns {number}
+ */
+function getBibCopyCount(item) {
+  return countBibHoldingCopies(item);
+}
+
+/**
+ * 判断馆藏书目是否与当前订单行已关联
+ * @param {Object} item 馆藏查重书目
+ * @returns {boolean}
+ */
+function isBibAssociated(item) {
+  const bibRecordNo = props.line?.bibRecordNo?.trim();
+  if (!bibRecordNo || !item?.bibRecordNo) return false;
+  return bibRecordNo === item.bibRecordNo;
+}
+
+/**
+ * 将馆藏书目记录号关联到当前订单行
+ * @param {Object} item 馆藏查重书目
+ */
+function associateBib(item) {
+  const orderLineNo = props.line?.orderLineNo;
+  if (!orderLineNo || !item?.bibRecordNo) return;
+  orderStore.updateLine(orderLineNo, { bibRecordNo: item.bibRecordNo });
+}
+
+/** 取消当前订单行与馆藏书目的关联 */
+function disassociateBib() {
+  const orderLineNo = props.line?.orderLineNo;
+  if (!orderLineNo) return;
+  orderStore.updateLine(orderLineNo, { bibRecordNo: '' });
+}
 </script>
 
 <style scoped>
 .dedup-result-panel__body {
   flex: 1 1 0%;
-  overscroll-behavior: contain;
-  isolation: isolate;
   background: #fff;
+}
+
+.dedup-result-panel__tab {
+  overscroll-behavior: contain;
 }
 </style>

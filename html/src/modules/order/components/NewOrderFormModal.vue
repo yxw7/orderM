@@ -95,13 +95,18 @@
     </div>
     <div class="flex items-start gap-3">
       <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">折扣</label>
-      <input
-        v-model="form.discount"
-        type="text"
-        placeholder="请输入"
-        autocomplete="off"
-        class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
-      >
+      <div class="flex-1">
+        <input
+          v-model="form.discount"
+          type="text"
+          placeholder="0.01～1.00"
+          autocomplete="off"
+          class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
+          :class="errors.discount ? 'border-red-500' : 'border-gray-300'"
+          @input="onDiscountInput"
+        >
+        <p v-if="errors.discount" class="text-red-500 text-xs mt-1">{{ errors.discount }}</p>
+      </div>
     </div>
     <div class="flex items-start gap-3">
       <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0"><span class="text-red-500">*</span> 馆址</label>
@@ -135,6 +140,7 @@ import {
 import { defaultNewOrderForm } from '@/modules/order/data/orders';
 import { validateNewOrderForm } from '@/modules/order/data/order-create';
 import { getSupplierOptionsByMethod, getSupplierDiscountByName, isSupplierValidForMethod } from '@/modules/order/data/supplier-sources';
+import { sanitizeDecimalInput } from '@/modules/order/data/order-field-input';
 
 const props = defineProps({
   open: { type: Boolean, default: false }
@@ -173,6 +179,14 @@ watch(() => form.value.method, method => {
 watch(() => form.value.supplier, supplier => {
   form.value.discount = getSupplierDiscountByName(supplier);
 });
+
+/**
+ * 折扣输入：限制为最多两位小数的数值文本
+ * @param {Event} event
+ */
+function onDiscountInput(event) {
+  form.value.discount = sanitizeDecimalInput(event.target.value);
+}
 
 function submit() {
   const result = validateNewOrderForm(form.value);

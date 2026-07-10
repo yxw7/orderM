@@ -101,7 +101,14 @@
                   <input type="text" :value="row.site" readonly class="w-full border border-gray-200 rounded px-3 py-2 text-sm bg-gray-50">
                   <p class="mt-1 text-xs text-gray-400">{{ row.orderId }}</p>
                 </div>
-                <input v-model="row.sets" type="number" min="0" placeholder="套数" class="w-28 shrink-0 border border-gray-300 rounded px-3 py-2 text-sm">
+                <input
+                  v-model="row.sets"
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="套数"
+                  class="w-28 shrink-0 border border-gray-300 rounded px-3 py-2 text-sm"
+                  @input="onSetsInput(row, $event)"
+                >
               </div>
             </div>
           </div>
@@ -119,15 +126,33 @@
           </div>
           <div class="flex items-start gap-3">
             <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0"><span class="text-red-500">*</span> 定价</label>
-            <input v-model="form.price" placeholder="请输入" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm">
+            <input
+              v-model="form.price"
+              placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
+              @input="onPriceInput"
+            >
           </div>
           <div class="flex items-start gap-3">
             <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0"><span class="text-red-500">*</span> 套内册数</label>
-            <input v-model="form.copiesInSet" type="number" min="1" placeholder="套内册数" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm">
+            <input
+              v-model="form.copiesInSet"
+              type="text"
+              inputmode="numeric"
+              placeholder="套内册数"
+              class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
+              @input="onCopiesInSetInput"
+            >
           </div>
           <div class="flex items-start gap-3">
             <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">备注</label>
-            <textarea v-model="form.remark" rows="3" placeholder="请输入" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm resize-none" />
+            <textarea
+              v-model="form.remark"
+              rows="3"
+              maxlength="500"
+              placeholder="请输入"
+              class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm resize-none"
+            />
           </div>
         </div>
 
@@ -145,6 +170,15 @@ import { computed, onUnmounted, reactive, ref, watch } from 'vue';
 import { ACQUISITION_METHOD_FILTER_OPTIONS } from '@/constants/acquisition-methods';
 import { ORDER_STATUS_LABELS } from '@/modules/order/data/bib';
 import { loadJoinOrderFormCache, saveJoinOrderFormCache } from '@/modules/order/data/bib-order-form-cache';
+import {
+  ORDER_REMARK_MAX_LENGTH,
+  isValidNonNegativeInteger,
+  isValidPositiveInteger,
+  sanitizeDecimalInput,
+  sanitizeNonNegativeIntegerInput,
+  sanitizePositiveIntegerInput,
+  validateOrderPrice
+} from '@/modules/order/data/order-field-input';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -296,16 +330,48 @@ function resetSearch() {
   activeSearch.supplier = '全部';
 }
 
+/**
+ * 套数输入：仅保留大于等于 0 的整数文本
+ * @param {{ sets: string }} row
+ * @param {Event} event
+ */
+function onSetsInput(row, event) {
+  row.sets = sanitizeNonNegativeIntegerInput(event.target.value);
+}
+
+/**
+ * 套内册数输入：仅保留正整数文本
+ * @param {Event} event
+ */
+function onCopiesInSetInput(event) {
+  form.copiesInSet = sanitizePositiveIntegerInput(event.target.value);
+}
+
+/**
+ * 定价输入：限制为最多两位小数的数值文本
+ * @param {Event} event
+ */
+function onPriceInput(event) {
+  form.price = sanitizeDecimalInput(event.target.value);
+}
+
 /** 提交加入订单 */
 function submit() {
   if (!siteRows.value.length) return window.alert('请至少选择一个订单');
-  if (!form.currency || !form.price || !form.copiesInSet) return window.alert('请填写必填项');
-  if (siteRows.value.some(row => row.sets === '' || row.sets === null || Number(row.sets) < 0)) {
+  const priceResult = validateOrderPrice(form.price);
+  if (!priceResult.valid) return window.alert(priceResult.message);
+  if (!form.currency || !form.copiesInSet) return window.alert('请填写必填项');
+  if (!isValidPositiveInteger(form.copiesInSet)) {
+    return window.alert('套内册数须为正整数');
+  }
+  if (siteRows.value.some(row => !isValidNonNegativeInteger(row.sets))) {
     return window.alert('请为每个馆址填写有效套数');
   }
-
   const activeRows = siteRows.value.filter(row => Number(row.sets) > 0);
   if (!activeRows.length) return window.alert('请至少为一个馆址填写大于0的套数');
+  if (form.remark.length > ORDER_REMARK_MAX_LENGTH) {
+    return window.alert(`备注最多${ORDER_REMARK_MAX_LENGTH}个字符`);
+  }
 
   persistCache();
   emit('confirm', { siteRows: activeRows, form: { ...form } });

@@ -1,10 +1,29 @@
 <template>
-  <FormModal title="查重" width-class="w-full max-w-2xl" confirm-text="确定" @close="$emit('close')" @confirm="submit">
+  <FormModal
+    title="查重"
+    width-class="w-full max-w-2xl"
+    confirm-text="确定"
+    loading-text="查重中..."
+    :confirm-loading="submitting"
+    @close="handleClose"
+    @confirm="submit"
+  >
     <div>
       <div class="text-sm text-gray-700 mb-3">重复类型</div>
       <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-700">
-        <label v-for="opt in duplicateTypeOptions" :key="opt.value" class="inline-flex items-center gap-2 cursor-pointer">
-          <input v-model="duplicateType" type="radio" :value="opt.value" class="text-sky-600">
+        <label
+          v-for="opt in duplicateTypeOptions"
+          :key="opt.value"
+          class="inline-flex items-center gap-2"
+          :class="submitting ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'"
+        >
+          <input
+            v-model="duplicateType"
+            type="radio"
+            :value="opt.value"
+            class="text-sky-600"
+            :disabled="submitting"
+          >
           <span>{{ opt.label }}</span>
         </label>
       </div>
@@ -12,12 +31,32 @@
     <div>
       <div class="text-sm text-gray-700 mb-3">查重字段</div>
       <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-700">
-        <label class="inline-flex items-center gap-2 cursor-pointer">
-          <input v-model="selectAll" type="checkbox" class="rounded text-sky-600" @change="toggleAll">
+        <label
+          class="inline-flex items-center gap-2"
+          :class="submitting ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'"
+        >
+          <input
+            v-model="selectAll"
+            type="checkbox"
+            class="rounded text-sky-600"
+            :disabled="submitting"
+            @change="toggleAll"
+          >
           <span>全部</span>
         </label>
-        <label v-for="field in fields" :key="field.value" class="inline-flex items-center gap-2 cursor-pointer">
-          <input v-model="selectedFields" type="checkbox" :value="field.value" class="rounded text-sky-600">
+        <label
+          v-for="field in fields"
+          :key="field.value"
+          class="inline-flex items-center gap-2"
+          :class="submitting ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'"
+        >
+          <input
+            v-model="selectedFields"
+            type="checkbox"
+            :value="field.value"
+            class="rounded text-sky-600"
+            :disabled="submitting"
+          >
           <span>{{ field.label }}</span>
         </label>
       </div>
@@ -29,13 +68,16 @@
 import { computed, ref, watch } from 'vue';
 import FormModal from '@/modules/order/components/FormModal.vue';
 import { DEDUP_FIELDS_BY_RESOURCE_TYPE, getDedupDefaultFieldKeys } from '@/modules/order/data/dedup';
+import { useOrderStore } from '@/modules/order/stores/order';
 
 const props = defineProps({
   resourceType: { type: String, default: '纸质书' },
   languageCategory: { type: String, default: '中文' }
 });
 
-const emit = defineEmits(['close', 'confirm']);
+const emit = defineEmits(['close']);
+
+const store = useOrderStore();
 
 const duplicateTypeOptions = [
   { value: 'all', label: '不限' },
@@ -45,6 +87,7 @@ const duplicateTypeOptions = [
 
 const duplicateType = ref('all');
 const selectedFields = ref([]);
+const submitting = ref(false);
 
 const fields = computed(() => DEDUP_FIELDS_BY_RESOURCE_TYPE[props.resourceType] || DEDUP_FIELDS_BY_RESOURCE_TYPE['纸质书']);
 
@@ -65,11 +108,31 @@ function toggleAll(event) {
   selectedFields.value = event.target.checked ? fields.value.map(f => f.value) : [];
 }
 
-function submit() {
+function handleClose() {
+  if (submitting.value) return;
+  emit('close');
+}
+
+/**
+ * 提交查重配置（防抖：加载中忽略重复点击）
+ */
+async function submit() {
+  if (submitting.value) return;
+
   if (!selectedFields.value.length) {
     window.alert('请至少选择一个查重字段');
     return;
   }
-  emit('confirm', { duplicateType: duplicateType.value, fieldKeys: [...selectedFields.value] });
+
+  submitting.value = true;
+  try {
+    await store.submitDedup({
+      duplicateType: duplicateType.value,
+      fieldKeys: [...selectedFields.value]
+    });
+  } catch {
+    window.alert('查重失败，请稍后重试');
+    submitting.value = false;
+  }
 }
 </script>

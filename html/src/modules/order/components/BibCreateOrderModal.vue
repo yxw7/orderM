@@ -73,9 +73,10 @@
       <input
         v-model="form.discount"
         type="text"
-        placeholder="请输入"
+        placeholder="0.01～1.00"
         autocomplete="off"
         class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
+        @input="onDiscountInput"
       >
     </div>
     <div class="flex items-start gap-3">
@@ -111,6 +112,7 @@ import {
 } from '@/modules/order/constants';
 import { loadCreateOrderFormCache, saveCreateOrderFormCache } from '@/modules/order/data/bib-order-form-cache';
 import { getSupplierOptionsByMethod, getSupplierDiscountByName, isSupplierValidForMethod } from '@/modules/order/data/supplier-sources';
+import { sanitizeDecimalInput, validateOrderDiscount } from '@/modules/order/data/order-field-input';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -204,6 +206,14 @@ function syncDiscountWithSupplier(supplier) {
   form.discount = getSupplierDiscountByName(supplier);
 }
 
+/**
+ * 折扣输入：限制为最多两位小数的数值文本
+ * @param {Event} event
+ */
+function onDiscountInput(event) {
+  form.discount = sanitizeDecimalInput(event.target.value);
+}
+
 function persistCache() {
   saveCreateOrderFormCache({
     subscriber: form.subscriber,
@@ -264,6 +274,11 @@ function submit() {
   if (!form.sites.length) {
     siteError.value = '请选择馆址';
     window.alert('请选择馆址');
+    return;
+  }
+  const discountResult = validateOrderDiscount(form.discount);
+  if (!discountResult.valid) {
+    window.alert(discountResult.message);
     return;
   }
   siteError.value = '';

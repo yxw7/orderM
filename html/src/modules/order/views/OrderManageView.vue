@@ -25,7 +25,6 @@
       :resource-type="store.dedupResourceType"
       :language-category="store.dedupLanguageCategory"
       @close="store.closeDedupModal()"
-      @confirm="store.submitDedup"
     />
     <DedupResultDrawer
       :open="store.dedupDrawerOpen"

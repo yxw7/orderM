@@ -9,7 +9,7 @@
       @reset="resetSearch"
     />
 
-    <div class="flex items-center gap-2 mb-4 flex-wrap">
+    <div class="relative z-20 flex items-center gap-2 mb-4 flex-wrap">
       <button type="button" class="px-4 py-1.5 bg-sky-600 text-white text-sm rounded hover:bg-sky-700" @click="openAdd">
         新增验收单
       </button>
@@ -91,6 +91,12 @@
       @close="settlementOpen = false"
       @confirm="confirmSettlement"
     />
+    <AcceptanceExportConfigModal
+      :open="exportConfigOpen"
+      :fields="ACCEPTANCE_LIST_EXPORT_FIELDS"
+      @close="exportConfigOpen = false"
+      @confirm="onExportConfigSave"
+    />
   </div>
 </template>
 
@@ -102,8 +108,9 @@ import DataTable from '@/components/common/DataTable.vue';
 import DropdownButton from '@/components/common/DropdownButton.vue';
 import AcceptanceFormModal from '@/modules/acceptance/components/AcceptanceFormModal.vue';
 import AcceptanceSettlementModal from '@/modules/acceptance/components/AcceptanceSettlementModal.vue';
+import AcceptanceExportConfigModal from '@/modules/acceptance/components/AcceptanceExportConfigModal.vue';
 import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
-import { ACCEPTANCE_LIST_COLUMNS } from '@/modules/acceptance/constants';
+import { ACCEPTANCE_LIST_COLUMNS, ACCEPTANCE_LIST_EXPORT_FIELDS } from '@/modules/acceptance/constants';
 import {
   acceptanceSearchFields,
   createAcceptanceRows,
@@ -128,6 +135,7 @@ const selectedIds = ref([]);
 const page = ref(1);
 const pageSize = ref(10);
 const settlementOpen = ref(false);
+const exportConfigOpen = ref(false);
 const formModal = reactive({ open: false, mode: 'add', row: null });
 
 const pagedRows = computed(() => {
@@ -346,6 +354,15 @@ function confirmSettlement() {
 }
 
 function onExport(item) {
-  window.alert(`${item.label}功能为原型演示`);
+  if (item.label === '导出配置') {
+    exportConfigOpen.value = true;
+    return;
+  }
+  window.alert(`${item.label}（原型演示）`);
+}
+
+function onExportConfigSave(fields) {
+  exportConfigOpen.value = false;
+  window.alert(`导出配置已保存（${fields.length} 个字段）`);
 }
 </script>
