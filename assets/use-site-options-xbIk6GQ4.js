@@ -1,1 +1,0 @@
-import{W as a,X as c,l as r,Y as u}from"./app-CkXdZ00f.js";function l(){const e=a();e.ensureInitialized();const{activeSites:i,activeSiteNames:s,activeSiteFilterOptions:t}=c(e);function o(n){return r(()=>u(n,t.value))}return{activeSites:i,activeSiteNames:s,activeSiteFilterOptions:t,withSiteSearchFields:o}}export{l as u};
