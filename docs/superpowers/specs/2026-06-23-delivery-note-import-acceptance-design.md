@@ -1,7 +1,7 @@
 # 电子发货单导入批量验收 — 设计规格
 
 **日期**：2026-06-23  
-**状态**：已实现（Vue SPA，`html/src/modules/acceptance/`）  
+**状态**：已实现（Vue SPA，`html/src/modules/acceptance/`）；**大批量异步任务续办**见 [2026-07-10-delivery-import-async-task-design.md](./2026-07-10-delivery-import-async-task-design.md)  
 **模块**：采访验收 / 验收单管理（02_01）
 
 ---
