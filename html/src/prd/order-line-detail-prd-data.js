@@ -34,16 +34,16 @@ ${prdSection('', '交互逻辑')}
 const item5452 = prdBlock('5.4.5.2', '业务 Tab 页签', `
 <div id="overview">
 ${prdSection('', '功能描述')}
-<p>书目信息下方为业务 Tab 容器，用于切换查看订单行关联业务数据。Tab 顺序固定，默认激活<strong>相关订单行</strong>。</p>
+<p>书目信息下方为业务 Tab 容器，用于切换查看订单行关联业务数据。Tab 顺序固定，默认激活<strong>相关订单行（N）</strong>。</p>
 ${prdSection('', 'Tab 列表')}
 <ol>
-<li><strong>相关订单行</strong>（默认）</li>
-<li><strong>验收记录</strong></li>
-<li><strong>结算记录</strong></li>
+<li><strong>相关订单行（N）</strong>（默认）：N 为相关订单行表格总行数（含当前行），无数据时为 0</li>
+<li><strong>验收记录（N）</strong>：N 为验收记录表格总行数，无数据时为 0</li>
+<li><strong>结算记录（N）</strong>：N 为结算记录表格总行数，无数据时为 0</li>
 <li><strong>单件（N）</strong>：N 为合并后单件总行数，无数据时为 0</li>
-<li><strong>MARC信息</strong></li>
+<li><strong>MARC信息</strong>（不加数量）</li>
 </ol>
-<p>其中「单件（N）」的 N 随单件表格总行数自动刷新；编目无单件时显示「单件（0）」。</p>
+<p>前四个页签的 N 随对应表格总行数自动刷新（与分页无关）；无数据时显示「名称（0）」。</p>
 </div>
 <div id="interaction">
 ${prdSection('', '交互逻辑')}
@@ -196,15 +196,15 @@ export const orderLineDetailPrdData = {
   title: '订单行详情',
   tabs: {
     related: {
-      label: '相关订单行',
+      label: '相关订单行（N）',
       itemIds: ['5.4.5.1', '5.4.5.2', '5.4.5.3']
     },
     acceptance: {
-      label: '验收记录',
+      label: '验收记录（N）',
       itemIds: ['5.4.5.4']
     },
     settlement: {
-      label: '结算记录',
+      label: '结算记录（N）',
       itemIds: ['5.4.5.5']
     },
     items: {

@@ -14,7 +14,9 @@ export function acceptanceFromRow(row) {
     supplier: row.supplier,
     shipNo: row.shipNo,
     status: row.status,
-    remarkText: row.remarkText || ''
+    remarkText: row.remarkText || '',
+    autoBarcode: row.autoBarcode,
+    barcode: row.barcode
   };
 }
 

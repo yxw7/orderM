@@ -2,6 +2,8 @@
 export const appConfig = {
   appName: '订单管理',
   institution: '北京市公共图书馆',
+  /** 当前登录馆员账号（原型演示） */
+  currentLibrarianAccount: 'BIBQUERY01',
   currentSubscriber: 'ceshi',
   viewableSubscribers: ['ceshi'],
   z3950Servers: ['北京大学', '华盛顿大学'],
@@ -9,7 +11,7 @@ export const appConfig = {
   sidebarHighlightMap: {
     '/bib-query/z3950': '/bib-query',
     '/bib-query/new-bib': '/bib-query',
-    '/acceptance/delivery-import': '/acceptance',
+    '/acceptance/delivery-import': '/acceptance/delivery-import/tasks',
     '/acceptance/detail': '/acceptance',
     '/orders/line': '/orders',
     '/orders/lines': '/orders',
@@ -33,6 +35,7 @@ export const appConfig = {
       expanded: true,
       children: [
         { label: '验收单管理', route: '/acceptance' },
+        { label: '导入任务', route: '/acceptance/delivery-import/tasks' },
         { label: '逐条收货', route: '/receive' },
         { label: '批量验收', route: '/batch-acceptance' },
         { label: '换货管理', route: '/exchange' },
@@ -107,7 +110,8 @@ export const routeTitleMap = {
   '/locations': '馆址管理',
   '/bib-query/new-bib': '新建书目',
   '/bib-query/z3950': '查Z3950',
-  '/acceptance/delivery-import': '导入发货单',
+  '/acceptance/delivery-import': '导入任务',
+  '/acceptance/delivery-import/tasks': '导入任务',
   '/acceptance/detail': '验收详情',
   '/orders/line': '订单行详情'
 };
@@ -115,6 +119,7 @@ export const routeTitleMap = {
 export function getRouteTitle(path) {
   if (routeTitleMap[path]) return routeTitleMap[path];
   if (path.startsWith('/acceptance/detail/')) return '验收详情';
+  if (path.startsWith('/acceptance/delivery-import/tasks/')) return '导入任务详情';
   if (path.startsWith('/orders/line/')) return '订单行详情';
   if (path.startsWith('/settled/detail/')) return '结算详情';
   if (path.startsWith('/settled/list/')) return '结算清单';

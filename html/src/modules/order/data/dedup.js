@@ -378,9 +378,23 @@ export function performOrderLineDedup(lines, orders, orderLineNos, config) {
     if (checkHolding) {
       target.holdingDedupResults = findHoldingDuplicateResults(target, fieldKeys);
       target.holdingDuplicate = target.holdingDedupResults.length > 0;
+      autoAssociateFirstHoldingBib(target);
     }
     target.lastDedupFieldKeys = fieldKeys;
   });
+}
+
+/**
+ * 馆藏查重返回后：订单行书目记录号为空时，静默关联结果第一条书目
+ * @param {Object} target - 订单行
+ */
+function autoAssociateFirstHoldingBib(target) {
+  if (!target || String(target.bibRecordNo || '').trim()) return;
+
+  const firstBibRecordNo = String(target.holdingDedupResults?.[0]?.bibRecordNo || '').trim();
+  if (!firstBibRecordNo) return;
+
+  target.bibRecordNo = firstBibRecordNo;
 }
 
 /**

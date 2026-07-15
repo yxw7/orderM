@@ -55,7 +55,8 @@ export const librarianRowsRaw = [
   { account: 'STAV01', name: '首图视听编目1', subscribers: '视听中心', date: '2020-05-10' },
   { account: 'STAV02', name: '首图视听编目2', subscribers: '视听中心', date: '2020-05-09' },
   { account: 'STCB01', name: '首图采编中心1', subscribers: '采编中心', date: '2020-05-08' },
-  { account: 'STCB02', name: '首图采编中心2', subscribers: '采编中心', date: '2020-05-07' }
+  { account: 'STCB02', name: '首图采编中心2', subscribers: '采编中心', date: '2020-05-07' },
+  { account: 'BIBQUERY01', name: '书目查询演示馆员', subscribers: 'ceshi', date: '2026-06-17' }
 ];
 
 export const LIBRARIAN_COLUMNS = [

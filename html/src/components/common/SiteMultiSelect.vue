@@ -29,7 +29,7 @@
       <div
         v-if="open"
         ref="dropdownRef"
-        class="fixed bg-white border border-gray-200 rounded shadow-lg z-[100] max-h-48 overflow-auto"
+        class="fixed bg-white border border-gray-200 rounded shadow-lg z-[130] max-h-48 overflow-auto"
         :style="dropdownStyle"
       >
         <ul class="py-1 text-sm">

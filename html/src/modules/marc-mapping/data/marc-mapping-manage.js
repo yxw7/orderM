@@ -73,3 +73,14 @@ export function resolveOrderFieldsFromMarcMapping(bibRow, rows = marcMappingRows
     language: mapping.language
   };
 }
+
+/**
+ * 根据书目 MARC 格式推断订单语种：CNMARC 为中文，否则为外文
+ * @param {{ marcType?: string }} [bibRow]
+ * @returns {'中文' | '外文' | null} 无法解析 MARC 格式时返回 null
+ */
+export function resolveLanguageFromMarcFormat(bibRow) {
+  const parsed = parseMarcTypeLabel(bibRow?.marcType);
+  if (!parsed?.marcFormat) return null;
+  return parsed.marcFormat === 'CNMARC' ? '中文' : '外文';
+}

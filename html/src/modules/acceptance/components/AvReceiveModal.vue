@@ -76,7 +76,7 @@
       </div>
       <div class="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50 rounded-b-lg shrink-0">
         <button type="button" class="px-5 py-1.5 text-sm border border-gray-300 rounded text-gray-600 hover:bg-gray-50" @click="emit('close')">取消</button>
-        <button type="button" class="px-5 py-1.5 text-sm bg-sky-600 text-white rounded hover:bg-sky-700" @click="submit">收货</button>
+        <button type="button" class="px-5 py-1.5 text-sm bg-sky-600 text-white rounded hover:bg-sky-700" @click="submit">确定</button>
       </div>
     </div>
   </div>
@@ -132,7 +132,7 @@ watch(() => [props.open, props.row], ([open, row]) => {
   form.brand = row.label || '';
   form.limitedNo = row.limitedNo || '';
   form.copies = String(row.copies || '');
-  form.receiveSets = String(row.pendingSets ?? counts.pending);
+  form.receiveSets = String(row.defaultReceiveSets ?? row.pendingSets ?? counts.pending);
   form.remark = row.receiveRemark || '';
   if (isForeign.value) {
     form.price = row.originalPrice || row.price || '';

@@ -220,8 +220,12 @@ export function canGenerateShortage(acceptanceStatus) {
   return acceptanceStatus && !SHORTAGE_BLOCKED_STATUSES.includes(acceptanceStatus);
 }
 
+/** 批量查重最多勾选订单行数 */
+export const BATCH_DEDUP_MAX_COUNT = 50;
+
 export function canBatchDedup(lines, selectedIds, orders = []) {
   if (!selectedIds.length) return false;
+  if (selectedIds.length > BATCH_DEDUP_MAX_COUNT) return false;
   const selected = lines.filter(r => selectedIds.includes(r.id));
   const canDedup = row => {
     if (row.lineStatus === '待发订') return true;

@@ -55,6 +55,15 @@ export const bibSearchFields = [
 
 export const bibRelatedOrderLines = [
   {
+    bibRecordNo: 'BIB2024999001', actualBibRecordNos: ['BIB2025001001'],
+    orderId: 'PG001B20250617001', site: '首都华威桥馆',
+    orderLineNo: 'PG001B20250617001-2', title: '流固耦合声学（实际关联）', resourceId: '9787576724455',
+    carrier: 'AP', author: '张志军, 姜献体, 王树声', publisher: '哈尔滨工业大学出版社', publishTime: '2025',
+    volumeNo: '—', volumeName: '—', price: '128.00', currency: 'CNY', copiesInSet: 1, sets: 1,
+    lineStatus: '已发订', acceptanceStatus: '待验收', settlementStatus: '待申请',
+    flowStats: '1/0/0/0/0', issueTime: '2026-06-08 10:15:00'
+  },
+  {
     bibRecordNo: 'BIB2025001001', orderId: 'PG001B20250617001', site: '首都华威桥馆',
     orderLineNo: 'PG001B20250617001-1', title: '流固耦合声学', resourceId: '9787576724455',
     carrier: 'AP', author: '张志军, 姜献体, 王树声', publisher: '哈尔滨工业大学出版社', publishTime: '2025',
@@ -69,6 +78,14 @@ export const bibRelatedOrderLines = [
     volumeNo: '—', volumeName: '—', price: '128.00', currency: 'CNY', copiesInSet: 1, sets: 1,
     lineStatus: '已关闭', acceptanceStatus: '收货完成', settlementStatus: '已结算',
     flowStats: '1/1/0/0/0', issueTime: '2025-12-08 09:18:02'
+  },
+  {
+    bibRecordNo: 'BIB2025001001', orderId: 'PG001B20250512003', site: '北京城市图书馆',
+    orderLineNo: 'PG001B20250512003-9', title: '流固耦合声学（已撤订不展示）', resourceId: '9787576724455',
+    carrier: 'AP', author: '张志军, 姜献体, 王树声', publisher: '哈尔滨工业大学出版社', publishTime: '2025',
+    volumeNo: '—', volumeName: '—', price: '128.00', currency: 'CNY', copiesInSet: 1, sets: 1,
+    lineStatus: '已撤订', acceptanceStatus: '', settlementStatus: '待申请',
+    flowStats: '0/0/0/0/1', issueTime: '2026-04-01 16:00:00'
   },
   {
     bibRecordNo: 'BIB2024001001', orderId: 'PG001B202406030005', site: '首都华威桥馆',
@@ -89,6 +106,12 @@ export const bibRelatedOrderLines = [
 ];
 
 export const pendingOrdersForBib = [
+  {
+    orderId: 'PG001B20250617001', subscriber: 'ceshi', site: '首都华威桥馆', method: '现采',
+    resourceType: '纸质书', language: '中文', supplier: '湖南长沙',
+    budget: '2026年首都图书馆图书购置费中文普通图书(一)', discount: '0.80',
+    orderStatus: 'issued', createTime: '2026-06-10 14:20:00'
+  },
   {
     orderId: 'PG001B202406030001', subscriber: 'ceshi', site: '首都华威桥馆', method: '现采',
     resourceType: '纸质书', language: '中文', supplier: '湖南长沙',
@@ -131,9 +154,95 @@ export function buildMarcDetailFields(row) {
   ].filter(item => item.content.replace(/▼[a-z]/g, '').trim());
 }
 
-export function getRelatedOrderLines(bibRecordNo) {
-  const lines = bibRelatedOrderLines.filter(line => line.bibRecordNo === bibRecordNo);
+export function getRelatedOrderLines(bibRecordNo, viewableSubscribers = [], allOrders = [], allLines = []) {
+  if (!bibRecordNo) return [];
+
+  const scope = viewableSubscribers?.length ? viewableSubscribers : [];
+  if (!scope.length) return [];
+
+  const orderSubscriberMap = buildOrderSubscriberMap(allOrders);
+  const linePool = mergeRelatedOrderLinePool(bibRelatedOrderLines, allLines);
+  const lines = linePool
+    .filter(line => isBibRelatedLineMatch(line, bibRecordNo))
+    .filter(line => isBibRelatedLineInSubscriberScope(line, scope, orderSubscriberMap))
+    .filter(line => line.lineStatus !== '已撤订');
+
   return sortOrderLinesByIssueTimeDesc(lines);
+}
+
+/**
+ * 合并静态 mock 与 store 订单行，同订单行号以 store 为准
+ * @param {Array<Record<string, unknown>>} staticLines
+ * @param {Array<Record<string, unknown>>} storeLines
+ * @returns {Array<Record<string, unknown>>}
+ */
+function mergeRelatedOrderLinePool(staticLines, storeLines = []) {
+  const byLineNo = new Map();
+  staticLines.forEach(line => {
+    if (line.orderLineNo) byLineNo.set(line.orderLineNo, line);
+  });
+  storeLines.forEach(line => {
+    if (line.orderLineNo) byLineNo.set(line.orderLineNo, line);
+  });
+  return [...byLineNo.values()];
+}
+
+/**
+ * 提取订单行上的实际关联书目记录号（支持多值数组或单值字段）
+ * @param {{ actualBibRecordNos?: string[], actualBibRecordNo?: string }} line
+ * @returns {string[]}
+ */
+function getLineActualBibRecordNos(line) {
+  if (Array.isArray(line.actualBibRecordNos)) {
+    return line.actualBibRecordNos.map(value => String(value).trim()).filter(Boolean);
+  }
+  const single = String(line.actualBibRecordNo ?? '').trim();
+  return single ? [single] : [];
+}
+
+/**
+ * 判断订单行是否与当前书目记录号关联：有实际关联书目记录号时优先按实际关联匹配，否则按书目记录号匹配
+ * @param {{ bibRecordNo?: string, actualBibRecordNos?: string[], actualBibRecordNo?: string }} line
+ * @param {string} bibRecordNo
+ * @returns {boolean}
+ */
+function isBibRelatedLineMatch(line, bibRecordNo) {
+  const target = String(bibRecordNo).trim();
+  if (!target) return false;
+
+  const actualNos = getLineActualBibRecordNos(line);
+  if (actualNos.length) {
+    return actualNos.includes(target);
+  }
+  return String(line.bibRecordNo ?? '').trim() === target;
+}
+
+/**
+ * 构建订单号到订户的映射（静态 mock 与 store 合并，同 orderId 以 store 为准）
+ * @param {Array<{ orderId: string, subscriber?: string }>} storeOrders
+ * @returns {Map<string, string>}
+ */
+function buildOrderSubscriberMap(storeOrders = []) {
+  const map = new Map();
+  pendingOrdersForBib.forEach(order => {
+    if (order.orderId && order.subscriber) map.set(order.orderId, order.subscriber);
+  });
+  storeOrders.forEach(order => {
+    if (order.orderId && order.subscriber) map.set(order.orderId, order.subscriber);
+  });
+  return map;
+}
+
+/**
+ * 判断关联订单行是否在当前订户可查看范围内
+ * @param {{ orderId?: string }} line
+ * @param {string[]} scope
+ * @param {Map<string, string>} orderSubscriberMap
+ * @returns {boolean}
+ */
+function isBibRelatedLineInSubscriberScope(line, scope, orderSubscriberMap) {
+  const subscriber = orderSubscriberMap.get(line.orderId);
+  return Boolean(subscriber && scope.includes(subscriber));
 }
 
 export function summarizeRelatedOrderFlow(lines) {
@@ -149,15 +258,27 @@ export function summarizeRelatedOrderFlow(lines) {
   return stats;
 }
 
-export function getJoinOrderCandidates(bibRow, storeOrders = []) {
+/**
+ * 获取加入订单候选列表（待发订 + 可查看订户范围；若书目可映射语种则再按语种过滤）
+ * @param {Record<string, unknown>} bibRow
+ * @param {Array<Record<string, unknown>>} [storeOrders]
+ * @param {string[]} [viewableSubscribers] 馆员可查看订户范围；为空则返回空列表
+ * @returns {Array<Record<string, unknown>>}
+ */
+export function getJoinOrderCandidates(bibRow, storeOrders = [], viewableSubscribers = []) {
   const mapped = resolveOrderFieldsFromMarcMapping(bibRow);
-  if (!mapped) return null;
+  const mappedLanguage = mapped?.language || '';
+
+  const scope = viewableSubscribers?.length ? viewableSubscribers : [];
+  if (!scope.length) return [];
+
   const merged = mergeJoinOrderPools(storeOrders, pendingOrdersForBib);
-  return merged.filter(order =>
-    order.orderStatus === 'pending'
-    && order.resourceType === mapped.resourceType
-    && order.language === mapped.language
-  );
+  return merged.filter(order => {
+    if (order.orderStatus !== 'pending') return false;
+    if (!order.subscriber || !scope.includes(order.subscriber)) return false;
+    if (mappedLanguage && order.language !== mappedLanguage) return false;
+    return true;
+  });
 }
 
 /**

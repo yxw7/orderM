@@ -83,6 +83,17 @@ export function filterCurrencyRows(rows, search = {}) {
   });
 }
 
+/**
+ * 获取使用中的货币选项（供业务下拉选用货币代码）
+ * @param {Array<{ code?: string, name?: string, status?: string }>} [rows]
+ * @returns {Array<{ code: string, name: string }>}
+ */
+export function getActiveCurrencyOptions(rows = currencyRows) {
+  return rows
+    .filter(row => row.status === 'active' && row.code)
+    .map(row => ({ code: row.code, name: row.name || row.code }));
+}
+
 export function getCurrencyRateHistory(code) {
   return currencyRateHistoryMap[code] || [
     { id: 1, updateTime: '—', rate: '—', operator: '—' }

@@ -2,7 +2,7 @@
   <FormModal
     v-if="open"
     title="新增退货"
-    confirm-text="退货"
+    confirm-text="确定"
     @close="emit('close')"
     @confirm="submit"
   >
@@ -53,11 +53,13 @@ const summaryText = computed(() => {
   return `${unit}：${props.row.copies || 0}，发订套数：${ordered}，已收货套数：${received}，待收货套数：${pending}`;
 });
 
-watch(() => props.open, open => {
+watch(() => [props.open, props.row], ([open, row]) => {
   if (!open) return;
-  form.returnQty = '';
-  form.returnReason = '';
-  form.remark = '';
+  form.returnQty = row?.defaultReturnQty != null && row.defaultReturnQty !== ''
+    ? String(row.defaultReturnQty)
+    : '';
+  form.returnReason = row?.defaultReturnReason || '';
+  form.remark = row?.defaultReturnRemark || '';
 });
 
 function submit() {

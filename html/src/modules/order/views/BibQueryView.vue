@@ -57,6 +57,7 @@
           :total="filteredRows.length"
           row-id-key="id"
           unit="条记录"
+          :selectable="false"
           highlight-selected
           v-model:page="page"
           v-model:page-size="pageSize"
@@ -83,7 +84,7 @@
           type="button"
           class="px-1 py-2.5 text-sm border-b-2 transition-colors"
           :class="activeItemTab === tab.key ? 'text-sky-600 border-sky-600' : 'text-gray-600 border-transparent hover:text-sky-600'"
-          @click="activeItemTab = tab.key"
+          @click="switchItemTab(tab.key)"
         >
           {{ tab.label }}<template v-if="tab.countKey">({{ tabCounts[tab.countKey] }})</template>
         </button>
@@ -216,7 +217,7 @@
             <tbody class="divide-y">
               <tr v-if="!relatedLines.length">
                 <td :colspan="relatedOrderColumns.length" class="px-3 py-16 text-center text-gray-400">
-                  {{ selectedBib ? '暂无关联订单行' : '请先选中书目' }}
+                  {{ relatedOrderEmptyText }}
                 </td>
               </tr>
               <tr v-for="(line, index) in relatedLines" :key="line.orderLineNo" class="hover:bg-gray-50">
@@ -301,6 +302,13 @@ import {
   getPhysicalItemsForBib
 } from '@/modules/order/data/bib';
 import { useOrderStore } from '@/modules/order/stores/order';
+import {
+  hasCurrentLibrarianAssociatedSubscribers,
+  getCurrentViewableSubscribers,
+  NO_ASSOCIATED_SUBSCRIBER_MESSAGE,
+  NO_ASSOCIATED_SUBSCRIBER_CREATE_ORDER_MESSAGE,
+  NO_ASSOCIATED_SUBSCRIBER_JOIN_ORDER_MESSAGE
+} from '@/modules/subscriber/data/current-librarian';
 
 defineOptions({ name: 'BibQueryView' });
 
@@ -363,8 +371,20 @@ onMounted(() => {
 });
 
 const relatedLines = computed(() => {
-  if (!selectedBib.value) return [];
-  return getRelatedOrderLines(selectedBib.value.bibRecordNo);
+  if (!selectedBib.value || !hasCurrentLibrarianAssociatedSubscribers()) return [];
+  return getRelatedOrderLines(
+    selectedBib.value.bibRecordNo,
+    getCurrentViewableSubscribers(),
+    orderStore.orders,
+    orderStore.lines
+  );
+});
+
+/** 关联订单行空状态文案 */
+const relatedOrderEmptyText = computed(() => {
+  if (!hasCurrentLibrarianAssociatedSubscribers()) return NO_ASSOCIATED_SUBSCRIBER_MESSAGE;
+  if (!selectedBib.value) return '请先选中书目';
+  return '暂无关联订单行';
 });
 
 const flowStats = computed(() => summarizeRelatedOrderFlow(relatedLines.value));
@@ -463,17 +483,29 @@ function goZ3950() {
   router.push({ name: 'z3950' });
 }
 
+function switchItemTab(tabKey) {
+  if (tabKey === 'related-order' && tabKey !== activeItemTab.value) {
+    if (!hasCurrentLibrarianAssociatedSubscribers()) {
+      window.alert(NO_ASSOCIATED_SUBSCRIBER_MESSAGE);
+    }
+  }
+  activeItemTab.value = tabKey;
+}
+
 function openJoinOrder() {
   if (!selectedBib.value) {
     window.alert('请先选中书目');
     return;
   }
-  const candidates = getJoinOrderCandidates(selectedBib.value, orderStore.orders);
-  if (candidates === null) {
-    window.alert('无法根据当前书目 MARC 类型匹配订单资源类型与语种');
+  if (!hasCurrentLibrarianAssociatedSubscribers()) {
+    window.alert(NO_ASSOCIATED_SUBSCRIBER_JOIN_ORDER_MESSAGE);
     return;
   }
-  joinOrderCandidates.value = candidates;
+  joinOrderCandidates.value = getJoinOrderCandidates(
+    selectedBib.value,
+    orderStore.orders,
+    getCurrentViewableSubscribers()
+  );
   joinOrderOpen.value = true;
 }
 
@@ -484,6 +516,10 @@ function onJoinOrder(payload) {
 function openCreateOrder(bibRow) {
   if (!bibRow) {
     window.alert('请先选中书目');
+    return;
+  }
+  if (!hasCurrentLibrarianAssociatedSubscribers()) {
+    window.alert(NO_ASSOCIATED_SUBSCRIBER_CREATE_ORDER_MESSAGE);
     return;
   }
   createOrderBib.value = bibRow;

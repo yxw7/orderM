@@ -1,9 +1,13 @@
 <template>
   <div class="page-panel flex flex-col min-h-0">
     <nav class="flex items-center gap-2 mb-4 text-sm shrink-0">
-      <RouterLink to="/acceptance" class="flex items-center gap-1 text-gray-500 hover:text-sky-600">
+      <a
+        href="#"
+        class="flex items-center gap-1 text-gray-500 hover:text-sky-600"
+        @click.prevent="goBackAndCloseTab('/acceptance')"
+      >
         <span>&lsaquo;</span> 验收单管理
-      </RouterLink>
+      </a>
       <span class="text-gray-400">/</span>
       <span class="text-gray-800 font-medium">导入发货单</span>
     </nav>
@@ -75,25 +79,35 @@
             <option value="">— 选择已保存模板 —</option>
             <option v-for="tpl in templateList" :key="tpl.name" :value="tpl.name">{{ tpl.name }}</option>
           </select>
-          <label class="inline-flex items-center gap-2 text-sm text-gray-700 whitespace-nowrap cursor-pointer">
-            <input v-model="saveAsTemplate" type="checkbox" class="rounded text-sky-600">
-            保存为模板
-          </label>
-          <input
-            v-if="saveAsTemplate"
-            v-model="templateNameInput"
-            type="text"
-            placeholder="请输入模板名称"
-            class="border border-gray-300 rounded px-3 py-1.5 text-sm min-w-[160px]"
-          >
-          <button
-            v-if="selectedTemplateName"
-            type="button"
-            class="px-3 py-1.5 text-sm text-red-500 border border-red-200 rounded hover:bg-red-50"
-            @click="removeTemplate"
-          >
-            删除模板
-          </button>
+          <template v-if="selectedTemplateName">
+            <button
+              type="button"
+              class="px-3 py-1.5 text-sm text-sky-600 border border-sky-200 rounded hover:bg-sky-50"
+              @click="updateSelectedTemplate"
+            >
+              更新模板
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 text-sm text-red-500 border border-red-200 rounded hover:bg-red-50"
+              @click="removeTemplate"
+            >
+              删除模板
+            </button>
+          </template>
+          <template v-else>
+            <label class="inline-flex items-center gap-2 text-sm text-gray-700 whitespace-nowrap cursor-pointer">
+              <input v-model="saveAsTemplate" type="checkbox" class="rounded text-sky-600">
+              保存为模板
+            </label>
+            <input
+              v-if="saveAsTemplate"
+              v-model="templateNameInput"
+              type="text"
+              placeholder="请输入模板名称"
+              class="border border-gray-300 rounded px-3 py-1.5 text-sm min-w-[160px]"
+            >
+          </template>
         </div>
         <div class="overflow-auto flex-1">
           <table class="w-full text-sm">
@@ -333,6 +347,7 @@ import { useRouter } from 'vue-router';
 import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import DeliveryImportPickOrderLineModal from '@/modules/acceptance/components/DeliveryImportPickOrderLineModal.vue';
 import { useAcceptanceStore } from '@/modules/acceptance/stores/acceptance';
+import { useBreadcrumbBack } from '@/composables/use-breadcrumb-back';
 import { markAcceptanceInProgressAfterImport } from '@/modules/acceptance/data/acceptance-list';
 import {
   DELIVERY_IMPORT_STEPS,
@@ -366,6 +381,7 @@ defineOptions({ name: 'DeliveryImportView' });
 
 const router = useRouter();
 const acceptanceStore = useAcceptanceStore();
+const { goBackAndCloseTab } = useBreadcrumbBack();
 
 const currentStep = ref(1);
 const uploadedFile = ref(null);
@@ -558,18 +574,22 @@ function applyTemplateMapping(mapping) {
  * 切换映射模板时自动应用
  */
 function onTemplateSelect() {
-  if (!selectedTemplateName.value) return;
+  if (!selectedTemplateName.value) {
+    saveAsTemplate.value = false;
+    return;
+  }
+  saveAsTemplate.value = false;
+  templateNameInput.value = '';
   const mapping = getMappingTemplateByName(ctx.value, selectedTemplateName.value);
   if (mapping) applyTemplateMapping(mapping);
   initDefaultMatchFields();
 }
 
 /**
- * 勾选「保存为模板」时，在点击下一步前校验并写入模板
  * @returns {boolean}
  */
 function trySaveTemplateIfNeeded() {
-  if (!saveAsTemplate.value) return true;
+  if (selectedTemplateName.value || !saveAsTemplate.value) return true;
   const name = templateNameInput.value.trim();
   if (!name) {
     window.alert('请输入模板名称');
@@ -577,7 +597,22 @@ function trySaveTemplateIfNeeded() {
   }
   saveMappingTemplate(ctx.value, name, columnMapping.value);
   selectedTemplateName.value = name;
+  saveAsTemplate.value = false;
   return true;
+}
+
+/**
+ * 用当前列映射覆盖已选模板
+ */
+function updateSelectedTemplate() {
+  if (!selectedTemplateName.value) return;
+  const err = validateMappingStep(columnMapping.value, ctx.value);
+  if (err) {
+    window.alert(err);
+    return;
+  }
+  saveMappingTemplate(ctx.value, selectedTemplateName.value, columnMapping.value);
+  window.alert(`已更新模板「${selectedTemplateName.value}」`);
 }
 
 function removeTemplate() {
@@ -586,6 +621,7 @@ function removeTemplate() {
   deleteMappingTemplate(ctx.value, selectedTemplateName.value);
   selectedTemplateName.value = '';
   templateNameInput.value = '';
+  saveAsTemplate.value = false;
   window.alert('已删除映射模板');
 }
 
@@ -672,7 +708,7 @@ function retrySubmit() {
 }
 
 function goBackToAcceptance() {
-  router.push('/acceptance');
+  goBackAndCloseTab('/acceptance');
 }
 
 function cancelImport() {

@@ -2,7 +2,7 @@
   <FormModal
     v-if="open"
     title="新增换货"
-    confirm-text="换货"
+    confirm-text="确定"
     @close="emit('close')"
     @confirm="submit"
   >
@@ -53,11 +53,13 @@ const summaryText = computed(() => {
   return `${unit}：${props.row.copies || 0}，发订套数：${ordered}，已收货套数：${received}，待收货套数：${pending}`;
 });
 
-watch(() => props.open, open => {
+watch(() => [props.open, props.row], ([open, row]) => {
   if (!open) return;
-  form.exchangeQty = '';
-  form.exchangeReason = '';
-  form.remark = '';
+  form.exchangeQty = row?.defaultExchangeQty != null && row.defaultExchangeQty !== ''
+    ? String(row.defaultExchangeQty)
+    : '';
+  form.exchangeReason = row?.defaultExchangeReason || '';
+  form.remark = row?.defaultExchangeRemark || '';
 });
 
 function submit() {

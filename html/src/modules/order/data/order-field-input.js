@@ -72,6 +72,53 @@ export function validateOrderPrice(value) {
 }
 
 /**
+ * 校验定价：选填；若填写则须为有效数值且最多两位小数
+ * @param {string} value
+ * @returns {{ valid: boolean, message?: string }}
+ */
+export function validateOptionalOrderPrice(value) {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed) return { valid: true };
+  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) {
+    return { valid: false, message: '定价须为有效数值，最多两位小数' };
+  }
+  if (Number(trimmed) < 0) {
+    return { valid: false, message: '定价须为有效数值，最多两位小数' };
+  }
+  return { valid: true };
+}
+
+/** @constant {string} 加入订单勾选不一致时的提示文案 */
+export const JOIN_ORDER_SAME_TYPE_LANGUAGE_MESSAGE = '请勾选相同资源类型和语种的待发订订单';
+
+/**
+ * 是否为纸质书 · 外文订单（加入订单时币种与定价必填）
+ * @param {string} resourceType
+ * @param {string} language
+ * @returns {boolean}
+ */
+export function isForeignPaperBookOrder(resourceType, language) {
+  return resourceType === '纸质书' && language === '外文';
+}
+
+/**
+ * 校验已勾选订单是否具备相同资源类型与语种
+ * @param {Array<{ resourceType?: string, language?: string }>} orders
+ * @returns {{ valid: boolean, message?: string }}
+ */
+export function validateSelectedOrdersSameResourceAndLanguage(orders) {
+  if (orders.length <= 1) return { valid: true };
+  const first = orders[0];
+  const hasMismatch = orders.some(
+    order => order.resourceType !== first.resourceType || order.language !== first.language
+  );
+  if (hasMismatch) {
+    return { valid: false, message: JOIN_ORDER_SAME_TYPE_LANGUAGE_MESSAGE };
+  }
+  return { valid: true };
+}
+
+/**
  * 校验非负整数（≥ 0）
  * @param {string|number} value
  * @returns {boolean}

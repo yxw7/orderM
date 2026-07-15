@@ -1,9 +1,13 @@
 <template>
   <div class="page-panel">
     <nav class="flex items-center gap-2 mb-4 text-sm shrink-0">
-      <RouterLink to="/bib-query" class="flex items-center gap-1 text-gray-500 hover:text-sky-600">
+      <a
+        href="#"
+        class="flex items-center gap-1 text-gray-500 hover:text-sky-600"
+        @click.prevent="goBackAndCloseTab('/bib-query')"
+      >
         <span>&lsaquo;</span> 书目查询
-      </RouterLink>
+      </a>
       <span class="text-gray-400">/</span>
       <span class="text-gray-800">新建书目</span>
     </nav>
@@ -88,9 +92,12 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useBreadcrumbBack } from '@/composables/use-breadcrumb-back';
 import { bibDbOptions, marcTypeOptions, newBibRecentItems, cloneMarcFields } from '@/modules/order/data/new-bib';
 
 defineOptions({ name: 'NewBibView' });
+
+const { goBackAndCloseTab } = useBreadcrumbBack();
 
 const bibDb = ref('stl01');
 const marcType = ref('CNMARC|中文图书');

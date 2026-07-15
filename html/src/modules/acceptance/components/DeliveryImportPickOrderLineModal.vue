@@ -1,7 +1,7 @@
 <template>
   <div v-if="open" class="fixed inset-0 z-[120] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/40" @click="emit('close')" />
-    <div class="relative bg-white rounded border border-gray-200 shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+    <div class="relative bg-white rounded border border-gray-200 shadow-xl w-full max-w-[96vw] xl:max-w-7xl max-h-[85vh] flex flex-col">
       <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 shrink-0">
         <h3 class="text-base font-medium text-gray-800">选择订单行</h3>
         <button type="button" class="text-gray-400 hover:text-gray-600 text-xl leading-none" @click="emit('close')">&times;</button>
@@ -23,7 +23,7 @@
       </div>
 
       <div class="flex-1 overflow-auto px-5 py-3">
-        <table class="w-full text-sm">
+        <table class="w-full text-sm min-w-max">
           <thead class="bg-gray-50 sticky top-0">
             <tr>
               <th class="px-2 py-2 w-10" />
@@ -43,7 +43,7 @@
                 >
               </td>
               <td v-for="col in tableColumns" :key="col.key" class="px-2 py-2 text-gray-700 whitespace-nowrap">
-                {{ row[col.key] ?? '—' }}
+                {{ getDisplayValue(row, col.key) }}
               </td>
             </tr>
             <tr v-if="!filteredRows.length">
@@ -63,6 +63,11 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue';
+import {
+  PICK_ORDER_LINE_COLUMNS,
+  filterPickOrderLineRows,
+  formatPickOrderLineDisplayRow
+} from '../data/delivery-import.js';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -83,46 +88,20 @@ const selectedRows = ref([]);
 
 const searchFieldOptions = [
   { value: 'orderLine', label: '订单行号' },
+  { value: 'systemOrderNo', label: '订单号' },
   { value: 'title', label: '正题名' },
-  { value: 'isbn', label: 'ISBN' },
+  { value: 'resourceId', label: '资源标识' },
   { value: 'location', label: '馆址' }
 ];
 
-const tableColumns = computed(() => {
-  if (props.resourceType === '视听资料') {
-    return [
-      { key: 'orderLine', label: '订单行号' },
-      { key: 'location', label: '馆址' },
-      { key: 'title', label: '题名' },
-      { key: 'isbn', label: 'ISBN' },
-      { key: 'carrier', label: '载体' },
-      { key: 'pendingSets', label: '待收套数' },
-      { key: 'orderTime', label: '发订时间' }
-    ];
-  }
-  return [
-    { key: 'orderLine', label: '订单行号' },
-    { key: 'location', label: '馆址' },
-    { key: 'title', label: '正题名' },
-    { key: 'isbn', label: 'ISBN' },
-    { key: 'author', label: '作者' },
-    { key: 'pendingSets', label: '待收套数' },
-    { key: 'orderTime', label: '发订时间' }
-  ];
-});
+const tableColumns = PICK_ORDER_LINE_COLUMNS;
 
-const filteredRows = computed(() => {
-  const kw = appliedKeyword.value.trim().toLowerCase();
-  if (!kw) return props.rows;
-  const field = appliedField.value;
-  return props.rows.filter(row => {
-    const val = String(row[field] ?? '').toLowerCase();
-    if (field === 'isbn') {
-      return val.includes(kw) || String(row.isrc || '').toLowerCase().includes(kw);
-    }
-    return val.includes(kw);
-  });
-});
+const filteredRows = computed(() =>
+  filterPickOrderLineRows(props.rows, {
+    field: appliedField.value,
+    keyword: appliedKeyword.value
+  })
+);
 
 watch(() => props.open, val => {
   if (!val) return;
@@ -137,6 +116,15 @@ watch(() => props.open, val => {
 function applySearch() {
   appliedKeyword.value = keyword.value;
   appliedField.value = searchField.value;
+}
+
+/**
+ * @param {object} row
+ * @param {string} key
+ * @returns {string|number}
+ */
+function getDisplayValue(row, key) {
+  return formatPickOrderLineDisplayRow(row)[key] ?? '—';
 }
 
 /**

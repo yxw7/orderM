@@ -400,15 +400,24 @@ export const orderLineTabs = [
   { key: 'related', label: '相关订单行' },
   { key: 'acceptance', label: '验收记录' },
   { key: 'settlement', label: '结算记录' },
-  { key: 'items', label: '单件信息' },
+  { key: 'items', label: '单件' },
   { key: 'marc', label: 'MARC信息' }
 ];
 
-/** 订单行详情 Tab 列表；单件页签展示为「单件（N）」 */
-export function getOrderLineTabs(itemCount = 0) {
+/**
+ * 订单行详情 Tab 列表；可计数页签展示为「名称（N）」
+ * @param {{ related?: number, acceptance?: number, settlement?: number, items?: number }} [counts]
+ */
+export function getOrderLineTabs(counts = {}) {
+  const n = {
+    related: counts.related ?? 0,
+    acceptance: counts.acceptance ?? 0,
+    settlement: counts.settlement ?? 0,
+    items: counts.items ?? 0
+  };
   return orderLineTabs.map(tab =>
-    tab.key === 'items'
-      ? { ...tab, label: `单件（${itemCount}）` }
+    Object.prototype.hasOwnProperty.call(n, tab.key)
+      ? { ...tab, label: `${tab.label}（${n[tab.key]}）` }
       : tab
   );
 }

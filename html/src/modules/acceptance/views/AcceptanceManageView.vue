@@ -97,6 +97,12 @@
       @close="exportConfigOpen = false"
       @confirm="onExportConfigSave"
     />
+    <DeliveryImportCreateModal
+      :open="deliveryImportModalOpen"
+      :ctx="deliveryImportCtx"
+      @close="deliveryImportModalOpen = false"
+      @created="onDeliveryImportCreated"
+    />
   </div>
 </template>
 
@@ -109,6 +115,7 @@ import DropdownButton from '@/components/common/DropdownButton.vue';
 import AcceptanceFormModal from '@/modules/acceptance/components/AcceptanceFormModal.vue';
 import AcceptanceSettlementModal from '@/modules/acceptance/components/AcceptanceSettlementModal.vue';
 import AcceptanceExportConfigModal from '@/modules/acceptance/components/AcceptanceExportConfigModal.vue';
+import DeliveryImportCreateModal from '@/modules/acceptance/components/DeliveryImportCreateModal.vue';
 import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import { ACCEPTANCE_LIST_COLUMNS, ACCEPTANCE_LIST_EXPORT_FIELDS } from '@/modules/acceptance/constants';
 import {
@@ -136,6 +143,7 @@ const page = ref(1);
 const pageSize = ref(10);
 const settlementOpen = ref(false);
 const exportConfigOpen = ref(false);
+const deliveryImportModalOpen = ref(false);
 const formModal = reactive({ open: false, mode: 'add', row: null });
 
 const pagedRows = computed(() => {
@@ -154,6 +162,11 @@ const importTitle = computed(() => {
   if (selectedIds.value.length !== 1) return '请勾选一条未开始或进行中的验收单';
   if (!canImport.value) return '仅未开始或进行中的验收单可导入发货单';
   return '';
+});
+
+const deliveryImportCtx = computed(() => {
+  if (!selectedRow.value) return acceptanceStore.current || {};
+  return acceptanceFromRow(selectedRow.value);
 });
 
 onMounted(() => {
@@ -235,7 +248,14 @@ function goDeliveryImport() {
     return;
   }
   setCurrent(selectedRow.value, true);
-  router.push('/acceptance/delivery-import');
+  deliveryImportModalOpen.value = true;
+}
+
+/**
+ * 创建导入任务成功回调
+ */
+function onDeliveryImportCreated() {
+  deliveryImportModalOpen.value = false;
 }
 
 function openAdd() {

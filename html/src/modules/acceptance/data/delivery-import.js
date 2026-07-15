@@ -1,4 +1,4 @@
-import { getReceiveOrderRows, isChineseAcceptanceLang } from '@/modules/acceptance/data/receive-by-item';
+import { getReceiveOrderRows, isChineseAcceptanceLang, parseReceiveCounts } from '@/modules/acceptance/data/receive-by-item';
 
 /** @typedef {{ value: string, label: string, matchable?: boolean, required?: boolean }} StandardField */
 
@@ -8,6 +8,12 @@ export const DELIVERY_IMPORT_STEPS = [
   { step: 3, title: '选择匹配字段' },
   { step: 4, title: '匹配预览' },
   { step: 5, title: '确认提交' }
+];
+
+/** 创建向导步骤（异步任务架构，①～③ 配置 + ④ 创建任务） */
+export const DELIVERY_IMPORT_CREATE_STEPS = [
+  ...DELIVERY_IMPORT_STEPS.slice(0, 3),
+  { step: 4, title: '创建任务' }
 ];
 
 export const PREVIEW_MATCHING_DURATION_MS = 8000;
@@ -197,6 +203,66 @@ export function getActiveStandardFields(ctx) {
 }
 
 /**
+ * 根据导入向导列映射得到预览展示的标准字段（按文件列顺序，去重）
+ * @param {Record<string, string>} columnMapping 文件列 → 标准字段
+ * @param {{ type?: string, lang?: string }} ctx
+ * @param {string[]} [fileColumns] 上传文件列名顺序
+ * @returns {StandardField[]}
+ */
+export function getPreviewMappedColumns(columnMapping, ctx, fileColumns) {
+  const pool = getActiveStandardFields(ctx).filter(f => f.value);
+  const byValue = new Map(pool.map(f => [f.value, f]));
+  const seen = new Set();
+  /** @type {StandardField[]} */
+  const cols = [];
+
+  const orderedFileCols = fileColumns?.length
+    ? fileColumns
+    : Object.keys(columnMapping || {});
+
+  orderedFileCols.forEach(fileCol => {
+    const stdKey = columnMapping?.[fileCol];
+    if (!stdKey || seen.has(stdKey)) return;
+    const field = byValue.get(stdKey);
+    if (!field) return;
+    seen.add(stdKey);
+    cols.push(field);
+  });
+
+  Object.values(columnMapping || {}).forEach(stdKey => {
+    if (!stdKey || seen.has(stdKey)) return;
+    const field = byValue.get(stdKey);
+    if (!field) return;
+    seen.add(stdKey);
+    cols.push(field);
+  });
+
+  return cols;
+}
+
+/**
+ * 预览主表动态列（已映射字段，不含发货套数）
+ * @param {Record<string, string>} columnMapping
+ * @param {{ type?: string, lang?: string }} ctx
+ * @param {string[]} [fileColumns]
+ * @returns {StandardField[]}
+ */
+export function getPreviewDisplayColumns(columnMapping, ctx, fileColumns) {
+  return getPreviewMappedColumns(columnMapping, ctx, fileColumns).filter(f => f.value !== 'receiveQty');
+}
+
+/**
+ * 预览主表是否展示独立「发货套数」列
+ * @param {Record<string, string>} columnMapping
+ * @param {{ type?: string, lang?: string }} ctx
+ * @param {string[]} [fileColumns]
+ * @returns {boolean}
+ */
+export function getPreviewShowReceiveQtyColumn(columnMapping, ctx, fileColumns) {
+  return getPreviewMappedColumns(columnMapping, ctx, fileColumns).some(f => f.value === 'receiveQty');
+}
+
+/**
  * @param {string[]} fileColumns
  * @param {{ type?: string, lang?: string, supplier?: string, method?: string }} ctx
  * @returns {Record<string, string>}
@@ -317,6 +383,105 @@ export function deleteMappingTemplate(ctx, name) {
 
 /** spec §5.1：可参与匹配的订单行状态 */
 export const MATCHABLE_LINE_STATUSES = ['已发订', '处理中'];
+
+/** 选择订单行弹窗表格列（与 PRD 关联订单行列表字段对齐） */
+export const PICK_ORDER_LINE_COLUMNS = [
+  { key: 'systemOrderNo', label: '订单号' },
+  { key: 'location', label: '馆址' },
+  { key: 'orderLine', label: '订单行号' },
+  { key: 'title', label: '正题名' },
+  { key: 'resourceId', label: '资源标识' },
+  { key: 'carrier', label: '载体' },
+  { key: 'author', label: '作者' },
+  { key: 'publisher', label: '出版社' },
+  { key: 'pubYear', label: '出版时间' },
+  { key: 'price', label: '定价' },
+  { key: 'currency', label: '币种' },
+  { key: 'copiesInSet', label: '套内册数' },
+  { key: 'orderedSets', label: '套数' },
+  { key: 'lineStatus', label: '行状态' },
+  { key: 'acceptanceStatus', label: '验收状态' },
+  { key: 'counts', label: '发/收/换/退/撤订' }
+];
+
+/**
+ * 从订单行号解析系统订单号（如 st00120250921005-3 → st00120250921005）
+ * @param {string} orderLine
+ * @returns {string}
+ */
+export function parseSystemOrderNo(orderLine) {
+  const text = String(orderLine || '').trim();
+  if (!text) return '—';
+  const dashIndex = text.lastIndexOf('-');
+  return dashIndex > 0 ? text.slice(0, dashIndex) : text;
+}
+
+/**
+ * 构建订单行资源标识展示值
+ * @param {object} row
+ * @returns {string}
+ */
+export function buildOrderLineResourceId(row) {
+  const parts = [row.isbn, row.isrc, row.barcode, row.catalogNo]
+    .map(value => String(value || '').trim())
+    .filter(Boolean);
+  return parts.length ? parts.join(';') : '—';
+}
+
+/**
+ * @param {string|number|null|undefined} value
+ * @returns {string|number}
+ */
+function pickOrderLineDisplayValue(value) {
+  if (value === null || value === undefined || value === '') return '—';
+  return value;
+}
+
+/**
+ * 格式化选择订单行弹窗展示行
+ * @param {object} row 原始订单行
+ * @returns {object}
+ */
+export function formatPickOrderLineDisplayRow(row) {
+  const pendingSets = row.pendingSets ?? 0;
+  return {
+    ...row,
+    systemOrderNo: parseSystemOrderNo(row.orderLine),
+    resourceId: buildOrderLineResourceId(row),
+    pubYear: pickOrderLineDisplayValue(row.pubYear ?? row.publishYear ?? row.publishTime),
+    copiesInSet: pickOrderLineDisplayValue(row.copies ?? row.copiesInSet ?? row.piecesInSet),
+    lineStatus: row.lineStatus || '已发订',
+    acceptanceStatus: row.acceptanceStatus || (pendingSets > 0 ? '待收货' : '收货完成'),
+    carrier: pickOrderLineDisplayValue(row.carrier),
+    publisher: pickOrderLineDisplayValue(row.publisher),
+    author: pickOrderLineDisplayValue(row.author),
+    title: pickOrderLineDisplayValue(row.title),
+    price: pickOrderLineDisplayValue(row.price ?? row.actualPrice),
+    currency: pickOrderLineDisplayValue(row.currency),
+    orderedSets: pickOrderLineDisplayValue(row.orderedSets),
+    counts: row.counts || '0/0/0/0/0'
+  };
+}
+
+/**
+ * 检索选择订单行池
+ * @param {object[]} rows
+ * @param {{ field?: string, keyword?: string }} search
+ * @returns {object[]}
+ */
+export function filterPickOrderLineRows(rows, search) {
+  const keyword = (search.keyword || '').trim().toLowerCase();
+  if (!keyword) return rows;
+  const field = search.field || 'orderLine';
+  return rows.filter(row => {
+    const display = formatPickOrderLineDisplayRow(row);
+    if (field === 'resourceId') {
+      return String(display.resourceId).toLowerCase().includes(keyword);
+    }
+    const value = String(display[field] ?? row[field] ?? '').toLowerCase();
+    return value.includes(keyword);
+  });
+}
 
 /**
  * 全角转半角（spec §5.2 文本规范化）
@@ -715,6 +880,148 @@ export function validatePreviewStep(previewRows) {
 }
 
 /**
+ * 按验收单上下文查找实时订单行（不限待收，复用 spec §5.1 过滤条件）
+ * @param {object} ctx
+ * @param {string} orderLineNo
+ * @returns {object|null}
+ */
+function findLiveOrderLine(ctx, orderLineNo) {
+  return getReceiveOrderRows(ctx).find(row => {
+    if (row.orderLine !== orderLineNo) return false;
+    if (ctx?.supplier && row.supplier && row.supplier !== ctx.supplier) return false;
+    if (ctx?.method && row.method && row.method !== ctx.method) return false;
+    return true;
+  }) || null;
+}
+
+/**
+ * 获取实时订单行待收套数
+ * @param {object} liveLine
+ * @returns {number}
+ */
+function getLivePendingSets(liveLine) {
+  if (liveLine.pendingSets != null) return Number(liveLine.pendingSets) || 0;
+  return parseReceiveCounts(liveLine.counts).pending;
+}
+
+/**
+ * 将冲突列表格式化为人类可读错误（spec 2026-07-10 order-line-conflict §6.1）
+ * @param {object[]} conflicts
+ * @returns {string[]}
+ */
+export function formatLiveConflictMessages(conflicts) {
+  if (!conflicts?.length) return [];
+  const lines = conflicts.map(c => {
+    const loc = c.location && c.location !== '—' ? `（${c.location}）` : '';
+    const prefix = `第${c.shipmentRowNo}行 ${c.orderLineNo}${loc}：`;
+    switch (c.type) {
+      case 'not_found':
+        return `${prefix}订单行不存在或已不可收`;
+      case 'not_receivable':
+        return `${prefix}订单行状态已变更，不可收货`;
+      case 'no_pending':
+        return `${prefix}已被他人收完`;
+      case 'pending_insufficient':
+        return `${prefix}待收不足（快照待收 ${c.snapshotPending}，实时待收 ${c.livePending}，本次处置 ${c.disposalTotal}）`;
+      default:
+        return `${prefix}订单行冲突`;
+    }
+  });
+  return [`以下 ${conflicts.length} 条订单行存在冲突，本次提交已取消：`, ...lines];
+}
+
+/**
+ * 提交时实时订单行冲突校验（spec 2026-07-10 order-line-conflict §5）
+ * @param {object} ctx 验收单快照
+ * @param {object[]} shipmentLines 待提交发货主行
+ * @param {object[]} taskLines 任务全部发货行（用于序号）
+ * @param {{ simulateConflict?: boolean }} [options]
+ * @returns {{ conflicts: object[], errors: string[] }}
+ */
+export function validateLiveOrderLines(ctx, shipmentLines, taskLines, options = {}) {
+  const { simulateConflict = false } = options;
+  /** @type {object[]} */
+  const conflicts = [];
+  let conflictSimulated = false;
+
+  shipmentLines.forEach(row => {
+    const shipmentRowNo = Math.max((taskLines || []).findIndex(l => l.lineId === row.lineId) + 1, 1);
+
+    (row.children || []).forEach(child => {
+      const disposalTotal = getChildDispositionTotal(child);
+      if (disposalTotal <= 0) return;
+
+      const liveLine = findLiveOrderLine(ctx, child.lineNo);
+      let livePending = liveLine ? getLivePendingSets(liveLine) : null;
+
+      if (simulateConflict && !conflictSimulated) {
+        livePending = Math.max(0, disposalTotal - 1);
+        conflictSimulated = true;
+      }
+
+      if (!liveLine) {
+        conflicts.push({
+          shipmentLineId: row.lineId,
+          shipmentRowNo,
+          orderLineNo: child.lineNo,
+          location: child.location || '—',
+          type: 'not_found',
+          snapshotPending: child.pending ?? 0,
+          livePending: 0,
+          disposalTotal
+        });
+        return;
+      }
+
+      const lineStatus = liveLine.lineStatus || '已发订';
+      if (!MATCHABLE_LINE_STATUSES.includes(lineStatus)) {
+        conflicts.push({
+          shipmentLineId: row.lineId,
+          shipmentRowNo,
+          orderLineNo: child.lineNo,
+          location: child.location || liveLine.location || '—',
+          type: 'not_receivable',
+          snapshotPending: child.pending ?? 0,
+          livePending: livePending ?? getLivePendingSets(liveLine),
+          disposalTotal
+        });
+        return;
+      }
+
+      const resolvedLivePending = livePending ?? getLivePendingSets(liveLine);
+      if (resolvedLivePending <= 0) {
+        conflicts.push({
+          shipmentLineId: row.lineId,
+          shipmentRowNo,
+          orderLineNo: child.lineNo,
+          location: child.location || liveLine.location || '—',
+          type: 'no_pending',
+          snapshotPending: child.pending ?? 0,
+          livePending: resolvedLivePending,
+          disposalTotal
+        });
+        return;
+      }
+
+      if (disposalTotal > resolvedLivePending) {
+        conflicts.push({
+          shipmentLineId: row.lineId,
+          shipmentRowNo,
+          orderLineNo: child.lineNo,
+          location: child.location || liveLine.location || '—',
+          type: 'pending_insufficient',
+          snapshotPending: child.pending ?? 0,
+          livePending: resolvedLivePending,
+          disposalTotal
+        });
+      }
+    });
+  });
+
+  return { conflicts, errors: formatLiveConflictMessages(conflicts) };
+}
+
+/**
  * @param {object[]} previewRows
  * @param {'receive'|'exchange'|'return'} action
  * @returns {{ count: number, qty: number }}
@@ -756,6 +1063,95 @@ export function getMatchStatusDisplay(status) {
 }
 
 /**
+ * 将发货单已映射字段覆盖到订单行（用于逐条收货弹窗预填）
+ * @param {object} baseRow 订单行基准数据
+ * @param {Record<string, string|number>} shipmentFieldValues 发货主行 fieldValues
+ * @param {{ lang?: string }} ctx 验收单上下文
+ * @returns {object}
+ */
+function applyShipmentFieldsToReceiveRow(baseRow, shipmentFieldValues, ctx) {
+  const next = { ...baseRow };
+  const ship = shipmentFieldValues || {};
+  const isForeign = !isChineseAcceptanceLang(ctx?.lang);
+
+  /** @type {[string, string][]} */
+  const textFields = [
+    ['isbn', 'isbn'],
+    ['title', 'title'],
+    ['author', 'author'],
+    ['publisher', 'publisher'],
+    ['edition', 'edition'],
+    ['carrier', 'carrier'],
+    ['barcode', 'barcode'],
+    ['catalogNo', 'catalogNo'],
+    ['isrc', 'isrc'],
+    ['format', 'format'],
+    ['currency', 'currency']
+  ];
+  textFields.forEach(([shipKey, rowKey]) => {
+    const val = ship[shipKey];
+    if (val !== undefined && val !== null && val !== '') next[rowKey] = val;
+  });
+
+  if (ship.price !== undefined && ship.price !== null && ship.price !== '') {
+    if (isForeign) {
+      next.originalPrice = ship.price;
+    } else {
+      next.price = ship.price;
+      if (!next.actualPrice) next.actualPrice = ship.price;
+    }
+  }
+
+  const volCount = ship.volCount ?? ship.pieceCount;
+  if (volCount !== undefined && volCount !== null && volCount !== '') {
+    next.copies = volCount;
+  }
+
+  return next;
+}
+
+/**
+ * 构建导入任务子行对应的收货弹窗订单行（发货已映射字段优先）
+ * @param {Record<string, string|number>} shipmentFieldValues
+ * @param {object} child 馆址子行
+ * @param {{ lang?: string, type?: string }} ctx
+ * @returns {object}
+ */
+export function buildReceiveModalRowFromImportChild(shipmentFieldValues, child, ctx) {
+  const base = {
+    ...(child.orderLineData || {}),
+    orderLine: child.orderLineData?.orderLine || child.lineNo,
+    location: child.orderLineData?.location || child.location
+  };
+  const merged = applyShipmentFieldsToReceiveRow(base, shipmentFieldValues, ctx);
+  const defaultReceiveSets = Number(child.receive) || Number(child.allocated) || 0;
+  return {
+    ...merged,
+    defaultReceiveSets: defaultReceiveSets > 0 ? defaultReceiveSets : undefined
+  };
+}
+
+/**
+ * 构建导入任务子行对应的换货/退货弹窗订单行
+ * @param {object} child
+ * @returns {object}
+ */
+export function buildDispositionModalRowFromImportChild(child) {
+  const base = {
+    ...(child.orderLineData || {}),
+    orderLine: child.orderLineData?.orderLine || child.lineNo,
+    location: child.orderLineData?.location || child.location
+  };
+  return {
+    ...base,
+    defaultExchangeQty: child.exchange ?? '',
+    defaultExchangeReason: child.exchangeReason ?? '',
+    defaultReturnQty: child.ret ?? '',
+    defaultReturnReason: child.returnReason ?? ''
+  };
+}
+
+/**
  * @param {object[]} selectedLines
  * @param {number} shipQty
  * @param {string[]} mappedDisplayFields
@@ -773,11 +1169,13 @@ export function buildChildrenFromPickedLines(selectedLines, shipQty, mappedDispl
       pending: line.pendingSets ?? 0,
       allocated: alloc,
       fieldValues: buildOrderLineFieldValues(line, mappedDisplayFields),
+      orderLineData: { ...line },
       receive: alloc,
       exchange: 0,
       exchangeReason: '',
       ret: 0,
-      returnReason: ''
+      returnReason: '',
+      deleteSelected: false
     }));
 }
 

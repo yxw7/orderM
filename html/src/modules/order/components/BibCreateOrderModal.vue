@@ -12,16 +12,20 @@
       </label>
       <select v-model="form.subscriber" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
         <option value="">请选择</option>
-        <option v-for="opt in SUBSCRIBER_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
+        <option v-for="opt in subscriberOptions" :key="opt" :value="opt">{{ opt }}</option>
       </select>
     </div>
     <div class="flex items-start gap-3">
       <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
         <span class="text-red-500">*</span> 资源类型
       </label>
-      <select v-model="form.resourceType" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
-        <option value="">请选择</option>
-        <option v-for="opt in RESOURCE_TYPE_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
+      <select
+        v-model="form.resourceType"
+        class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-400"
+        :disabled="!form.subscriber"
+      >
+        <option value="">{{ form.subscriber ? '请选择' : '请先选择订户' }}</option>
+        <option v-for="opt in resourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
       </select>
     </div>
     <div class="flex items-start gap-3">
@@ -30,7 +34,7 @@
       </label>
       <select v-model="form.method" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
         <option value="">请选择</option>
-        <option v-for="opt in METHOD_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
+        <option v-for="opt in BIB_CREATE_ORDER_METHOD_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
       </select>
     </div>
     <div class="flex items-start gap-3">
@@ -40,10 +44,10 @@
       <select
         v-model="form.budget"
         class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500 disabled:bg-gray-100 disabled:text-gray-400"
-        :disabled="budgetOptional"
+        :disabled="budgetOptional || !form.subscriber"
       >
-        <option value="">请选择</option>
-        <option v-for="opt in BIB_CREATE_ORDER_BUDGET_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
+        <option value="">{{ budgetOptional ? '请选择' : (form.subscriber ? '请选择' : '请先选择订户') }}</option>
+        <option v-for="opt in budgetOptions" :key="opt" :value="opt">{{ opt }}</option>
       </select>
     </div>
     <div class="flex items-start gap-3">
@@ -100,16 +104,20 @@ import { computed, reactive, ref, watch } from 'vue';
 import FormModal from '@/modules/order/components/FormModal.vue';
 import SiteMultiSelect from '@/components/common/SiteMultiSelect.vue';
 import { useSiteSelectOptions } from '@/composables/use-site-options';
-import { resolveOrderFieldsFromMarcMapping } from '@/modules/order/data/bib';
+import { resolveLanguageFromMarcFormat } from '@/modules/marc-mapping/data/marc-mapping-manage';
 import {
-  SUBSCRIBER_OPTIONS,
-  RESOURCE_TYPE_OPTIONS,
-  METHOD_OPTIONS,
   LANGUAGE_OPTIONS,
-  BIB_CREATE_ORDER_BUDGET_OPTIONS,
   BIB_CREATE_ORDER_REQUIRED_FIELDS,
   isBudgetOptionalForMethod
 } from '@/modules/order/constants';
+import {
+  BIB_CREATE_ORDER_METHOD_OPTIONS,
+  getBibCreateOrderSubscriberOptions,
+  getBibCreateOrderResourceTypeOptions,
+  getBibCreateOrderBudgetOptions,
+  validateBibCreateOrderScopedFields
+} from '@/modules/order/data/bib-create-order-options';
+import { NO_ASSOCIATED_SUBSCRIBER_CREATE_ORDER_MESSAGE } from '@/modules/subscriber/data/current-librarian';
 import { loadCreateOrderFormCache, saveCreateOrderFormCache } from '@/modules/order/data/bib-order-form-cache';
 import { getSupplierOptionsByMethod, getSupplierDiscountByName, isSupplierValidForMethod } from '@/modules/order/data/supplier-sources';
 import { sanitizeDecimalInput, validateOrderDiscount } from '@/modules/order/data/order-field-input';
@@ -137,6 +145,15 @@ const form = reactive({
   discount: '',
   sites: []
 });
+
+/** @type {import('vue').ComputedRef<string[]>} */
+const subscriberOptions = computed(() => getBibCreateOrderSubscriberOptions());
+
+/** @type {import('vue').ComputedRef<string[]>} */
+const resourceTypeOptions = computed(() => getBibCreateOrderResourceTypeOptions(form.subscriber));
+
+/** @type {import('vue').ComputedRef<string[]>} */
+const budgetOptions = computed(() => getBibCreateOrderBudgetOptions(form.subscriber));
 
 /** @type {import('vue').ComputedRef<string[]>} */
 const supplierOptions = computed(() => getSupplierOptionsByMethod(form.method));
@@ -168,6 +185,9 @@ function restoreFromCache() {
   form.subscriber = cached.subscriber ?? '';
   form.resourceType = cached.resourceType ?? '';
   form.method = cached.method ?? '';
+  if (form.method && !BIB_CREATE_ORDER_METHOD_OPTIONS.includes(form.method)) {
+    form.method = '';
+  }
   form.budget = cached.budget ?? '';
   form.language = cached.language ?? '';
   form.supplier = cached.supplier ?? '';
@@ -180,7 +200,23 @@ function restoreFromCache() {
   if (isBudgetOptionalForMethod(form.method)) {
     form.budget = '';
   }
+  syncFieldsWithSubscriber();
   isRestoring.value = false;
+}
+
+/**
+ * 订户变更时，清空不再适用的资源类型与预算名称
+ */
+function syncFieldsWithSubscriber() {
+  if (form.subscriber && !subscriberOptions.value.includes(form.subscriber)) {
+    form.subscriber = '';
+  }
+  if (form.resourceType && !resourceTypeOptions.value.includes(form.resourceType)) {
+    form.resourceType = '';
+  }
+  if (form.budget && !budgetOptions.value.includes(form.budget)) {
+    form.budget = '';
+  }
 }
 
 /**
@@ -227,14 +263,18 @@ function persistCache() {
   });
 }
 
-function applyMarcMapping(bibRow) {
-  const mapped = resolveOrderFieldsFromMarcMapping(bibRow);
-  if (!mapped) return false;
-  form.resourceType = mapped.resourceType;
-  form.language = mapped.language;
-  return true;
+/**
+ * 按书目 MARC 格式预填语种（CNMARC→中文，否则→外文）
+ * @param {Record<string, unknown> | null} bibRow
+ */
+function applyMarcLanguageDefault(bibRow) {
+  const language = resolveLanguageFromMarcFormat(bibRow);
+  if (language && LANGUAGE_OPTIONS.includes(language)) {
+    form.language = language;
+  }
 }
 
+watch(() => form.subscriber, syncFieldsWithSubscriber);
 watch(() => form.method, syncSupplierWithMethod);
 watch(() => form.supplier, syncDiscountWithSupplier);
 
@@ -246,8 +286,13 @@ watch(
       if (wasOpen) persistCache();
       return;
     }
+    if (!subscriberOptions.value.length) {
+      window.alert(NO_ASSOCIATED_SUBSCRIBER_CREATE_ORDER_MESSAGE);
+      emit('close');
+      return;
+    }
     restoreFromCache();
-    if (bibRow) applyMarcMapping(bibRow);
+    if (bibRow) applyMarcLanguageDefault(bibRow);
     siteError.value = '';
   }
 );
@@ -263,6 +308,12 @@ function buildOrderId(now, index) {
 }
 
 function submit() {
+  const scopedResult = validateBibCreateOrderScopedFields(form);
+  if (!scopedResult.valid) {
+    window.alert(scopedResult.message);
+    return;
+  }
+
   const requiredFields = BIB_CREATE_ORDER_REQUIRED_FIELDS.filter(
     field => field.key !== 'budget' || !budgetOptional.value
   );

@@ -1,12 +1,15 @@
 <template>
   <div :class="embedded ? '' : 'page-panel'">
     <nav v-if="!embedded" class="flex items-center gap-2 mb-4 text-sm shrink-0">
-      <RouterLink to="/acceptance" class="flex items-center gap-1 text-gray-500 hover:text-sky-600">
+      <a
+        href="#"
+        class="flex items-center gap-1 text-gray-500 hover:text-sky-600"
+        @click.prevent="goBackToAcceptance"
+      >
         <span>&lsaquo;</span> 验收单管理
-      </RouterLink>
+      </a>
       <span class="text-gray-400">/</span>
-      <span class="text-gray-800">验收详情</span>
-      <span class="text-gray-800 font-medium">{{ header.acceptanceId }}</span>
+      <span class="text-gray-800 font-medium">验收详情</span>
     </nav>
 
     <div class="bg-white rounded border border-gray-200 px-5 py-3 mb-4 shrink-0">
@@ -124,6 +127,7 @@ import {
   formatSpeciesReason
 } from '@/modules/acceptance/data/detail-utils';
 import { useAcceptanceStore } from '@/modules/acceptance/stores/acceptance';
+import { useBreadcrumbBack } from '@/composables/use-breadcrumb-back';
 
 defineOptions({ name: 'AcceptanceDetailView' });
 
@@ -135,6 +139,7 @@ const props = defineProps({
 const route = useRoute();
 const router = useRouter();
 const acceptanceStore = useAcceptanceStore();
+const { goBackAndCloseTab } = useBreadcrumbBack();
 
 const viewMode = ref(route.query.view === 'volume' ? 'volume' : 'species');
 const search = ref({});
@@ -357,5 +362,12 @@ function onExport(item) {
 function onExportConfigSave(fields) {
   exportConfigOpen.value = false;
   window.alert(`导出配置已保存（${fields.length} 个字段）`);
+}
+
+/**
+ * 面包屑返回验收单管理：关闭当前标签页并跳转
+ */
+function goBackToAcceptance() {
+  goBackAndCloseTab('/acceptance');
 }
 </script>

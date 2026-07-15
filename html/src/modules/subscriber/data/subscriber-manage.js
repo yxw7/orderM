@@ -59,7 +59,17 @@ const subscriberRowsRaw = [
   { name: '特藏部', siteId: 'site-4', types: ['纸质书'], budgets: ['2025古籍采购', '2025中国嘉德'], barcodeTypes: ['地方文献'], status: 'active', created: '2025-01-12', remark: '', hasLibrarian: true },
   { name: '流通部', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京新华'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-11', remark: '', hasLibrarian: true },
   { name: '东馆采编', siteId: 'site-2', types: ['纸质书'], budgets: ['2025北京人天', '2025北京新华'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-10', remark: '', hasLibrarian: true },
-  { name: '西馆采编', siteId: 'site-1', types: ['纸质书'], budgets: ['2025CNPIEC'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-09', remark: '', hasLibrarian: true }
+  { name: '西馆采编', siteId: 'site-1', types: ['纸质书'], budgets: ['2025CNPIEC'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-09', remark: '', hasLibrarian: true },
+  {
+    name: 'ceshi', siteId: 'site-1', types: ['纸质书', '视听资料'],
+    budgets: [
+      '2024年首都图书馆图书购置费中文普通图书(一)',
+      '2024年首都图书馆图书购置费中文普通图书(二)',
+      '2024年首都图书馆图书购置费中文普通图书(三)',
+      '2024年首都图书馆视听资料购置费'
+    ],
+    barcodeTypes: ['中文成人普通'], status: 'active', created: '2026-06-17', remark: '', hasLibrarian: true
+  }
 ];
 
 export const subscriberRows = subscriberRowsRaw.map((row, index) => ({

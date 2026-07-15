@@ -18,6 +18,7 @@ import { buildNewOrderRow, buildBibCreateOrderRow, renumberOrderRows } from '@/m
 import { issueOrder as performIssueOrder } from '@/modules/order/data/order-issue';
 import { applyOrderImport } from '@/modules/order/data/order-import';
 import { deletePendingOrder } from '@/modules/order/data/order-delete';
+import { BATCH_DEDUP_MAX_COUNT } from '@/modules/order/constants';
 
 export const useOrderStore = defineStore('order', {
   state: () => ({
@@ -109,6 +110,11 @@ export const useOrderStore = defineStore('order', {
     openBatchDedupModal(selectedIds) {
       const selected = this.lines.filter(r => selectedIds.includes(r.id));
       if (!selected.length) return;
+
+      if (selected.length > BATCH_DEDUP_MAX_COUNT) {
+        window.alert(`批量查重最多支持 ${BATCH_DEDUP_MAX_COUNT} 条订单行`);
+        return;
+      }
 
       const eligible = selected.filter(r => canDedupOrderLine(r, this.orders));
       if (eligible.length !== selected.length) {

@@ -1,9 +1,13 @@
 <template>
   <div class="page-panel">
     <nav class="flex items-center gap-2 mb-4 text-sm shrink-0">
-      <RouterLink to="/bib-query" class="flex items-center gap-1 text-gray-500 hover:text-sky-600">
+      <a
+        href="#"
+        class="flex items-center gap-1 text-gray-500 hover:text-sky-600"
+        @click.prevent="goBackAndCloseTab('/bib-query')"
+      >
         <span>&lsaquo;</span> 书目查询
-      </RouterLink>
+      </a>
       <span class="text-gray-400">/</span>
       <span class="text-gray-800">查Z3950 <span class="text-gray-600">（{{ serverLabel }}）</span></span>
     </nav>
@@ -56,10 +60,13 @@
 <script setup>
 import { computed, ref } from 'vue';
 import DataTable from '@/components/common/DataTable.vue';
+import { useBreadcrumbBack } from '@/composables/use-breadcrumb-back';
 import { appConfig } from '@/config/app-config';
 import { z3950Rows, z3950Columns, z3950FieldTypes } from '@/modules/order/data/z3950';
 
 defineOptions({ name: 'Z3950QueryView' });
+
+const { goBackAndCloseTab } = useBreadcrumbBack();
 
 const allRows = ref([...z3950Rows]);
 const filteredRows = ref([...z3950Rows]);

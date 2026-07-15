@@ -14,9 +14,19 @@ export const acceptanceRoutes = [
   },
   {
     path: 'acceptance/delivery-import',
-    name: 'delivery-import',
-    component: () => import('@/modules/acceptance/views/DeliveryImportView.vue'),
-    meta: { title: '导入发货单', module: 'acceptance' }
+    redirect: '/acceptance/delivery-import/tasks'
+  },
+  {
+    path: 'acceptance/delivery-import/tasks',
+    name: 'delivery-import-tasks',
+    component: () => import('@/modules/acceptance/views/DeliveryImportTaskListView.vue'),
+    meta: { title: '导入任务', module: 'acceptance' }
+  },
+  {
+    path: 'acceptance/delivery-import/tasks/:id',
+    name: 'delivery-import-task-detail',
+    component: () => import('@/modules/acceptance/views/DeliveryImportTaskDetailView.vue'),
+    meta: { title: '导入任务详情', module: 'acceptance' }
   },
   {
     path: 'receive',

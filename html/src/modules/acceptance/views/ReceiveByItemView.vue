@@ -126,6 +126,7 @@
       :open="paperReceiveOpen"
       :row="selectedRow"
       :acceptance-lang="current?.lang || '中文'"
+      :needs-barcode-allocation="needsBarcodeAllocationEnabled"
       @close="paperReceiveOpen = false"
       @preview="onBarcodePreview"
       @confirm="onPaperReceive"
@@ -179,8 +180,10 @@ import {
   RECEIVE_CARRIER_OPTIONS,
   calcBarcodePreview,
   filterReceiveRows,
-  getReceiveOrderRows
+  getReceiveOrderRows,
+  needsBarcodeAllocation
 } from '@/modules/acceptance/data/receive-by-item';
+import { createAcceptanceRows } from '@/modules/acceptance/data/acceptance-list';
 
 defineOptions({ name: 'ReceiveByItemView' });
 
@@ -209,6 +212,14 @@ const barcodePreview = ref({ allocated: '', unallocated: '无' });
 const carrierOptions = RECEIVE_CARRIER_OPTIONS.filter(Boolean);
 
 const isAvType = computed(() => current.value?.type === '视听资料');
+
+const needsBarcodeAllocationEnabled = computed(() => {
+  const cur = current.value;
+  if (!cur) return false;
+  if (cur.autoBarcode != null || cur.barcode) return needsBarcodeAllocation(cur);
+  const row = createAcceptanceRows().find(item => item.acceptanceId === cur.id);
+  return needsBarcodeAllocation(row || cur);
+});
 
 const searchFieldOptions = computed(() => {
   const type = current.value?.type;

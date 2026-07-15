@@ -1,9 +1,13 @@
 <template>
   <div class="page-panel page-panel--scroll">
     <nav class="flex items-center gap-2 mb-4 text-sm shrink-0">
-      <RouterLink to="/settled" class="flex items-center gap-1 text-gray-500 hover:text-sky-600">
+      <a
+        href="#"
+        class="flex items-center gap-1 text-gray-500 hover:text-sky-600"
+        @click.prevent="goBackAndCloseTab('/settled')"
+      >
         <span>&lsaquo;</span> 已结算
-      </RouterLink>
+      </a>
       <span class="text-gray-400">/</span>
       <span class="text-gray-800">结算详情</span>
       <span class="text-gray-800 font-medium">{{ detail.settleId }}</span>
@@ -58,6 +62,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { useBreadcrumbBack } from '@/composables/use-breadcrumb-back';
 import {
   SETTLEMENT_DETAIL_ITEM_COLUMNS,
   getSettlementDetail,
@@ -67,6 +72,7 @@ import {
 defineOptions({ name: 'SettlementDetailView' });
 
 const route = useRoute();
+const { goBackAndCloseTab } = useBreadcrumbBack();
 const settleId = computed(() => route.params.settleId || '');
 const listRow = computed(() => settledRows.find(row => row.settleId === settleId.value) || null);
 const detail = computed(() => getSettlementDetail(settleId.value, listRow.value));

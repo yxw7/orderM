@@ -118,17 +118,165 @@ export function filterReceiveRows(rows, search, resourceType) {
 }
 
 export function calcBarcodePreview(barcodeStart, receiveSets, volumesPerSet) {
-  const total = receiveSets * volumesPerSet;
-  if (!barcodeStart || total <= 0) return { allocated: '', unallocated: '无' };
-  const match = String(barcodeStart).trim().match(/^(.+?)(\d+)$/);
-  if (!match) return { allocated: barcodeStart, unallocated: '无' };
-  const prefix = match[1];
-  const start = Number(match[2]);
-  const padLength = match[2].length;
-  const end = start + total - 1;
-  const fmt = n => `${prefix}${String(n).padStart(padLength, '0')}`;
-  const allocated = total === 1 ? fmt(start) : `${fmt(start)}-${fmt(end)}`;
-  return { allocated, unallocated: '无' };
+  const result = calcBarcodeAllocation(barcodeStart, receiveSets, volumesPerSet);
+  return {
+    allocated: result.allocatedRanges.join('\n') || '',
+    unallocated: result.unallocatedText || '无'
+  };
+}
+
+/**
+ * 解析条码数字后缀
+ * @param {string} code
+ * @returns {{ prefix: string, num: number, padLength: number, raw: string }|null}
+ */
+function parseBarcodeNumber(code) {
+  const match = String(code ?? '').trim().match(/^(.+?)(\d+)$/);
+  if (!match) return null;
+  return {
+    prefix: match[1],
+    num: Number(match[2]),
+    padLength: match[2].length,
+    raw: String(code).trim()
+  };
+}
+
+/**
+ * 格式化条码数字
+ * @param {{ prefix: string, num: number, padLength: number }} item
+ * @returns {string}
+ */
+function formatBarcodeNumber(item) {
+  return `${item.prefix}${String(item.num).padStart(item.padLength, '0')}`;
+}
+
+/**
+ * 将连续条码合并为区间展示
+ * @param {string[]} barcodes
+ * @returns {string[]}
+ */
+function groupConsecutiveBarcodes(barcodes) {
+  if (!barcodes.length) return [];
+  const parsed = barcodes.map(parseBarcodeNumber);
+  if (parsed.some(item => !item)) return [...barcodes];
+
+  /** @type {string[]} */
+  const ranges = [];
+  /** @type {typeof parsed[0]} */
+  let rangeStart = parsed[0];
+  /** @type {typeof parsed[0]} */
+  let rangeEnd = parsed[0];
+
+  for (let i = 1; i < parsed.length; i += 1) {
+    const cur = parsed[i];
+    if (
+      cur.prefix === rangeEnd.prefix
+      && cur.padLength === rangeEnd.padLength
+      && cur.num === rangeEnd.num + 1
+    ) {
+      rangeEnd = cur;
+    } else {
+      ranges.push(
+        rangeStart.num === rangeEnd.num
+          ? rangeStart.raw
+          : `${formatBarcodeNumber(rangeStart)} - ${formatBarcodeNumber(rangeEnd)}`
+      );
+      rangeStart = cur;
+      rangeEnd = cur;
+    }
+  }
+
+  ranges.push(
+    rangeStart.num === rangeEnd.num
+      ? rangeStart.raw
+      : `${formatBarcodeNumber(rangeStart)} - ${formatBarcodeNumber(rangeEnd)}`
+  );
+  return ranges;
+}
+
+/**
+ * 计算收货条码分配结果
+ * @param {string} barcodeStart 条码初始号
+ * @param {number} receiveSets 收货套数
+ * @param {number} volumesPerSet 套内册数
+ * @param {{ simulateGaps?: boolean }} [options]
+ * @returns {{
+ *   displayType: 'single'|'continuous'|'discontinuous',
+ *   allocatedRanges: string[],
+ *   unallocated: string[],
+ *   unallocatedText: string,
+ *   hasEmpty: boolean
+ * }}
+ */
+export function calcBarcodeAllocation(barcodeStart, receiveSets, volumesPerSet, options = {}) {
+  const emptyResult = {
+    displayType: 'single',
+    allocatedRanges: [],
+    unallocated: [],
+    unallocatedText: '',
+    hasEmpty: false
+  };
+
+  const total = Number(receiveSets) * Number(volumesPerSet);
+  if (!barcodeStart || total <= 0) return emptyResult;
+
+  const startParsed = parseBarcodeNumber(barcodeStart);
+  if (!startParsed) {
+    return {
+      displayType: 'single',
+      allocatedRanges: [String(barcodeStart).trim()],
+      unallocated: [],
+      unallocatedText: '',
+      hasEmpty: false
+    };
+  }
+
+  /** @type {boolean[]} */
+  const allocatedFlags = Array.from({ length: total }, () => true);
+  const simulateGaps = options.simulateGaps ?? total >= 18;
+  if (simulateGaps && total >= 18) {
+    allocatedFlags[15] = false;
+    allocatedFlags[17] = false;
+  }
+
+  /** @type {string[]} */
+  const allBarcodes = allocatedFlags.map((_, index) =>
+    formatBarcodeNumber({
+      prefix: startParsed.prefix,
+      num: startParsed.num + index,
+      padLength: startParsed.padLength
+    })
+  );
+
+  const allocated = allBarcodes.filter((_, index) => allocatedFlags[index]);
+  const unallocated = allBarcodes.filter((_, index) => !allocatedFlags[index]);
+  const allocatedRanges = groupConsecutiveBarcodes(allocated);
+  const hasEmpty = unallocated.length > 0;
+
+  let displayType = /** @type {'single'|'continuous'|'discontinuous'} */ ('single');
+  if (allocated.length > 1) {
+    displayType = !hasEmpty && allocatedRanges.length === 1 ? 'continuous' : 'discontinuous';
+  }
+
+  return {
+    displayType,
+    allocatedRanges,
+    unallocated,
+    unallocatedText: unallocated.join('、'),
+    hasEmpty
+  };
+}
+
+/**
+ * 当前验收批次是否需要分配条码号
+ * @param {{ id?: string, autoBarcode?: boolean, barcode?: string }|null|undefined} acceptance
+ * @returns {boolean}
+ */
+export function needsBarcodeAllocation(acceptance) {
+  if (!acceptance) return false;
+  if (acceptance.autoBarcode != null) return !!acceptance.autoBarcode;
+  if (acceptance.barcode === '是') return true;
+  return false;
 }
 
 export const EXCHANGE_REASON_OPTIONS = ['换货', '残缺损'];

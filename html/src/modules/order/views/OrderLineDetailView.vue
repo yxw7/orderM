@@ -167,7 +167,6 @@ const acceptanceRecords = computed(() =>
 
 const itemColumns = computed(() => getOrderLineItemColumns());
 const itemRows = computed(() => getOrderLineItems(row.value));
-const detailTabs = computed(() => getOrderLineTabs(itemRows.value.length));
 const pagedItemRows = computed(() => {
   const start = (itemPage.value - 1) * itemPageSize.value;
   return itemRows.value.slice(start, start + itemPageSize.value);
@@ -176,6 +175,15 @@ const pagedItemRows = computed(() => {
 const settlementColumns = computed(() => getOrderLineSettlementColumns());
 const settlementRecords = computed(() =>
   getOrderLineSettlementRecords(row.value, relatedLines.value)
+);
+
+const detailTabs = computed(() =>
+  getOrderLineTabs({
+    related: relatedLines.value.length,
+    acceptance: acceptanceRecords.value.length,
+    settlement: settlementRecords.value.length,
+    items: itemRows.value.length
+  })
 );
 
 const marcRecordNos = computed(() => getOrderLineMarcRecordNos(row.value));
