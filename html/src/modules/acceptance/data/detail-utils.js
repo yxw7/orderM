@@ -34,6 +34,20 @@ export function updateSpeciesCounts(row, patch) {
   row.reason = formatSpeciesReason(row);
 }
 
+/** 按种明细「收 / 换 / 退」套数全量累计 */
+export function sumSpeciesSetStats(rows) {
+  return (rows || []).reduce(
+    (acc, row) => {
+      const c = parseSpeciesCounts(row);
+      acc.received += c.received;
+      acc.exchanged += c.exchange;
+      acc.returned += c.returned;
+      return acc;
+    },
+    { received: 0, exchanged: 0, returned: 0 }
+  );
+}
+
 export function isSpeciesReasonDisabled(row) {
   const counts = parseSpeciesCounts(row);
   return counts.ordered === counts.received;

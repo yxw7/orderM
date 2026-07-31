@@ -18,6 +18,7 @@ import { buildNewOrderRow, buildBibCreateOrderRow, renumberOrderRows } from '@/m
 import { issueOrder as performIssueOrder } from '@/modules/order/data/order-issue';
 import { applyOrderImport } from '@/modules/order/data/order-import';
 import { deletePendingOrder } from '@/modules/order/data/order-delete';
+import { buildOrderLineChangeSupplierResult } from '@/modules/order/data/order-line-change-supplier';
 import { BATCH_DEDUP_MAX_COUNT } from '@/modules/order/constants';
 
 export const useOrderStore = defineStore('order', {
@@ -88,6 +89,32 @@ export const useOrderStore = defineStore('order', {
     updateLine(lineNo, patch) {
       const target = this.lines.find(l => l.orderLineNo === lineNo);
       if (target) Object.assign(target, patch);
+    },
+
+    /**
+     * 批量应用订单行补丁（催缺撤订/更换供应商）
+     * @param {Object[]} patches
+     */
+    applyLinePatches(patches = []) {
+      patches.forEach(patch => {
+        if (!patch?.orderLineNo) return;
+        const { orderLineNo, ...rest } = patch;
+        this.updateLine(orderLineNo, rest);
+      });
+    },
+
+    /**
+     * 新增订单及订单行（催缺更换供应商）
+     * @param {Object} order
+     * @param {Object[]} lines
+     */
+    addOrderWithLines(order, lines = []) {
+      if (!order) return;
+      this.orders.unshift(order);
+      renumberOrderRows(this.orders);
+      lines.forEach(line => {
+        this.lines.unshift(line);
+      });
     },
 
     openDedupModal(lineNos) {
@@ -220,6 +247,43 @@ export const useOrderStore = defineStore('order', {
       this.orders = result.orders;
       this.lines = result.lines;
       return true;
+    },
+
+    /**
+     * 订单行列表更换供应商：迁出未收货套数并生成待发订新订单
+     * @param {string[]} lineIds - 列表行 id
+     * @param {{ orderName: string, supplier: string, budget: string, remark?: string }} form
+     * @returns {{ ok: boolean, message?: string, newOrderId?: string }}
+     */
+    changeSupplierGenerateOrder(lineIds, form) {
+      const selectedLines = this.lines.filter(line => lineIds.includes(line.id));
+      if (!selectedLines.length) {
+        return { ok: false, message: '请先勾选订单行' };
+      }
+
+      const sourceOrder = this.orders.find(order => order.orderId === selectedLines[0].orderId);
+      if (!sourceOrder) {
+        return { ok: false, message: '未找到原订单' };
+      }
+
+      const result = buildOrderLineChangeSupplierResult({
+        sourceOrder,
+        selectedLines,
+        form,
+        existingOrders: this.orders
+      });
+      if (!result.ok) {
+        return { ok: false, message: result.message };
+      }
+
+      this.applyLinePatches(result.patches);
+      this.addOrderWithLines(result.newOrder, result.newLines);
+
+      return {
+        ok: true,
+        message: `已生成新订单 ${result.newOrder.orderId}，原行未收货已按更换供应商撤订`,
+        newOrderId: result.newOrder.orderId
+      };
     },
 
     /**

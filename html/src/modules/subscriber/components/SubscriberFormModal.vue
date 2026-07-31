@@ -16,15 +16,14 @@
           </div>
         </div>
         <div class="flex items-start gap-3">
-          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0"><span class="text-red-500">*</span> 所属馆</label>
+          <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">所属馆</label>
           <div class="flex-1">
-            <select v-model="form.siteId"
-              class="w-full border rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500"
-              :class="errors.siteId ? 'border-red-500' : 'border-gray-300'">
-              <option value="">请选择</option>
-              <option v-for="site in activeSites" :key="site.id" :value="site.id">{{ site.name }}</option>
-            </select>
-            <p v-if="errors.siteId" class="text-red-500 text-xs mt-1">{{ errors.siteId }}</p>
+            <SearchableSingleSelect
+              v-model="form.branchId"
+              :options="branchOptions"
+              placeholder="请选择"
+              :error="errors.branchId"
+            />
           </div>
         </div>
         <div class="flex items-start gap-3">
@@ -64,9 +63,12 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
+import SearchableSingleSelect from '@/components/common/SearchableSingleSelect.vue';
 import SiteMultiSelect from '@/components/common/SiteMultiSelect.vue';
-import { useSiteSelectOptions } from '@/composables/use-site-options';
+import { formatBranchLabel } from '@/modules/location/data/location-manage';
+import { useLocationStore } from '@/modules/location/stores/location';
 import {
   BARCODE_TYPE_OPTIONS,
   BUDGET_OPTIONS,
@@ -82,12 +84,33 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'confirm']);
 
-const { activeSites } = useSiteSelectOptions();
+const locationStore = useLocationStore();
+locationStore.ensureInitialized();
+const { activeBranchSelectOptions, branchRows } = storeToRefs(locationStore);
+
 const form = ref(createEmptyForm());
 const errors = ref({});
 
+/** 使用中分馆；编辑时若当前分馆已停用仍保留可选 */
+const branchOptions = computed(() => {
+  const options = [...activeBranchSelectOptions.value];
+  const currentId = form.value.branchId;
+  if (!currentId || options.some(opt => opt.value === currentId)) return options;
+  const current = branchRows.value.find(row => row.id === currentId);
+  if (!current) return options;
+  return [
+    {
+      value: current.id,
+      label: formatBranchLabel(current),
+      code: current.code,
+      name: current.name
+    },
+    ...options
+  ];
+});
+
 function createEmptyForm() {
-  return { name: '', siteId: '', types: [], budgets: [], barcodeTypes: [], remark: '' };
+  return { name: '', branchId: '', types: [], budgets: [], barcodeTypes: [], remark: '' };
 }
 
 watch(() => props.open, open => {
@@ -96,7 +119,7 @@ watch(() => props.open, open => {
   if (props.mode === 'edit' && props.row) {
     form.value = {
       name: props.row.name,
-      siteId: props.row.siteId || '',
+      branchId: props.row.branchId || '',
       types: [...(props.row.types || [])],
       budgets: [...(props.row.budgets || [])],
       barcodeTypes: [...(props.row.barcodeTypes || [])],
@@ -110,7 +133,6 @@ watch(() => props.open, open => {
 function validate() {
   const next = {};
   const name = form.value.name.trim();
-  if (!form.value.siteId) next.siteId = '请选择';
   if (!name) next.name = '请输入';
   else if (name.length > 50) next.name = '已超字符限制';
   else if (props.existingNames.includes(name) && (props.mode !== 'edit' || props.row?.name !== name)) {
@@ -128,7 +150,7 @@ function submit() {
   if (!validate()) return;
   emit('confirm', {
     name: form.value.name.trim(),
-    siteId: form.value.siteId,
+    branchId: form.value.branchId,
     types: [...form.value.types],
     budgets: [...form.value.budgets],
     barcodeTypes: [...form.value.barcodeTypes],

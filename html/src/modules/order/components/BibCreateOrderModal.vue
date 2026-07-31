@@ -8,6 +8,19 @@
   >
     <div class="flex items-start gap-3">
       <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
+        <span class="text-red-500">*</span> 订单名称
+      </label>
+      <input
+        v-model="form.orderName"
+        type="text"
+        :maxlength="ORDER_NAME_MAX_LENGTH"
+        placeholder="请输入，50字符以内"
+        autocomplete="off"
+        class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
+      >
+    </div>
+    <div class="flex items-start gap-3">
+      <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0">
         <span class="text-red-500">*</span> 订户
       </label>
       <select v-model="form.subscriber" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
@@ -110,6 +123,7 @@ import {
   BIB_CREATE_ORDER_REQUIRED_FIELDS,
   isBudgetOptionalForMethod
 } from '@/modules/order/constants';
+import { ORDER_NAME_MAX_LENGTH } from '@/modules/order/data/order-create';
 import {
   BIB_CREATE_ORDER_METHOD_OPTIONS,
   getBibCreateOrderSubscriberOptions,
@@ -136,6 +150,7 @@ const siteError = ref('');
 const isRestoring = ref(false);
 
 const form = reactive({
+  orderName: '',
   subscriber: '',
   resourceType: '',
   method: '',
@@ -162,6 +177,7 @@ const supplierOptions = computed(() => getSupplierOptionsByMethod(form.method));
 const budgetOptional = computed(() => isBudgetOptionalForMethod(form.method));
 
 function resetForm() {
+  form.orderName = '';
   form.subscriber = '';
   form.resourceType = '';
   form.method = '';
@@ -182,6 +198,7 @@ function restoreFromCache() {
     return;
   }
 
+  form.orderName = cached.orderName ?? '';
   form.subscriber = cached.subscriber ?? '';
   form.resourceType = cached.resourceType ?? '';
   form.method = cached.method ?? '';
@@ -252,6 +269,7 @@ function onDiscountInput(event) {
 
 function persistCache() {
   saveCreateOrderFormCache({
+    orderName: form.orderName,
     subscriber: form.subscriber,
     resourceType: form.resourceType,
     method: form.method,
@@ -308,6 +326,16 @@ function buildOrderId(now, index) {
 }
 
 function submit() {
+  const orderName = String(form.orderName || '').trim();
+  if (!orderName) {
+    window.alert('请输入订单名称');
+    return;
+  }
+  if (orderName.length > ORDER_NAME_MAX_LENGTH) {
+    window.alert(`订单名称不能超过${ORDER_NAME_MAX_LENGTH}个字符`);
+    return;
+  }
+
   const scopedResult = validateBibCreateOrderScopedFields(form);
   if (!scopedResult.valid) {
     window.alert(scopedResult.message);
@@ -315,7 +343,7 @@ function submit() {
   }
 
   const requiredFields = BIB_CREATE_ORDER_REQUIRED_FIELDS.filter(
-    field => field.key !== 'budget' || !budgetOptional.value
+    field => field.key !== 'orderName' && (field.key !== 'budget' || !budgetOptional.value)
   );
   const missing = requiredFields.find(field => !String(form[field.key] ?? '').trim());
   if (missing) {
@@ -339,6 +367,7 @@ function submit() {
   persistCache();
   emit('confirm', {
     ...form,
+    orderName,
     orderIds,
     bibRow: props.bibRow
   });

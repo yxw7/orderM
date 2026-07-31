@@ -47,11 +47,12 @@
           </div>
 
           <div class="border border-gray-200 rounded overflow-x-auto max-h-56 overflow-y-auto">
-            <table class="w-full text-sm min-w-[1380px]">
+            <table class="w-full text-sm min-w-[1540px]">
               <thead class="bg-gray-50 border-b sticky top-0 z-10">
                 <tr>
                   <th class="px-3 py-2 w-10" />
                   <th class="px-3 py-2 text-left text-gray-600">订单号</th>
+                  <th class="px-3 py-2 text-left text-gray-600 min-w-[140px]">订单名称</th>
                   <th class="px-3 py-2 text-left text-gray-600">订户</th>
                   <th class="px-3 py-2 text-left text-gray-600">馆址</th>
                   <th class="bib-join-order-col-method px-3 py-2 text-left text-gray-600">采选方式</th>
@@ -66,7 +67,7 @@
               </thead>
               <tbody class="divide-y">
                 <tr v-if="!displayOrders.length">
-                  <td colspan="12" class="px-3 py-8 text-center text-gray-400">{{ emptyText }}</td>
+                  <td colspan="13" class="px-3 py-8 text-center text-gray-400">{{ emptyText }}</td>
                 </tr>
                 <tr
                   v-for="order in displayOrders"
@@ -79,6 +80,7 @@
                     <input type="checkbox" class="rounded text-sky-600" :checked="selectedIds.has(order.orderId)" @change="toggleOrder(order.orderId)">
                   </td>
                   <td class="px-3 py-2 whitespace-nowrap">{{ order.orderId }}</td>
+                  <td class="px-3 py-2 max-w-[180px] truncate" :title="order.orderName">{{ order.orderName || '—' }}</td>
                   <td class="px-3 py-2">{{ order.subscriber }}</td>
                   <td class="px-3 py-2">{{ order.site }}</td>
                   <td class="bib-join-order-col-method px-3 py-2 whitespace-nowrap">{{ order.method }}</td>

@@ -40,7 +40,7 @@
       row-id-key="id"
       v-model:page="page"
       v-model:page-size="pageSize"
-      :page-sizes="[5, 10, 20]"
+      :page-sizes="[10, 20, 50, 100]"
       unit="个项目"
       empty-text="未检索到结果"
     >
@@ -191,7 +191,7 @@ const activeTab = ref('site');
 const search = ref({});
 const filteredRows = ref([]);
 const page = ref(1);
-const pageSize = ref(5);
+const pageSize = ref(10);
 const selectedKeys = ref([]);
 
 const formMode = ref('add');

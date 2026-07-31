@@ -106,6 +106,15 @@
                 class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500"
               >
             </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0 w-20">馆址</label>
+              <select
+                v-model="model.site"
+                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500"
+              >
+                <option v-for="opt in siteOptions" :key="opt" :value="opt">{{ opt }}</option>
+              </select>
+            </div>
           </div>
 
           <div v-show="expanded" class="grid grid-cols-3 gap-4">
@@ -118,6 +127,27 @@
                 <option v-for="opt in dedupFilterOptions" :key="opt" :value="opt">{{ opt }}</option>
               </select>
             </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0 w-20">供应商</label>
+              <SearchableSingleSelect
+                v-model="model.supplier"
+                class="flex-1 min-w-0"
+                :options="supplierSelectOptions"
+                placeholder="请选择"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0 w-20">预算</label>
+              <SearchableSingleSelect
+                v-model="model.budget"
+                class="flex-1 min-w-0"
+                :options="budgetSelectOptions"
+                placeholder="请选择"
+              />
+            </div>
+          </div>
+
+          <div v-show="expanded" class="grid grid-cols-3 gap-4">
             <div class="flex items-center gap-2">
               <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0 w-20">订单重复</label>
               <select
@@ -156,9 +186,13 @@ import { computed, ref } from 'vue';
 import {
   ORDER_LINE_CRITERION_FIELDS,
   ORDER_LINE_DEDUP_FILTER_OPTIONS,
-  ORDER_LINE_LOGIC_OPTIONS
+  ORDER_LINE_LOGIC_OPTIONS,
+  getOrderLineSearchBudgetOptions,
+  getOrderLineSearchSupplierOptions
 } from '@/modules/order/data/order-line-filter';
 import SearchExpandToggle from '@/components/common/SearchExpandToggle.vue';
+import SearchableSingleSelect from '@/components/common/SearchableSingleSelect.vue';
+import { useSiteSelectOptions } from '@/composables/use-site-options';
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -193,6 +227,17 @@ const emit = defineEmits(['update:modelValue', 'search', 'reset']);
 const expanded = ref(false);
 const criterionFields = ORDER_LINE_CRITERION_FIELDS;
 const logicOptions = ORDER_LINE_LOGIC_OPTIONS;
+
+const { activeSiteFilterOptions } = useSiteSelectOptions();
+const siteOptions = activeSiteFilterOptions;
+
+const supplierSelectOptions = computed(() =>
+  getOrderLineSearchSupplierOptions().map(name => ({ value: name, label: name }))
+);
+
+const budgetSelectOptions = computed(() =>
+  getOrderLineSearchBudgetOptions().map(name => ({ value: name, label: name }))
+);
 
 const model = computed({
   get: () => props.modelValue,

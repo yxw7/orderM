@@ -87,6 +87,16 @@ export function isImportableAcceptance(row) {
 }
 
 /**
+ * 按验收单号取共享源数据（实时状态）
+ * @param {string} acceptanceId
+ * @returns {object|null}
+ */
+export function findAcceptanceById(acceptanceId) {
+  if (!acceptanceId) return null;
+  return BASE_ROWS.find(r => r.acceptanceId === acceptanceId) || null;
+}
+
+/**
  * 导入发货单成功后，将未开始验收单标记为进行中
  * @param {string} acceptanceId
  * @returns {boolean} 是否发生状态变更

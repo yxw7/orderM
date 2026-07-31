@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import { nextTick, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -47,24 +47,45 @@ const props = defineProps({
       unallocatedText: '',
       hasEmpty: false
     })
-  }
+  },
+  /** >0 时自动「已知晓」并关闭（毫秒） */
+  autoCloseMs: { type: Number, default: 0 }
 });
 
 const emit = defineEmits(['acknowledge']);
 
 /** @type {import('vue').Ref<HTMLButtonElement|null>} */
 const ackButtonRef = ref(null);
+/** @type {ReturnType<typeof setTimeout>|null} */
+let autoCloseTimer = null;
+
+function clearAutoClose() {
+  if (autoCloseTimer != null) {
+    clearTimeout(autoCloseTimer);
+    autoCloseTimer = null;
+  }
+}
+
+function onAcknowledge() {
+  clearAutoClose();
+  emit('acknowledge');
+}
 
 watch(
   () => props.open,
   async open => {
+    clearAutoClose();
     if (!open) return;
     await nextTick();
     ackButtonRef.value?.focus();
+    if (props.autoCloseMs > 0) {
+      autoCloseTimer = setTimeout(() => {
+        autoCloseTimer = null;
+        emit('acknowledge');
+      }, props.autoCloseMs);
+    }
   }
 );
 
-function onAcknowledge() {
-  emit('acknowledge');
-}
+onBeforeUnmount(clearAutoClose);
 </script>

@@ -39,7 +39,7 @@
       :page-sizes="[10, 20, 50]"
     >
       <template #cell-shortageId="{ row }">
-        <button type="button" class="text-sky-600 hover:underline whitespace-nowrap" @click="openDetail(row)">{{ row.shortageId }}</button>
+        <button type="button" class="text-sky-600 hover:underline whitespace-nowrap" @click="goDetail(row)">{{ row.shortageId }}</button>
       </template>
       <template #cell-orderId="{ row }">
         <button type="button" class="text-sky-600 hover:underline whitespace-nowrap" @click="goOrder(row)">{{ row.orderId }}</button>
@@ -71,11 +71,6 @@
       @close="supplierModalOpen = false"
       @confirm="submitSupplier"
     />
-    <ShortageDetailModal
-      :open="detailOpen"
-      :row="detailRow"
-      @close="detailOpen = false"
-    />
   </div>
 </template>
 
@@ -89,7 +84,6 @@ import DropdownButton from '@/components/common/DropdownButton.vue';
 import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import ShortageCancelModal from '@/modules/acceptance/components/ShortageCancelModal.vue';
 import ShortageChangeSupplierModal from '@/modules/acceptance/components/ShortageChangeSupplierModal.vue';
-import ShortageDetailModal from '@/modules/acceptance/components/ShortageDetailModal.vue';
 import { useSiteSelectOptions } from '@/composables/use-site-options';
 import {
   SHORTAGE_COLUMNS,
@@ -115,8 +109,6 @@ const page = ref(1);
 const pageSize = ref(20);
 const cancelModalOpen = ref(false);
 const supplierModalOpen = ref(false);
-const detailOpen = ref(false);
-const detailRow = ref(null);
 const actionTargetIds = ref([]);
 
 const exportItems = [{ label: '导出配置' }, { label: '导出清单' }];
@@ -146,8 +138,10 @@ function resetSearch() {
 function openGeneratedDetailFromQuery() {
   const shortageId = route.query.shortageId;
   if (!shortageId) return;
-  const row = shortageStore.findByShortageId(String(shortageId));
-  if (row) openDetail(row);
+  router.replace({
+    name: 'shortage-detail',
+    params: { shortageId: String(shortageId) }
+  });
 }
 
 onMounted(() => {
@@ -183,30 +177,28 @@ function openSupplierModal(row) {
 }
 
 function submitCancel(reason) {
-  shortageStore.rows.forEach(row => {
-    if (actionTargetIds.value.includes(row.id) && hasShortageActions(row)) {
-      row.status = 'done';
-      row.actions = false;
-      row.remark = true;
-      row.remarkText = `撤订原因：${reason}`;
-    }
-  });
+  const result = shortageStore.cancelShortage(actionTargetIds.value, reason);
   cancelModalOpen.value = false;
   actionTargetIds.value = [];
   selectedIds.value = [];
   filterRows();
-  window.alert('撤订成功');
+  window.alert(result.message);
 }
 
-function submitSupplier() {
+function submitSupplier(form) {
+  const result = shortageStore.changeSupplier(actionTargetIds.value, form);
   supplierModalOpen.value = false;
   actionTargetIds.value = [];
-  window.alert('生成新订单成功');
+  selectedIds.value = [];
+  filterRows();
+  window.alert(result.message);
 }
 
-function openDetail(row) {
-  detailRow.value = row;
-  detailOpen.value = true;
+function goDetail(row) {
+  router.push({
+    name: 'shortage-detail',
+    params: { shortageId: row.shortageId }
+  });
 }
 
 function goOrder(row) {

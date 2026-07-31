@@ -7,6 +7,7 @@ export const ORDER_LIST_COLUMNS = [
   { key: 'subscriber', label: '订户', minWidth: 'min-w-[120px]', pin: 'left' },
   { key: 'site', label: '馆址', minWidth: 'min-w-[100px]', pin: 'left' },
   { key: 'orderId', label: '订单号', pin: 'left' },
+  { key: 'orderName', label: '订单名称', minWidth: 'min-w-[160px]' },
   { key: 'method', label: '采选方式' },
   { key: 'resourceType', label: '资源类型' },
   { key: 'language', label: '语种' },
@@ -31,6 +32,7 @@ export const ORDER_LINE_COLUMNS = [
   { key: 'orderId', label: '订单号', pin: 'left' },
   { key: 'site', label: '馆址', pin: 'left' },
   { key: 'orderLineNo', label: '订单行号', pin: 'left' },
+  { key: 'orderName', label: '订单名称', minWidth: 'min-w-[160px]' },
   { key: 'bibRecordNo', label: '书目记录号' },
   { key: 'title', label: '正题名', minWidth: 'min-w-[140px]' },
   { key: 'resourceId', label: '资源标识' },
@@ -44,6 +46,8 @@ export const ORDER_LINE_COLUMNS = [
   { key: 'currency', label: '币种' },
   { key: 'copiesInSet', label: '套内册数' },
   { key: 'sets', label: '套数' },
+  { key: 'supplier', label: '供应商', minWidth: 'min-w-[140px]' },
+  { key: 'budget', label: '预算', minWidth: 'min-w-[180px]' },
   { key: 'lineStatus', label: '行状态' },
   { key: 'acceptanceStatus', label: '验收状态', format: v => v || '—' },
   { key: 'settlementStatus', label: '结算状态' },
@@ -100,6 +104,7 @@ export const BIB_CREATE_ORDER_SUPPLIER_OPTIONS = [
 ];
 
 export const BIB_CREATE_ORDER_REQUIRED_FIELDS = [
+  { key: 'orderName', label: '订单名称' },
   { key: 'subscriber', label: '订户' },
   { key: 'resourceType', label: '资源类型' },
   { key: 'method', label: '采选方式' },

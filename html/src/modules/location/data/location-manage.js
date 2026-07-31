@@ -26,14 +26,23 @@ export const LEVEL4_COLLECTION_CODES = [
 ];
 
 export const LEVEL4_BRANCH_CODES = [
-  'STD01', 'STE01', 'STG01', 'STK01', 'STB01', 'STC01', 'STD02', 'STE02', 'STF01', 'STH01'
+  'ST001', 'STD01', 'STE01', 'STEK1', 'STES1', 'STG01', 'STK01', 'STS01', 'STF01',
+  'ST029',
+  'ST002', 'ST003', 'ST004', 'ST005', 'ST006', 'ST007', 'ST008', 'ST009', 'ST010',
+  'ST011', 'ST012', 'ST013', 'ST014', 'ST015', 'ST018', 'ST019', 'ST020', 'ST021',
+  'ST024', 'ST025', 'ST026', 'ST030', 'ST031', 'ST032', 'ST033', 'ST034', 'ST044', 'ST047',
+  'STB01', 'STC01', 'STD02', 'STE02', 'STH01'
 ];
 
 export const SITE_BRANCH_PREFIXES = {
-  'site-1': ['STD', 'STE'],
-  'site-2': ['STG'],
-  'site-3': ['STK'],
-  'site-4': ['STB', 'STC']
+  'site-1': ['ST001', 'STD', 'STE', 'STG', 'STK', 'STS', 'STF'],
+  'site-2': ['ST029'],
+  'site-3': ['STB', 'STC'],
+  'site-4': [
+    'ST002', 'ST003', 'ST004', 'ST005', 'ST006', 'ST007', 'ST008', 'ST009', 'ST010',
+    'ST011', 'ST012', 'ST013', 'ST014', 'ST015', 'ST018', 'ST019', 'ST020', 'ST021',
+    'ST024', 'ST025', 'ST026', 'ST030', 'ST031', 'ST032', 'ST033', 'ST034', 'ST044', 'ST047'
+  ]
 };
 
 export const SITE_IMPORT_HEADERS = ['馆址编码', '馆址名称', '状态', '备注'];
@@ -51,10 +60,44 @@ export const initialSiteRows = [
 ];
 
 export const initialBranchRows = [
+  { id: 'branch-6', siteId: 'site-1', code: 'ST001', name: '首都图书馆', status: 'active', remark: '' },
   { id: 'branch-1', siteId: 'site-1', code: 'STD01', name: '首图地方文献', status: 'active', remark: '' },
   { id: 'branch-2', siteId: 'site-1', code: 'STE01', name: '市少儿图书馆', status: 'active', remark: '' },
-  { id: 'branch-3', siteId: 'site-2', code: 'STG01', name: '首图古籍', status: 'active', remark: '' },
-  { id: 'branch-4', siteId: 'site-3', code: 'STK01', name: '首图期刊分馆', status: 'active', remark: '' },
+  { id: 'branch-7', siteId: 'site-1', code: 'STEK1', name: '市少儿图书馆期刊分馆', status: 'active', remark: '' },
+  { id: 'branch-8', siteId: 'site-1', code: 'STES1', name: '市少儿图书馆视听分馆', status: 'active', remark: '' },
+  { id: 'branch-3', siteId: 'site-1', code: 'STG01', name: '首图古籍', status: 'active', remark: '' },
+  { id: 'branch-4', siteId: 'site-1', code: 'STK01', name: '首图期刊分馆', status: 'active', remark: '' },
+  { id: 'branch-9', siteId: 'site-1', code: 'STS01', name: '首图视听中心', status: 'active', remark: '' },
+  { id: 'branch-10', siteId: 'site-2', code: 'ST029', name: '首图大兴机场分馆', status: 'active', remark: '' },
+  { id: 'branch-11', siteId: 'site-1', code: 'STF01', name: '首图非遗文献分馆', status: 'active', remark: '' },
+  { id: 'branch-12', siteId: 'site-4', code: 'ST002', name: '首都图书馆月坛分馆', status: 'active', remark: '' },
+  { id: 'branch-13', siteId: 'site-4', code: 'ST003', name: '首都图书馆北工大分馆', status: 'active', remark: '' },
+  { id: 'branch-14', siteId: 'site-4', code: 'ST004', name: '首都图书馆东四分馆', status: 'active', remark: '' },
+  { id: 'branch-15', siteId: 'site-4', code: 'ST005', name: '首都图书馆小堡分馆', status: 'active', remark: '' },
+  { id: 'branch-16', siteId: 'site-4', code: 'ST006', name: '首都图书馆前门分馆', status: 'active', remark: '' },
+  { id: 'branch-17', siteId: 'site-4', code: 'ST007', name: '首都图书馆南邵分馆', status: 'active', remark: '' },
+  { id: 'branch-18', siteId: 'site-4', code: 'ST008', name: '首都图书馆东花市分馆', status: 'active', remark: '' },
+  { id: 'branch-19', siteId: 'site-4', code: 'ST009', name: '首都图书馆西长安街分馆', status: 'active', remark: '' },
+  { id: 'branch-20', siteId: 'site-4', code: 'ST010', name: '首都图书馆六里屯分馆', status: 'active', remark: '' },
+  { id: 'branch-21', siteId: 'site-4', code: 'ST011', name: '首都图书馆堡头分馆', status: 'active', remark: '' },
+  { id: 'branch-22', siteId: 'site-4', code: 'ST012', name: '首都图书馆首都机场分馆', status: 'active', remark: '' },
+  { id: 'branch-23', siteId: 'site-4', code: 'ST013', name: '首都图书馆西三旗分馆', status: 'active', remark: '' },
+  { id: 'branch-24', siteId: 'site-4', code: 'ST014', name: '首都图书馆社区活动', status: 'active', remark: '' },
+  { id: 'branch-25', siteId: 'site-4', code: 'ST015', name: '首都图书馆市财政局分馆', status: 'active', remark: '' },
+  { id: 'branch-26', siteId: 'site-4', code: 'ST018', name: '首都图书馆市人大分馆', status: 'active', remark: '' },
+  { id: 'branch-27', siteId: 'site-4', code: 'ST019', name: '亦庄开发区图书馆', status: 'active', remark: '' },
+  { id: 'branch-28', siteId: 'site-4', code: 'ST020', name: '北京市国际艺术学校分馆', status: 'active', remark: '' },
+  { id: 'branch-29', siteId: 'site-4', code: 'ST021', name: '国家图书馆', status: 'active', remark: '' },
+  { id: 'branch-30', siteId: 'site-4', code: 'ST024', name: '老干部局（怀柔）分馆', status: 'active', remark: '' },
+  { id: 'branch-31', siteId: 'site-4', code: 'ST025', name: '老干部局（东直门）分馆', status: 'active', remark: '' },
+  { id: 'branch-32', siteId: 'site-4', code: 'ST026', name: '首图耿丹学院分馆', status: 'active', remark: '' },
+  { id: 'branch-33', siteId: 'site-4', code: 'ST030', name: '首都图书馆酷车小镇分馆', status: 'active', remark: '' },
+  { id: 'branch-34', siteId: 'site-4', code: 'ST031', name: '首都图书馆天通苑分馆', status: 'active', remark: '' },
+  { id: 'branch-35', siteId: 'site-4', code: 'ST032', name: '首都图书馆体育分馆', status: 'active', remark: '' },
+  { id: 'branch-36', siteId: 'site-4', code: 'ST033', name: '首都图书馆南航分馆', status: 'active', remark: '' },
+  { id: 'branch-37', siteId: 'site-4', code: 'ST034', name: '首都图书馆火箭军分馆', status: 'active', remark: '' },
+  { id: 'branch-38', siteId: 'site-4', code: 'ST044', name: '首图北京政务中心分馆', status: 'active', remark: '' },
+  { id: 'branch-39', siteId: 'site-4', code: 'ST047', name: '首都图书馆沐林分馆', status: 'active', remark: '' },
   { id: 'branch-5', siteId: 'site-5', code: '', name: '测试停用分馆', status: 'inactive', remark: '' }
 ];
 
@@ -192,6 +235,28 @@ export function getActiveBranchesBySiteId(branchRows, siteId) {
   return branchRows
     .filter(row => row.siteId === siteId && row.status === 'active')
     .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+}
+
+export function getActiveBranches(branchRows) {
+  return [...branchRows]
+    .filter(row => row.status === 'active' && row.code)
+    .sort((a, b) => a.code.localeCompare(b.code, 'zh-CN'));
+}
+
+/** 分馆下拉展示：分馆编码 | 分馆名称 */
+export function formatBranchLabel(branch) {
+  if (!branch) return '';
+  if (!branch.code) return branch.name || '';
+  return `${branch.code} | ${branch.name}`;
+}
+
+export function buildBranchSelectOptions(branchRows) {
+  return getActiveBranches(branchRows).map(branch => ({
+    value: branch.id,
+    label: formatBranchLabel(branch),
+    code: branch.code,
+    name: branch.name
+  }));
 }
 
 export function isValidLevel4SiteCode(code) {

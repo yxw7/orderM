@@ -13,6 +13,7 @@ export const appConfig = {
     '/bib-query/new-bib': '/bib-query',
     '/acceptance/delivery-import': '/acceptance/delivery-import/tasks',
     '/acceptance/detail': '/acceptance',
+    '/shortage/detail': '/shortage',
     '/orders/line': '/orders',
     '/orders/lines': '/orders',
     '/settled/detail': '/settled',
@@ -35,7 +36,6 @@ export const appConfig = {
       expanded: true,
       children: [
         { label: '验收单管理', route: '/acceptance' },
-        { label: '导入任务', route: '/acceptance/delivery-import/tasks' },
         { label: '逐条收货', route: '/receive' },
         { label: '批量验收', route: '/batch-acceptance' },
         { label: '换货管理', route: '/exchange' },
@@ -94,6 +94,7 @@ export const routeTitleMap = {
   '/exchange': '换货管理',
   '/return': '退货管理',
   '/shortage': '催缺管理',
+  '/shortage/detail': '催缺详情',
   '/pending-settlement': '待结算',
   '/settled': '已结算',
   '/settled/detail': '结算详情',
@@ -119,6 +120,7 @@ export const routeTitleMap = {
 export function getRouteTitle(path) {
   if (routeTitleMap[path]) return routeTitleMap[path];
   if (path.startsWith('/acceptance/detail/')) return '验收详情';
+  if (path.startsWith('/shortage/detail/')) return '催缺详情';
   if (path.startsWith('/acceptance/delivery-import/tasks/')) return '导入任务详情';
   if (path.startsWith('/orders/line/')) return '订单行详情';
   if (path.startsWith('/settled/detail/')) return '结算详情';

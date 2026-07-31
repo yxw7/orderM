@@ -13,30 +13,100 @@ export const DEDUP_FIELD_LABELS = {
   limitedNo: '限量编号'
 };
 
+const PAPER_BOOK_DEDUP_FIELDS = [
+  { value: 'title', label: '题名' },
+  { value: 'resourceId', label: '资源标识' },
+  { value: 'author', label: '作者' },
+  { value: 'publisher', label: '出版社' },
+  { value: 'publishTime', label: '出版年' }
+];
+
+/** 查重可选字段：按资源类型 + 语种分类 */
 export const DEDUP_FIELDS_BY_RESOURCE_TYPE = {
-  纸质书: [
-    { value: 'title', label: '题名' },
-    { value: 'resourceId', label: '资源标识' },
-    { value: 'author', label: '作者' },
-    { value: 'publisher', label: '出版社' },
-    { value: 'publishTime', label: '出版年' },
-    { value: 'textLanguage', label: '语种' }
-  ],
-  视听资料: [
-    { value: 'title', label: '题名' },
-    { value: 'resourceId', label: '资源标识' },
-    { value: 'carrier', label: '载体' },
-    { value: 'productBarcode', label: '商品条码' },
-    { value: 'catalogNo', label: '目录号' },
-    { value: 'limitedNo', label: '限量编号' },
-    { value: 'publisher', label: '出版社' }
-  ]
+  纸质书: {
+    中文: PAPER_BOOK_DEDUP_FIELDS,
+    外文: PAPER_BOOK_DEDUP_FIELDS
+  },
+  视听资料: {
+    中文: [
+      { value: 'title', label: '题名' },
+      { value: 'carrier', label: '载体' }
+    ],
+    外文: [
+      { value: 'productBarcode', label: '商品条码' },
+      { value: 'catalogNo', label: '目录号' }
+    ]
+  }
 };
 
 export const DEDUP_DEFAULT_FIELDS = {
   纸质书: { 中文: ['resourceId'], 外文: ['resourceId'] },
   视听资料: { 中文: ['title', 'carrier'], 外文: ['productBarcode', 'catalogNo'] }
 };
+
+/**
+ * 获取查重配置可选字段
+ * @param {string} resourceType
+ * @param {string} languageCategory
+ * @returns {{ value: string, label: string }[]}
+ */
+export function getDedupFields(resourceType, languageCategory) {
+  const byType = DEDUP_FIELDS_BY_RESOURCE_TYPE[resourceType] || DEDUP_FIELDS_BY_RESOURCE_TYPE['纸质书'];
+  return byType[languageCategory] || byType['中文'] || [];
+}
+
+/**
+ * 查重范围预设：分馆编码前缀通配符（产品写死）
+ * value 为提交用模式；label 为复选展示文案
+ */
+export const DEDUP_BRANCH_PATTERNS = [
+  { value: 'ST*', label: 'ST* | 首都图书馆' },
+  { value: 'CP*', label: 'CP* | 昌平区图书馆' },
+  { value: 'CY*', label: 'CY* | 朝阳区图书馆' },
+  { value: 'DC*', label: 'DC* | 东城区图书馆' },
+  { value: 'CW*', label: 'CW* | 东城区图书馆' },
+  { value: 'DX*', label: 'DX* | 大兴区图书馆' },
+  { value: 'FS*', label: 'FS* | 房山区图书馆' },
+  { value: 'YS*', label: 'YS* | 燕山区图书馆' },
+  { value: 'FT*', label: 'FT* | 丰台区图书馆' },
+  { value: 'HD*', label: 'HD* | 海淀区图书馆' },
+  { value: 'HR*', label: 'HR* | 怀柔区图书馆' },
+  { value: 'MT*', label: 'MT* | 门头沟区图书馆' },
+  { value: 'MY*', label: 'MY* | 密云区图书馆' },
+  { value: 'PG*', label: 'PG* | 平谷区图书馆' },
+  { value: 'SJ*', label: 'SJ* | 石景山区图书馆' },
+  { value: 'SY*', label: 'SY* | 顺义区图书馆' },
+  { value: 'TZ*', label: 'TZ* | 通州区图书馆' },
+  { value: 'XC*', label: 'XC* | 西城区图书馆' },
+  { value: 'XW*', label: 'XW* | 西城区图书馆' },
+  { value: 'YQ*', label: 'YQ* | 延庆区图书馆' }
+];
+
+/**
+ * 前缀通配符是否匹配分馆编码（忽略大小写）
+ * @param {string} pattern - 如 ST*
+ * @param {string} branchCode
+ * @returns {boolean}
+ */
+export function matchesBranchPattern(pattern, branchCode) {
+  const code = String(branchCode || '').trim().toLowerCase();
+  const raw = String(pattern || '').trim();
+  if (!code || !raw) return false;
+  if (!raw.endsWith('*')) return code === raw.toLowerCase();
+  const prefix = raw.slice(0, -1).toLowerCase();
+  return code.startsWith(prefix);
+}
+
+/**
+ * 分馆编码是否命中任一已选通配符（空列表视为不限 / 全部命中）
+ * @param {string} branchCode
+ * @param {string[]} patterns
+ * @returns {boolean}
+ */
+export function isBranchInDedupScope(branchCode, patterns) {
+  if (!Array.isArray(patterns) || !patterns.length) return true;
+  return patterns.some(pattern => matchesBranchPattern(pattern, branchCode));
+}
 
 /** 馆藏查重结果书目卡片字段（按资源类型 + 语种） */
 export const HOLDING_BIB_CARD_FIELDS = {
@@ -175,6 +245,26 @@ export function filterHoldingDedupMarcFields(marcFields, languageCategory) {
   );
 }
 
+/**
+ * 构造馆藏查重单件示例行
+ * @param {Object} patch - 单件字段覆盖
+ * @returns {Object}
+ */
+function createHoldingDedupItem(patch = {}) {
+  return {
+    barcode: '',
+    callNo: '',
+    ownerLibrary: '首都图书馆',
+    homeLocation: '',
+    currentLibrary: '首都图书馆',
+    currentLocation: '',
+    circulationType: '001-成人外借',
+    volumeDesc: '',
+    checkInTime: '2024-06-15 10:20:00',
+    ...patch
+  };
+}
+
 export const HOLDING_DEDUP_CATALOG = [
   {
     bibRecordNo: 'BIB2024002001', standardNo: '9787040456789', isbn: '978-7-04-045678-9', title: '中国现代史纲要',
@@ -209,6 +299,57 @@ export const HOLDING_DEDUP_CATALOG = [
       }
     ],
     unassignedCopyCount: 2,
+    physicalItems: [
+      createHoldingDedupItem({
+        barcode: 'ST2024002001',
+        callNo: 'K25/1',
+        homeLocation: '首少.少儿中文库本库',
+        currentLocation: '首少.少儿中文库本库',
+        circulationType: '002-少儿外借'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002002',
+        callNo: 'K25/1',
+        homeLocation: '生态书库',
+        currentLocation: '生态书库'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002003',
+        callNo: 'K25/1',
+        homeLocation: '集体外借部',
+        currentLocation: '集体外借部'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002004',
+        callNo: 'K25/1',
+        homeLocation: '少儿外借部（新库）',
+        currentLocation: '少儿外借部（新库）',
+        circulationType: '002-少儿外借'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002005',
+        callNo: 'K25/1',
+        homeLocation: '少儿外借部（新库）',
+        currentLocation: '少儿外借部（新库）',
+        circulationType: '002-少儿外借'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002006',
+        callNo: 'K25/1',
+        homeLocation: '',
+        currentLibrary: '',
+        currentLocation: '',
+        checkInTime: '2024-06-18 09:00:00'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002007',
+        callNo: 'K25/1',
+        homeLocation: '',
+        currentLibrary: '',
+        currentLocation: '',
+        checkInTime: '2024-06-18 09:05:00'
+      })
+    ],
     marcFields: [
       { field: '010', indicator: '', content: '▼a978-7-04-045678-9' },
       { field: '200', indicator: '1 ', content: '▼a中国现代史纲要▼f王顺生著' },
@@ -233,7 +374,40 @@ export const HOLDING_DEDUP_CATALOG = [
         ]
       }
     ],
-    unassignedCopyCount: 1
+    unassignedCopyCount: 1,
+    physicalItems: [
+      createHoldingDedupItem({
+        barcode: 'ST2024002101',
+        callNo: 'P5/88',
+        homeLocation: '自然科学借阅室',
+        currentLocation: '自然科学借阅室'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002102',
+        callNo: 'P5/88',
+        homeLocation: '自然科学借阅室',
+        currentLocation: '自然科学借阅室'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002103',
+        callNo: 'P5/88',
+        homeLocation: '',
+        currentLibrary: '',
+        currentLocation: '',
+        checkInTime: '2026-03-01 14:30:00'
+      })
+    ],
+    marcFields: [
+      { field: '010', indicator: '', content: '▼a978-7-5658-5537-5' },
+      { field: '200', indicator: '1 ', content: '▼a地质勘查工程与生态修复▼f张昕, 冯红彩, 张海燕主编' },
+      { field: '210', indicator: '  ', content: '▼a汕头▼c汕头大学出版社▼d2026' },
+      { field: '300', indicator: '  ', content: '▼a含图' },
+      { field: '690', indicator: '  ', content: '▼aP5' },
+      { field: '701', indicator: '0 ', content: '▼a张昕▼4主编' },
+      { field: '702', indicator: '0 ', content: '▼a冯红彩▼4主编' },
+      { field: '702', indicator: '0 ', content: '▼a张海燕▼4主编' },
+      { field: '905', indicator: '  ', content: '▼a首图.华威桥馆' }
+    ]
   },
   {
     bibRecordNo: 'BIB2024002003', standardNo: '9787501345678', isbn: '978-7-5013-4567-8', title: '图书馆学概论',
@@ -256,6 +430,32 @@ export const HOLDING_DEDUP_CATALOG = [
           }
         ]
       }
+    ],
+    physicalItems: [
+      createHoldingDedupItem({
+        barcode: 'ST2024002201',
+        callNo: 'G25/3',
+        homeLocation: '社会科学借阅室',
+        currentLocation: '社会科学借阅室',
+        checkInTime: '2023-07-10 11:00:00'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002202',
+        callNo: 'G25/3',
+        homeLocation: '工具书阅览室',
+        currentLocation: '工具书阅览室',
+        checkInTime: '2023-07-10 11:05:00'
+      })
+    ],
+    marcFields: [
+      { field: '010', indicator: '', content: '▼a978-7-5013-4567-8' },
+      { field: '200', indicator: '1 ', content: '▼a图书馆学概论▼f吴慰慈著' },
+      { field: '210', indicator: '  ', content: '▼a北京▼c国家图书馆出版社▼d2023' },
+      { field: '215', indicator: '  ', content: '▼a286页▼c23cm' },
+      { field: '300', indicator: '  ', content: '▼a有参考文献' },
+      { field: '690', indicator: '  ', content: '▼aG250' },
+      { field: '701', indicator: '0 ', content: '▼a吴慰慈▼4著' },
+      { field: '905', indicator: '  ', content: '▼a首图.华威桥馆' }
     ]
   },
   {
@@ -274,17 +474,52 @@ export const HOLDING_DEDUP_CATALOG = [
         ]
       }
     ],
-    unassignedCopyCount: 1
+    unassignedCopyCount: 1,
+    physicalItems: [
+      createHoldingDedupItem({
+        barcode: 'AV2024003001',
+        callNo: 'J647.1/12',
+        homeLocation: '音像资料外借部',
+        currentLocation: '音像资料外借部',
+        circulationType: '003-音像外借',
+        checkInTime: '2015-04-02 16:20:00'
+      }),
+      createHoldingDedupItem({
+        barcode: 'AV2024003002',
+        callNo: 'J647.1/12',
+        homeLocation: '',
+        currentLibrary: '',
+        currentLocation: '',
+        circulationType: '003-音像外借',
+        checkInTime: '2015-04-02 16:25:00'
+      })
+    ],
+    marcFields: [
+      { field: '010', indicator: '', content: '▼aCN-A1234567890' },
+      { field: '200', indicator: '1 ', content: '▼a布鲁克纳：第二交响曲▼f安东·布鲁克纳' },
+      { field: '210', indicator: '  ', content: '▼a北京▼c国家大剧院▼d2015' },
+      { field: '215', indicator: '  ', content: '▼a1光盘▼cCD' },
+      { field: '300', indicator: '  ', content: '▼a商品条码017685110221▼a目录号CD-1102' },
+      { field: '690', indicator: '  ', content: '▼aJ647.1' },
+      { field: '701', indicator: '0 ', content: '▼a布鲁克纳▼b安东▼4作曲' },
+      { field: '905', indicator: '  ', content: '▼a首图.华威桥馆' }
+    ]
   },
   {
     bibRecordNo: 'BIB2024002004', standardNo: '9787040478912', isbn: '978-7-04-0478912', title: '信息资源管理',
     author: '马费成著', textLanguage: '中文', publisher: '高等教育出版社', publishTime: '2023',
     holdingTree: [],
     unassignedCopyCount: 0,
+    physicalItems: [],
     marcFields: [
       { field: '010', indicator: '', content: '▼a978-7-04-0478912' },
       { field: '200', indicator: '1 ', content: '▼a信息资源管理▼f马费成著' },
-      { field: '210', indicator: '  ', content: '▼a北京▼c高等教育出版社▼d2023' }
+      { field: '210', indicator: '  ', content: '▼a北京▼c高等教育出版社▼d2023' },
+      { field: '215', indicator: '  ', content: '▼a320页▼c24cm' },
+      { field: '300', indicator: '  ', content: '▼a有参考文献和索引' },
+      { field: '690', indicator: '  ', content: '▼aG203' },
+      { field: '701', indicator: '0 ', content: '▼a马费成▼4著' },
+      { field: '905', indicator: '  ', content: '▼a首图.华威桥馆' }
     ]
   }
 ];
@@ -312,6 +547,47 @@ export function getDedupFieldValue(row, fieldKey) {
   };
   const rawValue = String(valueMap[fieldKey] || '').trim();
   return fieldKey === 'resourceId' ? rawValue.toLowerCase().replace(/-/g, '') : rawValue.toLowerCase();
+}
+
+/**
+ * 检查待查重订单行上已选字段是否存在空值
+ * @param {Object[]} lines
+ * @param {string[]} orderLineNos
+ * @param {string[]} fieldKeys
+ * @returns {{ orderLineNo: string, emptyLabels: string[] }[]}
+ */
+export function findEmptyDedupFieldsOnLines(lines, orderLineNos, fieldKeys) {
+  if (!fieldKeys?.length || !orderLineNos?.length) return [];
+
+  const issues = [];
+  orderLineNos.forEach(orderLineNo => {
+    const row = lines.find(item => item.orderLineNo === orderLineNo);
+    if (!row) return;
+
+    const emptyLabels = fieldKeys
+      .filter(fieldKey => !getDedupFieldValue(row, fieldKey))
+      .map(fieldKey => DEDUP_FIELD_LABELS[fieldKey] || fieldKey);
+
+    if (emptyLabels.length) {
+      issues.push({ orderLineNo, emptyLabels });
+    }
+  });
+  return issues;
+}
+
+/**
+ * 生成查重字段为空的提示文案
+ * @param {{ orderLineNo: string, emptyLabels: string[] }[]} issues
+ * @returns {string}
+ */
+export function formatEmptyDedupFieldsMessage(issues) {
+  if (!issues?.length) return '';
+
+  const preview = issues.slice(0, 5).map(item =>
+    `订单行号 ${item.orderLineNo}（${item.emptyLabels.join('、')}）`
+  );
+  const more = issues.length > 5 ? `等共 ${issues.length} 条` : '';
+  return `存在查重字段为空的订单行，无法继续查重：\n${preview.join('；')}${more ? `；${more}` : ''}。请取消勾选空字段或补全数据后再查重`;
 }
 
 export function matchesDedupFields(sourceRow, targetRow, fieldKeys) {
@@ -363,9 +639,10 @@ export function findOrderDuplicatesForCheck(row, allLines, orders, fieldKeys) {
 }
 
 export function performOrderLineDedup(lines, orders, orderLineNos, config) {
-  const { duplicateType, fieldKeys } = config;
+  const { duplicateType, fieldKeys, branchPatterns = [] } = config;
   const checkOrder = duplicateType === 'all' || duplicateType === 'order';
   const checkHolding = duplicateType === 'all' || duplicateType === 'holding';
+  const patterns = Array.isArray(branchPatterns) ? [...branchPatterns] : [];
 
   orderLineNos.forEach(orderLineNo => {
     const target = lines.find(item => item.orderLineNo === orderLineNo);
@@ -381,6 +658,8 @@ export function performOrderLineDedup(lines, orders, orderLineNos, config) {
       autoAssociateFirstHoldingBib(target);
     }
     target.lastDedupFieldKeys = fieldKeys;
+    // 查重范围存档；未选通配符视为不限。Mock 馆藏树缺分馆编码时暂不裁剪结果
+    target.lastDedupBranchPatterns = patterns;
   });
 }
 
@@ -428,15 +707,42 @@ export function countHoldingTreeCopies(nodes) {
 }
 
 /**
- * 统计书目全部馆藏复本数（已分配馆藏地 + 未关联馆藏）
+ * 统计书目全部馆藏复本数（优先单件明细条数，否则已分配馆藏地 + 未关联馆藏）
  * @param {Object} item - 馆藏查重书目
  * @returns {number}
  */
 export function countBibHoldingCopies(item) {
   if (!item) return 0;
+  if (Array.isArray(item.physicalItems)) return item.physicalItems.length;
   const assigned = countHoldingTreeCopies(item.holdingTree);
   const unassigned = Number(item.unassignedCopyCount) || 0;
   return assigned + unassigned;
+}
+
+/** 馆藏查重「单件」页签列定义 */
+export const HOLDING_DEDUP_ITEM_COLUMNS = [
+  { key: 'barcode', label: '条码号' },
+  { key: 'callNo', label: '索书号' },
+  { key: 'ownerLibrary', label: '所属馆', minWidth: 'min-w-[140px]' },
+  { key: 'homeLocation', label: '所属馆藏地', minWidth: 'min-w-[160px]' },
+  { key: 'currentLibrary', label: '所在馆', minWidth: 'min-w-[140px]' },
+  { key: 'currentLocation', label: '所在馆藏地', minWidth: 'min-w-[160px]' },
+  { key: 'circulationType', label: '借阅类型' },
+  { key: 'volumeDesc', label: '卷册描述' },
+  { key: 'checkInTime', label: '登到时间', minWidth: 'whitespace-nowrap' }
+];
+
+/**
+ * 获取馆藏查重书目关联的单件列表
+ * @param {Object} [item] - 馆藏查重书目
+ * @returns {Object[]}
+ */
+export function getHoldingDedupPhysicalItems(item) {
+  if (!item || !Array.isArray(item.physicalItems)) return [];
+  return item.physicalItems.map((row, index) => ({
+    id: `${item.bibRecordNo || 'item'}-${index + 1}`,
+    ...row
+  }));
 }
 
 /**

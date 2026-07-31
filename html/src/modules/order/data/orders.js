@@ -16,6 +16,7 @@ export const ORDER_STATUS_MAP = {
 export const orderListRows = [
   {
     id: 'PG001B20260528008', no: 6, subscriber: '测试订户0001', site: '华威桥馆', orderId: 'PG001B20260528008',
+    orderName: '2026年度地质勘查专题采购',
     method: '现采', resourceType: '纸质书', language: '中文', supplier: '湖南长沙',
     orderTime: '2026-05-28 17:34:43', issuer: '杨晓娴', issueTime: '2026-05-28 17:34:43',
     orderVolumes: 1, orderSpecies: 1,
@@ -24,6 +25,7 @@ export const orderListRows = [
   },
   {
     id: 'PG001B202406030001', no: 1, subscriber: 'ceshi', site: '华威桥馆', orderId: 'PG001B202406030001',
+    orderName: '中文普通图书现采批次（一）',
     method: '现采', resourceType: '纸质书', language: '中文', supplier: '湖南长沙',
     orderTime: '2024-06-03 09:47:52', issuer: '杨现规', issueTime: '2024-06-03 10:12:18',
     orderVolumes: 0, orderSpecies: 0,
@@ -32,6 +34,7 @@ export const orderListRows = [
   },
   {
     id: 'PG001B202406030002', no: 2, subscriber: '捐赠订户', site: '华威桥馆', orderId: 'PG001B202406030002',
+    orderName: '社会捐赠图书登记',
     method: '现采', resourceType: '纸质书', language: '中文', supplier: '湖北三新',
     orderTime: '2024-06-03 10:07:42', issuer: '王二小', issueTime: '2026-05-29 10:54:51',
     orderVolumes: 12, orderSpecies: 8,
@@ -40,6 +43,7 @@ export const orderListRows = [
   },
   {
     id: 'PG001B202406030003', no: 3, subscriber: 'ceshi', site: '华威桥馆', orderId: 'PG001B202406030003',
+    orderName: '外文视听资料补配',
     method: '现采', resourceType: '视听资料', language: '外文', supplier: '湖北三新',
     orderTime: '2024-06-03 10:20:37', issuer: '赵付', issueTime: '2026-05-22 09:08:45',
     orderVolumes: 6, orderSpecies: 3,
@@ -48,6 +52,7 @@ export const orderListRows = [
   },
   {
     id: 'PG001B202406030004', no: 4, subscriber: '捐赠订户', site: '华威桥馆', orderId: 'PG001B202406030004',
+    orderName: '捐赠图书验收批次',
     method: '捐赠', resourceType: '纸质书', language: '中文', supplier: '湖南长沙',
     orderTime: '2024-06-03 11:05:12', issuer: '杨现规', issueTime: '2024-06-03 15:40:17',
     orderVolumes: 20, orderSpecies: 15,
@@ -56,6 +61,7 @@ export const orderListRows = [
   },
   {
     id: 'PG001B202406030005', no: 5, subscriber: 'ceshi', site: '华威桥馆', orderId: 'PG001B202406030005',
+    orderName: '新华书店现采待导入',
     method: '现采', resourceType: '纸质书', language: '中文', supplier: '北京新华',
     orderTime: '2024-06-03 14:30:00', issuer: '李佳', issueTime: '',
     orderVolumes: 0, orderSpecies: 0,
@@ -64,6 +70,7 @@ export const orderListRows = [
   },
   {
     id: 'PG001B202406030006', no: 7, subscriber: 'ceshi', site: '华威桥馆', orderId: 'PG001B202406030006',
+    orderName: '中文视听资料采购（含较长名称用于换行展示验证）',
     method: '现采', resourceType: '视听资料', language: '中文', supplier: '湖北三新',
     orderTime: '2024-06-04 09:15:30', issuer: '杨现规', issueTime: '2024-06-04 09:15:30',
     orderVolumes: 5, orderSpecies: 3,
@@ -180,13 +187,34 @@ const rawOrderLines = [
     carrier: 'CD', author: '', publisher: '国家大剧院', publishTime: '2015-03',
     volumeNo: '分卷号', volumeName: '分卷名', price: '300.00', currency: 'CNY', copiesInSet: 1, sets: 2,
     lineStatus: '处理中', acceptanceStatus: '部分收货', settlementStatus: '待申请', isShortage: '否',
-    flowStats: '2/0/0/0/0', issueTime: '2026-05-22 09:08:45', hasRemark: true,
+    flowStats: '2/1/0/0/0', issueTime: '2026-05-22 09:08:45', hasRemark: true,
     textLanguage: '中文', productBarcode: '017685110221', catalogNo: 'CD-1102',
     resourceType: '视听资料', language: '外文'
   }
 ];
 
-export const orderLineRows = applyDedupSampleData(rawOrderLines.map(r => ({ ...r })));
+/**
+ * 从所属订单带出供应商、预算、订单名称（行上已有值则保留）
+ * @param {Array<Record<string, unknown>>} lines
+ * @param {Array<Record<string, unknown>>} orders
+ * @returns {Array<Record<string, unknown>>}
+ */
+function enrichOrderLinesFromOrders(lines, orders) {
+  const orderById = new Map(orders.map(order => [order.orderId, order]));
+  return lines.map(line => {
+    const order = orderById.get(line.orderId);
+    return {
+      ...line,
+      supplier: line.supplier || order?.supplier || '',
+      budget: line.budget || order?.budget || '',
+      orderName: line.orderName || order?.orderName || ''
+    };
+  });
+}
+
+export const orderLineRows = applyDedupSampleData(
+  enrichOrderLinesFromOrders(rawOrderLines.map(r => ({ ...r })), orderListRows)
+);
 
 const ORDER_ISSUER_OPTIONS = ['杨现规', '李佳', '黄俊', '杨晓娴', '王二小', '赵付'];
 
@@ -215,6 +243,7 @@ export const orderSearchFields = [
 ];
 
 export const defaultNewOrderForm = {
+  orderName: '',
   subscriber: '',
   resourceType: '',
   method: '',

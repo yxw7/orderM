@@ -6,6 +6,21 @@
     @confirm="submit"
   >
     <div class="flex items-start gap-3">
+      <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0"><span class="text-red-500">*</span> 订单名称</label>
+      <div class="flex-1">
+        <input
+          v-model="form.orderName"
+          type="text"
+          maxlength="50"
+          placeholder="请输入，50字符以内"
+          autocomplete="off"
+          class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
+          :class="errors.orderName ? 'border-red-500' : 'border-gray-300'"
+        >
+        <p v-if="errors.orderName" class="text-red-500 text-xs mt-1">{{ errors.orderName }}</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
       <label class="text-sm text-gray-600 w-28 text-right pt-2 shrink-0"><span class="text-red-500">*</span> 订户</label>
       <div class="flex-1">
         <select

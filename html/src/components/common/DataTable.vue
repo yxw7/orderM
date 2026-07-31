@@ -312,13 +312,10 @@ onBeforeUnmount(() => {
   isolation: isolate;
 }
 
-.data-table-head {
+.data-table-th {
   position: sticky;
   top: 0;
-  z-index: 20;
-}
-
-.data-table-th {
+  z-index: 25;
   background-color: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -330,7 +327,7 @@ onBeforeUnmount(() => {
 .data-table-select-cell {
   position: sticky;
   left: 0;
-  z-index: 35;
+  z-index: 15;
   box-sizing: border-box;
   padding: 0.5rem 0.75rem;
   text-align: left;
@@ -338,6 +335,7 @@ onBeforeUnmount(() => {
 }
 
 .data-table-head .data-table-select-cell {
+  top: 0;
   z-index: 45;
   padding-top: 0.625rem;
   padding-bottom: 0.625rem;
@@ -363,12 +361,13 @@ onBeforeUnmount(() => {
 }
 
 :deep(.sticky-pin-head) {
+  top: 0;
   z-index: 40;
   background-color: #f9fafb !important;
 }
 
 :deep(.sticky-pin-body-cell) {
-  z-index: 30;
+  z-index: 10;
   background-color: #fff !important;
 }
 

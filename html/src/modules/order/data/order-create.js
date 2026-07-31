@@ -2,6 +2,7 @@ import { isBudgetOptionalForMethod } from '@/modules/order/constants';
 import { validateOrderDiscount } from '@/modules/order/data/order-field-input';
 
 export const NEW_ORDER_REQUIRED_FIELDS = [
+  { key: 'orderName', label: '订单名称' },
   { key: 'subscriber', label: '订户' },
   { key: 'resourceType', label: '资源类型' },
   { key: 'method', label: '采选方式' },
@@ -10,6 +11,9 @@ export const NEW_ORDER_REQUIRED_FIELDS = [
   { key: 'supplier', label: '供应商' },
   { key: 'site', label: '馆址' }
 ];
+
+/** 新建订单：订单名称最大字符数 */
+export const ORDER_NAME_MAX_LENGTH = 50;
 
 function formatDateTime(date) {
   const pad = value => String(value).padStart(2, '0');
@@ -29,7 +33,14 @@ function buildOrderId(existingCount, date = new Date()) {
 
 export function validateNewOrderForm(form) {
   const errors = {};
+  const orderName = String(form.orderName || '').trim();
+  if (!orderName) {
+    errors.orderName = '请输入订单名称';
+  } else if (orderName.length > ORDER_NAME_MAX_LENGTH) {
+    errors.orderName = `订单名称不能超过${ORDER_NAME_MAX_LENGTH}个字符`;
+  }
   NEW_ORDER_REQUIRED_FIELDS.forEach(field => {
+    if (field.key === 'orderName') return;
     if (field.key === 'budget' && isBudgetOptionalForMethod(form.method)) return;
     if (!form[field.key]?.trim?.() && !form[field.key]) {
       errors[field.key] = `请选择${field.label}`;
@@ -53,6 +64,7 @@ export function buildNewOrderRow(form, existingOrders) {
     subscriber: form.subscriber,
     site: form.site,
     orderId,
+    orderName: String(form.orderName || '').trim(),
     method: form.method,
     resourceType: form.resourceType,
     language: form.language,
@@ -91,6 +103,7 @@ export function buildBibCreateOrderRow(form, site, orderId, existingCount) {
     subscriber: form.subscriber,
     site,
     orderId,
+    orderName: form.orderName || '',
     method: form.method,
     resourceType: form.resourceType,
     language: form.language,

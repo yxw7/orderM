@@ -57,5 +57,11 @@ export const acceptanceRoutes = [
     name: 'shortage',
     component: () => import('@/modules/acceptance/views/ShortageManageView.vue'),
     meta: { title: '催缺管理', module: 'acceptance' }
+  },
+  {
+    path: 'shortage/detail/:shortageId',
+    name: 'shortage-detail',
+    component: () => import('@/modules/acceptance/views/ShortageDetailView.vue'),
+    meta: { title: '催缺详情', module: 'acceptance' }
   }
 ];

@@ -1,4 +1,7 @@
 import { sortOrderLinesByIssueTimeDesc } from '@/modules/order/data/order-line-sort';
+import { getSupplierOptionsByResourceTypes } from '@/modules/order/data/supplier-sources';
+import { getCurrentLibrarianAssociatedSubscribers } from '@/modules/subscriber/data/current-librarian';
+import { subscriberRows } from '@/modules/subscriber/data/subscriber-manage';
 
 export const ORDER_LINE_CRITERION_FIELDS = [
   { value: 'resourceId', label: '资源标识' },
@@ -17,6 +20,39 @@ export const ORDER_LINE_DEDUP_FILTER_OPTIONS = ['全部', '有', '无'];
 
 function isBlankSelect(value) {
   return !value || value === '全部';
+}
+
+/**
+ * 当前馆员关联且状态为使用中的订户主数据
+ * @returns {Array<{ name: string, types?: string[], budgets?: string[] }>}
+ */
+function getAssociatedActiveSubscriberRecords() {
+  const names = getCurrentLibrarianAssociatedSubscribers();
+  if (!names.length) return [];
+  const nameSet = new Set(names);
+  return subscriberRows.filter(row => row.status === 'active' && nameSet.has(row.name));
+}
+
+/**
+ * 订单行检索：供应商选项（关联订户资源类型 ∩ 供应商 resourceTypes）
+ * @returns {string[]}
+ */
+export function getOrderLineSearchSupplierOptions() {
+  const types = [
+    ...new Set(getAssociatedActiveSubscriberRecords().flatMap(row => row.types || []))
+  ];
+  return getSupplierOptionsByResourceTypes(types);
+}
+
+/**
+ * 订单行检索：预算选项（关联订户预算并集）
+ * @returns {string[]}
+ */
+export function getOrderLineSearchBudgetOptions() {
+  const budgets = [
+    ...new Set(getAssociatedActiveSubscriberRecords().flatMap(row => row.budgets || []))
+  ];
+  return budgets.sort((a, b) => a.localeCompare(b, 'zh-CN'));
 }
 
 /**
@@ -49,7 +85,10 @@ export function createDefaultOrderLineSearch(presetOrderId = '') {
     isShortage: '全部',
     holdingDuplicate: '全部',
     orderDuplicate: '全部',
-    bibRecordNo: ''
+    bibRecordNo: '',
+    site: '全部',
+    supplier: '',
+    budget: ''
   };
 }
 
@@ -93,6 +132,9 @@ export function filterOrderLineRows(rows, search = {}) {
     if (!matchDedupFilter(row.holdingDuplicate, search.holdingDuplicate)) return false;
     if (!matchDedupFilter(row.orderDuplicate, search.orderDuplicate)) return false;
     if (bibRecordNo && !String(row.bibRecordNo || '').includes(bibRecordNo)) return false;
+    if (!isBlankSelect(search.site) && row.site !== search.site) return false;
+    if (search.supplier && row.supplier !== search.supplier) return false;
+    if (search.budget && row.budget !== search.budget) return false;
     return true;
   });
 

@@ -7,8 +7,11 @@
         @click="$emit('close')"
       />
       <section
-        class="dedup-result-panel absolute top-0 inset-x-0 bg-white flex flex-col transition-transform duration-300 ease-out shadow-[0_8px_24px_rgba(15,23,42,0.12)] h-[60vh] overflow-hidden"
-        :class="open ? 'translate-y-0' : '-translate-y-full'"
+        class="dedup-result-panel absolute top-0 inset-x-0 bg-white flex flex-col transition-transform duration-300 ease-out shadow-[0_8px_24px_rgba(15,23,42,0.12)] overflow-hidden"
+        :class="[
+          open ? 'translate-y-0' : '-translate-y-full',
+          panelHeightClass
+        ]"
         role="dialog"
         aria-modal="true"
       >
@@ -19,7 +22,7 @@
         <div class="px-5 py-3 border-b bg-gray-50 shrink-0 text-sm text-gray-600">
           <div class="flex flex-wrap items-center gap-x-6 gap-y-1">
             <span class="whitespace-nowrap">
-              <span class="text-gray-500">订单行号：</span>{{ line?.orderLineNo || '—' }}
+              <span class="text-gray-500">订单行号：</span>{{ displayLine?.orderLineNo || '—' }}
             </span>
             <span class="min-w-0 truncate" :title="fieldLabels || '—'">
               <span class="text-gray-500">查重字段：</span>{{ fieldLabels || '—' }}
@@ -73,7 +76,7 @@
                       >
                         {{ field.label }}
                       </th>
-                      <th class="px-3 py-2 text-left text-gray-600 whitespace-nowrap min-w-[120px]">操作</th>
+                      <th class="px-3 py-2 text-left text-gray-600 whitespace-nowrap min-w-[160px]">操作</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y">
@@ -107,6 +110,9 @@
                         <td class="px-3 py-2 align-middle whitespace-nowrap">
                           <button type="button" class="text-sky-600 hover:underline mr-2" @click="viewMarc(item)">
                             查看
+                          </button>
+                          <button type="button" class="text-sky-600 hover:underline mr-2" @click="viewItems(item)">
+                            单件
                           </button>
                           <button
                             v-if="isBibAssociated(item)"
@@ -142,11 +148,113 @@
               </div>
               <div
                 v-show="holdingTab === 'marc'"
-                ref="marcPanelRef"
+                ref="marcSplitRef"
+                class="dedup-result-panel__tab absolute inset-0 flex min-h-0 bg-white px-4 py-3 sm:px-5 sm:py-4"
+              >
+                <aside
+                  class="flex flex-col min-h-0 border border-gray-200 overflow-hidden bg-white min-w-0"
+                  :style="{ flex: `0 0 ${marcLeftPercent}%` }"
+                >
+                  <div class="shrink-0 px-3 py-2 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
+                    订单行信息
+                  </div>
+                  <div ref="marcLeftPanelRef" class="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2 text-sm">
+                    <div
+                      v-for="item in orderLineDetailFields"
+                      :key="item.key"
+                    >
+                      <span class="text-gray-500">{{ item.label }}：</span>
+                      <span class="text-gray-800 break-words">{{ formatDetailValue(item.value) }}</span>
+                    </div>
+                    <p v-if="!orderLineDetailFields.length" class="text-gray-400">暂无订单行信息</p>
+                  </div>
+                </aside>
+                <div
+                  class="dedup-marc-resizer shrink-0 w-1.5 mx-1 cursor-col-resize self-stretch relative group"
+                  title="拖拽调整宽度"
+                  @mousedown.prevent="startMarcSplitDrag"
+                >
+                  <span class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gray-200 group-hover:bg-sky-400 group-active:bg-sky-500" />
+                </div>
+                <div class="flex-1 min-w-0 flex flex-col min-h-0 border border-gray-200 overflow-hidden bg-white">
+                  <div class="shrink-0 px-3 py-2 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
+                    MARC信息
+                  </div>
+                  <template v-if="activeMarcFields.length">
+                    <div class="shrink-0 bg-gray-50 border-b border-gray-200">
+                      <table class="w-full text-sm table-fixed">
+                        <colgroup>
+                          <col class="w-20">
+                          <col class="w-16">
+                          <col>
+                        </colgroup>
+                        <thead>
+                          <tr>
+                            <th class="px-3 py-2 text-left text-gray-600 font-medium">字段名</th>
+                            <th class="px-3 py-2 text-left text-gray-600 font-medium whitespace-nowrap">指示符</th>
+                            <th class="px-3 py-2 text-left text-gray-600 font-medium">字段内容</th>
+                          </tr>
+                        </thead>
+                      </table>
+                    </div>
+                    <div ref="marcPanelRef" class="flex-1 min-h-0 overflow-y-auto bg-white">
+                      <table class="w-full text-sm table-fixed">
+                        <colgroup>
+                          <col class="w-20">
+                          <col class="w-16">
+                          <col>
+                        </colgroup>
+                        <tbody>
+                          <tr
+                            v-for="(item, index) in activeMarcFields"
+                            :key="index"
+                            class="border-b border-gray-100 last:border-b-0"
+                          >
+                            <td class="px-3 py-2 align-top">{{ item.field }}</td>
+                            <td class="px-3 py-2 align-top whitespace-nowrap">{{ item.indicator || '—' }}</td>
+                            <td class="px-3 py-2 align-top break-all leading-relaxed">{{ item.content }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </template>
+                  <p v-else class="px-3 py-4 text-gray-400 text-sm">暂无MARC信息</p>
+                </div>
+              </div>
+              <div
+                v-show="holdingTab === 'items'"
+                ref="itemsPanelRef"
                 class="dedup-result-panel__tab absolute inset-0 overflow-y-auto overflow-x-hidden px-5 py-4 bg-white"
               >
-                <MarcTable v-if="activeMarcFields.length" :fields="activeMarcFields" />
-                <p v-else class="text-gray-400 text-sm">暂无MARC信息</p>
+                <div v-if="activePhysicalItems.length" class="overflow-x-auto w-full max-w-full">
+                  <table class="text-sm border border-gray-200 min-w-full w-max">
+                    <thead class="bg-gray-50 border-b sticky top-0 z-10">
+                      <tr>
+                        <th
+                          v-for="col in itemColumns"
+                          :key="col.key"
+                          class="px-3 py-2 text-left text-gray-600 whitespace-nowrap"
+                          :class="col.minWidth"
+                        >
+                          {{ col.label }}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                      <tr v-for="row in activePhysicalItems" :key="row.id" class="hover:bg-gray-50">
+                        <td
+                          v-for="col in itemColumns"
+                          :key="col.key"
+                          class="px-3 py-2 align-middle whitespace-nowrap"
+                          :class="col.minWidth"
+                        >
+                          {{ row[col.key] || '—' }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p v-else class="text-gray-400 text-sm">暂无单件信息</p>
               </div>
             </template>
             <template v-else>
@@ -191,10 +299,8 @@
             </template>
           </div>
           <div
-            v-if="results.length"
+            v-if="results.length && !hidePaginationBar"
             class="flex items-center justify-between px-5 py-3 border-t shrink-0 bg-white text-sm text-gray-600"
-            :class="{ 'invisible pointer-events-none': duplicateType === 'holding' && holdingTab === 'marc' }"
-            :aria-hidden="duplicateType === 'holding' && holdingTab === 'marc'"
           >
             <span class="text-gray-500">共 {{ results.length }} 条记录</span>
             <div class="flex items-center gap-2">
@@ -213,9 +319,8 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import HoldingTree from '@/modules/order/components/HoldingTree.vue';
-import MarcTable from '@/modules/order/components/MarcTable.vue';
 import TreeExpandIcon from '@/modules/order/components/TreeExpandIcon.vue';
 import {
   buildDisplayHoldingTree,
@@ -224,10 +329,13 @@ import {
   formatDedupFieldLabels,
   getHoldingBibCardFields,
   getHoldingBibFieldDisplayValue,
+  getHoldingDedupPhysicalItems,
   hasHoldingDistribution,
+  HOLDING_DEDUP_ITEM_COLUMNS,
   getOrderLineLanguageCategory,
   getOrderLineResourceType
 } from '@/modules/order/data/dedup';
+import { buildOrderLineBibFields } from '@/modules/order/data/order-line-detail';
 import { useOrderStore } from '@/modules/order/stores/order';
 
 const props = defineProps({
@@ -241,18 +349,36 @@ defineEmits(['close']);
 
 const orderStore = useOrderStore();
 
-const holdingTabs = [{ key: 'bib', label: '书目' }, { key: 'marc', label: 'MARC信息' }];
+const holdingTabs = [
+  { key: 'bib', label: '书目' },
+  { key: 'marc', label: 'MARC信息' },
+  { key: 'items', label: '单件' }
+];
 const holdingTab = ref('bib');
 const expandedIds = ref(new Set());
-const activeMarc = ref(null);
+const activeHoldingBib = ref(null);
 const panelBodyRef = ref(null);
 const bibPanelRef = ref(null);
 const marcPanelRef = ref(null);
+const marcLeftPanelRef = ref(null);
+const marcSplitRef = ref(null);
+const itemsPanelRef = ref(null);
 const page = ref(1);
 const pageSize = ref(50);
+/** MARC 页签左侧宽度百分比，默认各 50% */
+const marcLeftPercent = ref(50);
+const MARC_SPLIT_MIN = 20;
+const MARC_SPLIT_MAX = 80;
+
+/** 优先取 store 中最新订单行，保证关联后字段同步 */
+const displayLine = computed(() => {
+  const orderLineNo = props.line?.orderLineNo;
+  if (!orderLineNo) return props.line;
+  return orderStore.lines.find(row => row.orderLineNo === orderLineNo) || props.line;
+});
 
 const title = computed(() => (props.duplicateType === 'holding' ? '馆藏查重结果' : '订单查重结果'));
-const fieldLabels = computed(() => formatDedupFieldLabels(props.line?.lastDedupFieldKeys));
+const fieldLabels = computed(() => formatDedupFieldLabels(displayLine.value?.lastDedupFieldKeys));
 const totalCount = computed(() => props.results.length);
 const totalPages = computed(() => Math.max(1, Math.ceil(props.results.length / pageSize.value)));
 const pageSizeOptions = computed(() => (
@@ -263,23 +389,59 @@ const pagedResults = computed(() => {
   return props.results.slice(start, start + pageSize.value);
 });
 
-/** 馆藏查重书目卡片字段（随查重订单行资源类型与语种变化） */
-const holdingBibCardFields = computed(() => {
-  if (!props.line) return getHoldingBibCardFields('纸质书', '中文');
-  const resourceType = getOrderLineResourceType(props.line, orderStore.orders);
-  const languageCategory = getOrderLineLanguageCategory(props.line, orderStore.orders);
-  return getHoldingBibCardFields(resourceType, languageCategory);
+const lineResourceType = computed(() => {
+  if (!displayLine.value) return '纸质书';
+  return getOrderLineResourceType(displayLine.value, orderStore.orders);
 });
+
+const lineLanguageCategory = computed(() => {
+  if (!displayLine.value) return '中文';
+  return getOrderLineLanguageCategory(displayLine.value, orderStore.orders);
+});
+
+/** 订单行明细字段（按资源类型 / 语种） */
+const orderLineDetailFields = computed(() => {
+  if (!displayLine.value) return [];
+  return buildOrderLineBibFields(displayLine.value, lineResourceType.value, lineLanguageCategory.value);
+});
+
+/**
+ * 明细字段空值展示为 —
+ * @param {*} value 字段值
+ * @returns {string}
+ */
+function formatDetailValue(value) {
+  if (value == null || String(value).trim() === '') return '—';
+  return String(value);
+}
+
+/** 馆藏查重书目卡片字段（随查重订单行资源类型与语种变化） */
+const holdingBibCardFields = computed(() =>
+  getHoldingBibCardFields(lineResourceType.value, lineLanguageCategory.value)
+);
 
 /** 馆藏查重 MARC 页签字段（随语种过滤） */
-const holdingLanguageCategory = computed(() => {
-  if (!props.line) return '中文';
-  return getOrderLineLanguageCategory(props.line, orderStore.orders);
-});
+const holdingLanguageCategory = lineLanguageCategory;
 
 const activeMarcFields = computed(() => {
-  if (!activeMarc.value?.marcFields?.length) return [];
-  return filterHoldingDedupMarcFields(activeMarc.value.marcFields, holdingLanguageCategory.value);
+  if (!activeHoldingBib.value?.marcFields?.length) return [];
+  return filterHoldingDedupMarcFields(activeHoldingBib.value.marcFields, holdingLanguageCategory.value);
+});
+
+const activePhysicalItems = computed(() => getHoldingDedupPhysicalItems(activeHoldingBib.value));
+
+const itemColumns = HOLDING_DEDUP_ITEM_COLUMNS;
+
+const hidePaginationBar = computed(() => (
+  props.duplicateType === 'holding' && (holdingTab.value === 'marc' || holdingTab.value === 'items')
+));
+
+/** 馆藏 MARC/单件页签用更高面板，小分辨率下保证内容区可读 */
+const panelHeightClass = computed(() => {
+  if (props.duplicateType === 'holding' && (holdingTab.value === 'marc' || holdingTab.value === 'items')) {
+    return 'h-[min(88vh,calc(100vh-1.5rem))]';
+  }
+  return 'h-[min(75vh,calc(100vh-2rem))]';
 });
 
 watch(() => props.open, val => {
@@ -287,21 +449,23 @@ watch(() => props.open, val => {
     page.value = 1;
     pageSize.value = props.duplicateType === 'order' ? 50 : 5;
     holdingTab.value = 'bib';
-    const firstBibId = props.results[0]?.bibRecordNo;
-    expandedIds.value = firstBibId ? new Set([firstBibId]) : new Set();
-    activeMarc.value = props.results[0] || null;
+    marcLeftPercent.value = 50;
+    expandedIds.value = new Set();
+    activeHoldingBib.value = props.results[0] || null;
   }
 });
 
 watch(() => props.results, val => {
-  activeMarc.value = val[0] || null;
+  activeHoldingBib.value = val[0] || null;
 });
 
 watch(holdingTab, async () => {
   await nextTick();
   resetPanelScroll();
-  if (holdingTab.value === 'marc' && !activeMarc.value && props.results.length) {
-    activeMarc.value = props.results[0];
+  if ((holdingTab.value === 'marc' || holdingTab.value === 'items')
+    && !activeHoldingBib.value
+    && props.results.length) {
+    activeHoldingBib.value = props.results[0];
   }
 });
 
@@ -309,13 +473,55 @@ watch(holdingTab, async () => {
  * 重置当前页签内容区滚动位置
  */
 function resetPanelScroll() {
-  const panel = props.duplicateType === 'holding' && holdingTab.value === 'marc'
-    ? marcPanelRef.value
-    : props.duplicateType === 'holding'
-      ? bibPanelRef.value
-      : panelBodyRef.value;
+  let panel = panelBodyRef.value;
+  if (props.duplicateType === 'holding') {
+    if (holdingTab.value === 'marc') {
+      marcPanelRef.value?.scrollTo({ top: 0 });
+      marcLeftPanelRef.value?.scrollTo({ top: 0 });
+      return;
+    }
+    if (holdingTab.value === 'items') panel = itemsPanelRef.value;
+    else panel = bibPanelRef.value;
+  }
   panel?.scrollTo({ top: 0 });
 }
+
+/**
+ * 开始拖拽调整 MARC 左右分栏宽度
+ * @param {MouseEvent} event
+ */
+function startMarcSplitDrag(event) {
+  const container = marcSplitRef.value;
+  if (!container) return;
+
+  const rect = container.getBoundingClientRect();
+  const startX = event.clientX;
+  const startPercent = marcLeftPercent.value;
+  const width = rect.width || 1;
+
+  function onMove(moveEvent) {
+    const deltaPercent = ((moveEvent.clientX - startX) / width) * 100;
+    const next = Math.min(MARC_SPLIT_MAX, Math.max(MARC_SPLIT_MIN, startPercent + deltaPercent));
+    marcLeftPercent.value = Math.round(next * 10) / 10;
+  }
+
+  function onUp() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+onBeforeUnmount(() => {
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+});
 
 function toggleExpand(id) {
   const next = new Set(expandedIds.value);
@@ -325,8 +531,18 @@ function toggleExpand(id) {
 }
 
 function viewMarc(item) {
-  activeMarc.value = item;
+  activeHoldingBib.value = item;
   holdingTab.value = 'marc';
+  resetPanelScroll();
+}
+
+/**
+ * 切换到单件页签并展示指定书目的单件
+ * @param {Object} item 馆藏查重书目
+ */
+function viewItems(item) {
+  activeHoldingBib.value = item;
+  holdingTab.value = 'items';
   resetPanelScroll();
 }
 
@@ -345,7 +561,7 @@ function getBibCopyCount(item) {
  * @returns {boolean}
  */
 function isBibAssociated(item) {
-  const bibRecordNo = props.line?.bibRecordNo?.trim();
+  const bibRecordNo = displayLine.value?.bibRecordNo?.trim();
   if (!bibRecordNo || !item?.bibRecordNo) return false;
   return bibRecordNo === item.bibRecordNo;
 }
@@ -355,14 +571,14 @@ function isBibAssociated(item) {
  * @param {Object} item 馆藏查重书目
  */
 function associateBib(item) {
-  const orderLineNo = props.line?.orderLineNo;
+  const orderLineNo = displayLine.value?.orderLineNo;
   if (!orderLineNo || !item?.bibRecordNo) return;
   orderStore.updateLine(orderLineNo, { bibRecordNo: item.bibRecordNo });
 }
 
 /** 取消当前订单行与馆藏书目的关联 */
 function disassociateBib() {
-  const orderLineNo = props.line?.orderLineNo;
+  const orderLineNo = displayLine.value?.orderLineNo;
   if (!orderLineNo) return;
   orderStore.updateLine(orderLineNo, { bibRecordNo: '' });
 }

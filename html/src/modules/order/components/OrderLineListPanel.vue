@@ -17,6 +17,15 @@
     </button>
     <button
       type="button"
+      class="px-4 py-1.5 text-sm rounded border"
+      :class="canChangeSupplier ? 'border-gray-300 text-gray-600 bg-white hover:bg-gray-50' : 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'"
+      :disabled="!canChangeSupplier"
+      @click="openChangeSupplierModal"
+    >
+      更换供应商
+    </button>
+    <button
+      type="button"
       class="px-4 py-1.5 text-sm rounded"
       :class="canDedup ? 'bg-teal-500 text-white hover:bg-teal-600' : 'border border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'"
       :disabled="!canDedup"
@@ -45,6 +54,18 @@
       @cancel="shortageSuccessOpen = false"
       @confirm="confirmViewShortage"
     />
+    <GenerateShortageSuccessModal
+      :open="changeSupplierSuccessOpen"
+      :lines="changeSupplierSuccessLines"
+      @cancel="changeSupplierSuccessOpen = false"
+      @confirm="confirmViewNewOrder"
+    />
+    <OrderLineChangeSupplierModal
+      :open="changeSupplierOpen"
+      :source-order="changeSupplierSourceOrder"
+      @close="changeSupplierOpen = false"
+      @confirm="confirmChangeSupplier"
+    />
   </div>
   <DataTable
     v-model:selected-keys="selectedIds"
@@ -61,6 +82,11 @@
     :page-sizes="[50, 100, 200]"
   >
     <template #cell-no="{ row }">{{ row.no }}</template>
+    <template #cell-orderName="{ row }">
+      <div class="whitespace-normal min-w-[140px] max-w-[220px] text-sm leading-snug break-words">
+        {{ row.orderName || '—' }}
+      </div>
+    </template>
     <template #cell-orderLineNo="{ row }">
       <button
         type="button"
@@ -81,6 +107,12 @@
     </template>
     <template #cell-publisher="{ row }">
       <EllipsisCell :text="row.publisher" max-width-class="max-w-[160px]" />
+    </template>
+    <template #cell-supplier="{ row }">
+      <EllipsisCell :text="row.supplier" max-width-class="max-w-[140px]" />
+    </template>
+    <template #cell-budget="{ row }">
+      <EllipsisCell :text="row.budget" max-width-class="max-w-[180px]" />
     </template>
     <template #cell-bibRecordNo="{ row }">
       <span class="inline-flex items-center gap-1 max-w-full">
@@ -140,6 +172,7 @@ import DedupBadge from '@/modules/order/components/DedupBadge.vue';
 import ActualBibRecordNoMarker from '@/modules/order/components/ActualBibRecordNoMarker.vue';
 import CatalogRecordWindowStack from '@/modules/order/components/CatalogRecordWindowStack.vue';
 import GenerateShortageSuccessModal from '@/modules/order/components/GenerateShortageSuccessModal.vue';
+import OrderLineChangeSupplierModal from '@/modules/order/components/OrderLineChangeSupplierModal.vue';
 import { useCatalogRecordWindows } from '@/modules/order/composables/useCatalogRecordWindows';
 import { useShortageStore } from '@/modules/acceptance/stores/shortage';
 import { useOrderStore } from '@/modules/order/stores/order';
@@ -147,6 +180,7 @@ import {
   canOrderLineGenerateShortage,
   generateShortageOrdersByOrderId
 } from '@/modules/order/data/shortage-generate';
+import { canChangeSupplierSelection } from '@/modules/order/data/order-line-change-supplier';
 import { ORDER_LINE_COLUMNS, canBatchDedup } from '@/modules/order/constants';
 import {
   createDefaultOrderLineSearch,
@@ -170,7 +204,7 @@ const {
   toggleAllColumns,
   moveColumn,
   setColumnPin
-} = useColumnDisplay('order-line-columns-v2', ORDER_LINE_COLUMNS);
+} = useColumnDisplay('order-line-columns-v5', ORDER_LINE_COLUMNS);
 
 const router = useRouter();
 const store = useOrderStore();
@@ -190,8 +224,22 @@ const page = ref(1);
 const pageSize = ref(50);
 const shortageSuccessOpen = ref(false);
 const lastGeneratedShortages = ref([]);
+const changeSupplierOpen = ref(false);
+const changeSupplierSuccessOpen = ref(false);
+const lastChangeSupplierOrderId = ref('');
+
+const changeSupplierSuccessLines = computed(() => {
+  const orderId = lastChangeSupplierOrderId.value || '—';
+  return [
+    `已生成新订单 ${orderId}，原行未收货已按更换供应商撤订，是否立即查看？`
+  ];
+});
 
 const exportItems = [{ label: '导出配置' }, { label: '导出清单' }];
+
+const selectedLines = computed(() =>
+  store.lines.filter(row => selectedIds.value.includes(row.id))
+);
 
 const pagedRows = computed(() => {
   const start = (page.value - 1) * pageSize.value;
@@ -205,11 +253,16 @@ const canDedup = computed(() => canBatchDedup(store.lines, selectedIds.value, st
 
 const canShortage = computed(() => {
   if (!selectedIds.value.length) return false;
-  return store.lines
-    .filter(r => selectedIds.value.includes(r.id))
-    .every(r => canOrderLineGenerateShortage(r));
+  return selectedLines.value.every(r => canOrderLineGenerateShortage(r));
 });
 
+const canChangeSupplier = computed(() => canChangeSupplierSelection(selectedLines.value).ok);
+
+const changeSupplierSourceOrder = computed(() => {
+  const orderId = selectedLines.value[0]?.orderId;
+  if (!orderId) return null;
+  return store.orders.find(order => order.orderId === orderId) || null;
+});
 watch(() => store.lines, () => {
   filterRows();
 }, { deep: true });
@@ -249,7 +302,7 @@ function goLineDetail(lineNo) {
 function openShortageModal() {
   if (!canShortage.value) return;
 
-  const checkedRows = store.lines.filter(r => selectedIds.value.includes(r.id));
+  const checkedRows = selectedLines.value;
   const generated = generateShortageOrdersByOrderId(checkedRows);
   if (!generated.length) {
     window.alert('所选订单行均已收货或已退货，无法生成催缺单');
@@ -267,17 +320,36 @@ function openShortageModal() {
   shortageSuccessOpen.value = true;
 }
 
+function openChangeSupplierModal() {
+  const check = canChangeSupplierSelection(selectedLines.value);
+  if (!check.ok) {
+    window.alert(check.reason || '当前勾选不满足更换供应商条件');
+    return;
+  }
+  changeSupplierOpen.value = true;
+}
+
+function confirmChangeSupplier(form) {
+  const result = store.changeSupplierGenerateOrder(selectedIds.value, form);
+  if (!result.ok) {
+    window.alert(result.message || '生成新订单失败');
+    return;
+  }
+  changeSupplierOpen.value = false;
+  selectedIds.value = [];
+  lastChangeSupplierOrderId.value = result.newOrderId || '';
+  changeSupplierSuccessOpen.value = true;
+}
+
+function confirmViewNewOrder() {
+  changeSupplierSuccessOpen.value = false;
+  store.setActiveTab('order-list');
+  router.replace({ path: '/orders' });
+}
+
 function confirmViewShortage() {
   shortageSuccessOpen.value = false;
   if (!lastGeneratedShortages.value.length) return;
-
-  if (lastGeneratedShortages.value.length === 1) {
-    router.push({
-      name: 'shortage',
-      query: { shortageId: lastGeneratedShortages.value[0].shortageId }
-    });
-    return;
-  }
   router.push({ name: 'shortage' });
 }
 

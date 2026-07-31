@@ -43,114 +43,100 @@ function stdField(value, label, overrides = {}) {
   return { value, label, matchable: true, ...overrides };
 }
 
+/** 纸质书书目字段（中文 + 外文合并，同义字段合一） */
+export const BOOK_MERGED_BIB_FIELDS = [
+  stdField('title', '正题名/题名'),
+  stdField('isbn', 'ISBN'),
+  stdField('subTitle', '副题名'),
+  stdField('volNo', '分卷号'),
+  stdField('volName', '分卷名'),
+  stdField('classNo', '分类号'),
+  stdField('subjectMajor', '学科大类'),
+  stdField('subjectDetail', '学科细分'),
+  stdField('clcNo', '中图分类号'),
+  stdField('cnTitle', '中译名'),
+  stdField('author', '作者/责任者'),
+  stdField('series', '丛编'),
+  stdField('publisher', '出版社'),
+  stdField('binding', '装帧形式'),
+  stdField('pubYear', '出版年/出版日期'),
+  stdField('edition', '版本/版次'),
+  stdField('pages', '页数'),
+  stdField('currency', '币种'),
+  stdField('price', '定价/价格'),
+  stdField('subject', '主题词'),
+  stdField('audience', '读者对象'),
+  stdField('size', '尺寸'),
+  stdField('textLang', '语种/正文语种'),
+  stdField('volumeCount', '卷数'),
+  stdField('pubPlace', '出版地'),
+  stdField('generalNote', '一般性附注'),
+  stdField('summary', '图书简介/简介'),
+  stdField('isbnConcise', '精简装ISBN对照'),
+  stdField('holdingInfo', '馆藏信息'),
+  stdField('reviewLevel', '审读级别'),
+  stdField('award', '获奖信息'),
+  stdField('toc', '目次信息'),
+  stdField('authorBio', '作者简介'),
+  stdField('bookReview', '书评'),
+  stdField('remark', '备注')
+];
+
+/** 视听资料书目字段（中文 + 外文合并，同义字段合一） */
+export const AV_MERGED_BIB_FIELDS = [
+  stdField('isbn', 'ISBN'),
+  stdField('isrc', 'ISRC'),
+  stdField('title', '题名'),
+  stdField('carrier', '载体'),
+  stdField('publisher', '出版社/出版方'),
+  stdField('format', '版本/格式'),
+  stdField('author', '著者'),
+  stdField('currency', '币种'),
+  stdField('listPrice', '码洋'),
+  stdField('vinylColor', '彩胶颜色'),
+  stdField('limitedNo', '限量编号'),
+  stdField('label', '厂牌'),
+  stdField('seriesName', '系列名称'),
+  stdField('isSigned', '是否签名'),
+  stdField('isOldRecord', '是否老唱片'),
+  stdField('award', '获奖信息'),
+  stdField('bjPublisher', '北京出版社'),
+  stdField('category', '分类'),
+  stdField('discNo', '盘号'),
+  stdField('oldRecordBrand', '老唱片品牌'),
+  stdField('operaType', '剧种'),
+  stdField('era', '年代'),
+  stdField('barcode', '商品条码'),
+  stdField('catalogNo', '目录号'),
+  stdField('origTitle', '外文原文题名'),
+  stdField('remark', '备注')
+];
+
 /** @type {Record<string, StandardField[]>} */
 export const STANDARD_FIELD_POOLS = {
   book_zh: [
     stdField('receiveQty', '发货套数', { required: true, matchable: false }),
     stdField('volCount', '套内册数'),
     stdField('sets', '套数'),
-    stdField('title', '正题名'),
-    stdField('isbn', 'ISBN'),
-    stdField('subTitle', '副题名'),
-    stdField('volNo', '分卷号'),
-    stdField('volName', '分卷名'),
-    stdField('classNo', '分类号'),
-    stdField('publisher', '出版社'),
-    stdField('author', '作者'),
-    stdField('pubYear', '出版年'),
-    stdField('price', '定价'),
-    stdField('edition', '版本'),
-    stdField('series', '丛编'),
-    stdField('subject', '主题词'),
-    stdField('audience', '读者对象'),
-    stdField('binding', '装帧形式'),
-    stdField('size', '尺寸'),
-    stdField('textLang', '正文语种'),
-    stdField('generalNote', '一般性附注'),
-    stdField('summary', '图书简介'),
-    stdField('remark', '备注'),
-    stdField('volumeCount', '卷数'),
-    stdField('pubPlace', '出版地')
+    ...BOOK_MERGED_BIB_FIELDS
   ],
   book_foreign: [
     stdField('receiveQty', '发货套数', { required: true, matchable: false }),
     stdField('fullVolCount', '全套册数'),
     stdField('sets', '套数'),
-    stdField('isbn', 'ISBN'),
-    stdField('subjectMajor', '学科大类'),
-    stdField('subjectDetail', '学科细分'),
-    stdField('clcNo', '中图分类号'),
-    stdField('cnTitle', '中译名'),
-    stdField('title', '题名'),
-    stdField('subTitle', '副题名'),
-    stdField('author', '责任者'),
-    stdField('series', '丛编'),
-    stdField('publisher', '出版社'),
-    stdField('binding', '装帧形式'),
-    stdField('pubDate', '出版日期'),
-    stdField('edition', '版次'),
-    stdField('pages', '页数'),
-    stdField('currency', '币种'),
-    stdField('price', '价格'),
-    stdField('subject', '主题词'),
-    stdField('audience', '读者对象'),
-    stdField('size', '尺寸'),
-    stdField('lang', '语种'),
-    stdField('summary', '简介'),
-    stdField('isbnConcise', '精简装ISBN对照'),
-    stdField('holdingInfo', '馆藏信息'),
-    stdField('reviewLevel', '审读级别'),
-    stdField('award', '获奖信息'),
-    stdField('toc', '目次信息'),
-    stdField('volNo', '分卷号'),
-    stdField('volName', '分卷名'),
-    stdField('authorBio', '作者简介'),
-    stdField('bookReview', '书评'),
-    stdField('remark', '备注')
+    ...BOOK_MERGED_BIB_FIELDS
   ],
   av_zh: [
     stdField('receiveQty', '发货套数', { required: true, matchable: false }),
     stdField('pieceCount', '套内件数'),
     stdField('sets', '套数'),
-    stdField('isbn', 'ISBN'),
-    stdField('isrc', 'ISRC'),
-    stdField('title', '题名'),
-    stdField('carrier', '载体'),
-    stdField('publisher', '出版社'),
-    stdField('format', '版本/格式'),
-    stdField('author', '著者'),
-    stdField('currency', '币种'),
-    stdField('listPrice', '码洋'),
-    stdField('vinylColor', '彩胶颜色'),
-    stdField('limitedNo', '限量编号'),
-    stdField('label', '厂牌'),
-    stdField('seriesName', '系列名称'),
-    stdField('isSigned', '是否签名'),
-    stdField('isOldRecord', '是否老唱片'),
-    stdField('award', '获奖信息'),
-    stdField('bjPublisher', '北京出版社'),
-    stdField('category', '分类'),
-    stdField('discNo', '盘号'),
-    stdField('oldRecordBrand', '老唱片品牌'),
-    stdField('operaType', '剧种'),
-    stdField('era', '年代'),
-    stdField('remark', '备注')
+    ...AV_MERGED_BIB_FIELDS
   ],
   av_foreign: [
     stdField('receiveQty', '发货套数', { required: true, matchable: false }),
     stdField('pieceCount', '套内件数'),
     stdField('sets', '套数'),
-    stdField('isrc', 'ISRC'),
-    stdField('title', '题名'),
-    stdField('carrier', '载体'),
-    stdField('barcode', '商品条码'),
-    stdField('catalogNo', '目录号'),
-    stdField('origTitle', '外文原文题名'),
-    stdField('publisher', '出版方'),
-    stdField('listPrice', '码洋'),
-    stdField('currency', '币种'),
-    stdField('remark', '备注'),
-    stdField('label', '厂牌')
+    ...AV_MERGED_BIB_FIELDS
   ]
 };
 
@@ -158,12 +144,31 @@ export const STANDARD_FIELD_POOLS = {
 export const COLUMN_AUTO_MAP = {
   ISBN: 'isbn',
   书名: 'title',
+  正题名: 'title',
+  题名: 'title',
   作者: 'author',
+  责任者: 'author',
+  著者: 'author',
   出版社: 'publisher',
+  出版方: 'publisher',
   每套册数: 'volCount',
+  套内册数: 'volCount',
+  套内件数: 'pieceCount',
   总套数: 'receiveQty',
+  发货套数: 'receiveQty',
+  收货套数: 'receiveQty',
   RMB单价: 'price',
-  RMB码洋: 'listPrice'
+  定价: 'price',
+  价格: 'price',
+  RMB码洋: 'listPrice',
+  码洋: 'listPrice',
+  RMB实洋: 'netPrice',
+  实洋: 'netPrice',
+  出版年: 'pubYear',
+  出版日期: 'pubYear',
+  ISRC: 'isrc',
+  载体: 'carrier',
+  厂牌: 'label'
 };
 
 /** 模拟 Excel 表头与示例行（原型演示） */
@@ -519,7 +524,7 @@ export function normalizeFieldValue(value, fieldKey) {
 export function getOrderLineMatchFieldValue(orderLine, fieldKey) {
   if (fieldKey === 'receiveQty') return orderLine.pendingSets ?? 0;
   if (fieldKey === 'isbn') return orderLine.isbn || '';
-  if (fieldKey === 'title') return orderLine.title || '';
+  if (fieldKey === 'title') return orderLine.title || orderLine.cnTitle || '';
   if (fieldKey === 'author') return orderLine.author || '';
   if (fieldKey === 'publisher') return orderLine.publisher || '';
   if (fieldKey === 'carrier') return orderLine.carrier || '';
@@ -529,7 +534,11 @@ export function getOrderLineMatchFieldValue(orderLine, fieldKey) {
   if (fieldKey === 'edition') return orderLine.edition || '';
   if (fieldKey === 'format') return orderLine.format || '';
   if (fieldKey === 'price') return orderLine.price ?? orderLine.actualPrice ?? '';
-  if (fieldKey === 'volCount' || fieldKey === 'pieceCount') return orderLine.copies ?? '';
+  if (fieldKey === 'listPrice') return orderLine.listPrice ?? orderLine.price ?? orderLine.originalPrice ?? '';
+  if (fieldKey === 'netPrice') return orderLine.actualPrice ?? orderLine.netPrice ?? orderLine.price ?? '';
+  if (fieldKey === 'pubYear') return orderLine.pubYear ?? orderLine.publishYear ?? orderLine.pubDate ?? '';
+  if (fieldKey === 'textLang') return orderLine.textLang ?? orderLine.lang ?? '';
+  if (fieldKey === 'volCount' || fieldKey === 'pieceCount') return orderLine.copies ?? orderLine.piecesInSet ?? '';
   return orderLine[fieldKey] ?? '';
 }
 
@@ -559,10 +568,17 @@ export function getMatchableOrderLines(ctx) {
     if ((row.pendingSets ?? 0) <= 0) return false;
     const lineStatus = row.lineStatus || '已发订';
     if (!MATCHABLE_LINE_STATUSES.includes(lineStatus)) return false;
-    if (ctx?.supplier && row.supplier && row.supplier !== ctx.supplier) return false;
-    if (ctx?.method && row.method && row.method !== ctx.method) return false;
+    if (ctx?.supplier && String(row.supplier || '') !== String(ctx.supplier)) return false;
+    if (ctx?.method && String(row.method || '') !== String(ctx.method)) return false;
     return true;
-  });
+  }).map(row => ({
+    ...row,
+    type: row.type || ctx?.type || '',
+    lang: row.lang || ctx?.lang || '',
+    method: row.method || '',
+    supplier: row.supplier || '',
+    _matchCtx: { type: ctx?.type || row.type || '', lang: ctx?.lang || row.lang || '' }
+  }));
 }
 
 /**
@@ -888,8 +904,8 @@ export function validatePreviewStep(previewRows) {
 function findLiveOrderLine(ctx, orderLineNo) {
   return getReceiveOrderRows(ctx).find(row => {
     if (row.orderLine !== orderLineNo) return false;
-    if (ctx?.supplier && row.supplier && row.supplier !== ctx.supplier) return false;
-    if (ctx?.method && row.method && row.method !== ctx.method) return false;
+    if (ctx?.supplier && String(row.supplier || '') !== String(ctx.supplier)) return false;
+    if (ctx?.method && String(row.method || '') !== String(ctx.method)) return false;
     return true;
   }) || null;
 }

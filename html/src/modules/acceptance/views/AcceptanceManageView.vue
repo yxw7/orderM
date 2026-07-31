@@ -19,9 +19,19 @@
         :class="canImport ? 'border border-sky-600 text-sky-600 bg-white hover:bg-sky-50' : 'border border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'"
         :disabled="!canImport"
         :title="importTitle"
+        @click="goPreAccept"
+      >
+        预验收
+      </button>
+      <button
+        type="button"
+        class="px-4 py-1.5 text-sm rounded"
+        :class="canImport ? 'border border-sky-600 text-sky-600 bg-white hover:bg-sky-50' : 'border border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'"
+        :disabled="!canImport"
+        :title="importTitle"
         @click="goDeliveryImport"
       >
-        导入发货单
+        批验收
       </button>
       <button type="button" class="px-4 py-1.5 bg-amber-500 text-white text-sm rounded hover:bg-amber-600" @click="openSettlement">
         申请结算
@@ -97,25 +107,33 @@
       @close="exportConfigOpen = false"
       @confirm="onExportConfigSave"
     />
-    <DeliveryImportCreateModal
-      :open="deliveryImportModalOpen"
-      :ctx="deliveryImportCtx"
-      @close="deliveryImportModalOpen = false"
-      @created="onDeliveryImportCreated"
+    <PreAcceptWizardModal
+      :open="preAcceptOpen"
+      :ctx="batchImportCtx"
+      @close="preAcceptOpen = false"
     />
+    <BatchImportWizardModal
+      :open="batchImportOpen"
+      :ctx="batchImportCtx"
+      @close="batchImportOpen = false"
+      @confirmed="onBatchImportConfirmed"
+    />
+    <PrdSpecDrawer page-id="acceptance-manage" />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onActivated, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import SearchPanel from '@/components/common/SearchPanel.vue';
 import DataTable from '@/components/common/DataTable.vue';
 import DropdownButton from '@/components/common/DropdownButton.vue';
+import PrdSpecDrawer from '@/components/common/PrdSpecDrawer.vue';
 import AcceptanceFormModal from '@/modules/acceptance/components/AcceptanceFormModal.vue';
 import AcceptanceSettlementModal from '@/modules/acceptance/components/AcceptanceSettlementModal.vue';
 import AcceptanceExportConfigModal from '@/modules/acceptance/components/AcceptanceExportConfigModal.vue';
-import DeliveryImportCreateModal from '@/modules/acceptance/components/DeliveryImportCreateModal.vue';
+import PreAcceptWizardModal from '@/modules/acceptance/components/PreAcceptWizardModal.vue';
+import BatchImportWizardModal from '@/modules/acceptance/components/BatchImportWizardModal.vue';
 import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import { ACCEPTANCE_LIST_COLUMNS, ACCEPTANCE_LIST_EXPORT_FIELDS } from '@/modules/acceptance/constants';
 import {
@@ -129,6 +147,10 @@ import {
   SETTLEMENT_STATUS_MAP
 } from '@/modules/acceptance/data/acceptance-list';
 import { useAcceptanceStore, acceptanceFromRow } from '@/modules/acceptance/stores/acceptance';
+import {
+  hasCurrentLibrarianAssociatedSubscribers,
+  NO_ASSOCIATED_SUBSCRIBER_IMPORT_PERMISSION_MESSAGE
+} from '@/modules/subscriber/data/current-librarian';
 
 defineOptions({ name: 'AcceptanceManageView' });
 
@@ -143,7 +165,8 @@ const page = ref(1);
 const pageSize = ref(10);
 const settlementOpen = ref(false);
 const exportConfigOpen = ref(false);
-const deliveryImportModalOpen = ref(false);
+const preAcceptOpen = ref(false);
+const batchImportOpen = ref(false);
 const formModal = reactive({ open: false, mode: 'add', row: null });
 
 const pagedRows = computed(() => {
@@ -160,19 +183,34 @@ const canImport = computed(() => isImportableAcceptance(selectedRow.value));
 
 const importTitle = computed(() => {
   if (selectedIds.value.length !== 1) return '请勾选一条未开始或进行中的验收单';
-  if (!canImport.value) return '仅未开始或进行中的验收单可导入发货单';
+  if (!canImport.value) return '仅未开始或进行中的验收单可预验收/批验收';
   return '';
 });
 
-const deliveryImportCtx = computed(() => {
+const batchImportCtx = computed(() => {
   if (!selectedRow.value) return acceptanceStore.current || {};
   return acceptanceFromRow(selectedRow.value);
 });
 
 onMounted(() => {
   acceptanceStore.initFromStorage();
+  syncImportStatusesFromSource();
   syncDefaultFromStore();
 });
+
+onActivated(() => {
+  syncImportStatusesFromSource();
+});
+
+/** 批验收确认后 BASE_ROWS 可能已改为进行中，同步到当前列表 */
+function syncImportStatusesFromSource() {
+  const fresh = createAcceptanceRows();
+  const statusById = Object.fromEntries(fresh.map(r => [r.acceptanceId, r.status]));
+  rows.value.forEach(r => {
+    if (statusById[r.acceptanceId]) r.status = statusById[r.acceptanceId];
+  });
+  filteredRows.value = filterAcceptanceRows(rows.value, search.value);
+}
 
 function syncDefaultFromStore() {
   const stored = acceptanceStore.current;
@@ -238,7 +276,11 @@ function goDetail(row) {
   router.push(`/acceptance/detail/${encodeURIComponent(row.acceptanceId)}`);
 }
 
-function goDeliveryImport() {
+function goPreAccept() {
+  if (!hasCurrentLibrarianAssociatedSubscribers()) {
+    window.alert(NO_ASSOCIATED_SUBSCRIBER_IMPORT_PERMISSION_MESSAGE);
+    return;
+  }
   if (selectedIds.value.length !== 1) {
     window.alert('请先在列表中勾选一条未开始或进行中的验收单');
     return;
@@ -248,14 +290,29 @@ function goDeliveryImport() {
     return;
   }
   setCurrent(selectedRow.value, true);
-  deliveryImportModalOpen.value = true;
+  preAcceptOpen.value = true;
 }
 
-/**
- * 创建导入任务成功回调
- */
-function onDeliveryImportCreated() {
-  deliveryImportModalOpen.value = false;
+function goDeliveryImport() {
+  if (!hasCurrentLibrarianAssociatedSubscribers()) {
+    window.alert(NO_ASSOCIATED_SUBSCRIBER_IMPORT_PERMISSION_MESSAGE);
+    return;
+  }
+  if (selectedIds.value.length !== 1) {
+    window.alert('请先在列表中勾选一条未开始或进行中的验收单');
+    return;
+  }
+  if (!canImport.value || !selectedRow.value) {
+    window.alert('请先在列表中勾选一条未开始或进行中的验收单');
+    return;
+  }
+  setCurrent(selectedRow.value, true);
+  batchImportOpen.value = true;
+}
+
+function onBatchImportConfirmed() {
+  batchImportOpen.value = false;
+  syncImportStatusesFromSource();
 }
 
 function openAdd() {

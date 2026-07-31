@@ -16,18 +16,51 @@
         </div>
       </div>
       <div class="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50 rounded-b-lg">
-        <button type="button" class="px-5 py-1.5 text-sm rounded bg-amber-500 text-white hover:bg-amber-600" @click="emit('reject')">不接受</button>
-        <button type="button" class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700" @click="emit('accept')">接受</button>
+        <template v-if="autoCloseMs > 0">
+          <button type="button" class="px-5 py-1.5 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50" @click="emit('close')">已知晓</button>
+        </template>
+        <template v-else>
+          <button type="button" class="px-5 py-1.5 text-sm rounded bg-amber-500 text-white hover:bg-amber-600" @click="emit('reject')">不接受</button>
+          <button type="button" class="px-5 py-1.5 text-sm rounded bg-sky-600 text-white hover:bg-sky-700" @click="emit('accept')">接受</button>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { onBeforeUnmount, watch } from 'vue';
+
+const props = defineProps({
   open: { type: Boolean, default: false },
-  preview: { type: Object, default: () => ({ allocated: '', unallocated: '无' }) }
+  preview: { type: Object, default: () => ({ allocated: '', unallocated: '无' }) },
+  /** >0 时自动关闭（毫秒）；开启后底栏显示「已知晓」 */
+  autoCloseMs: { type: Number, default: 0 }
 });
 
 const emit = defineEmits(['close', 'accept', 'reject']);
+
+/** @type {ReturnType<typeof setTimeout>|null} */
+let autoCloseTimer = null;
+
+function clearAutoClose() {
+  if (autoCloseTimer != null) {
+    clearTimeout(autoCloseTimer);
+    autoCloseTimer = null;
+  }
+}
+
+watch(
+  () => props.open,
+  open => {
+    clearAutoClose();
+    if (!open || props.autoCloseMs <= 0) return;
+    autoCloseTimer = setTimeout(() => {
+      autoCloseTimer = null;
+      emit('close');
+    }, props.autoCloseMs);
+  }
+);
+
+onBeforeUnmount(clearAutoClose);
 </script>

@@ -6,10 +6,22 @@
         <button type="button" class="text-gray-400 text-xl" @click="emit('close')">&times;</button>
       </div>
       <div class="px-6 py-5 overflow-y-auto space-y-4">
-        <div class="bg-gray-50 rounded px-4 py-3 flex flex-wrap gap-x-10 gap-y-1 text-sm text-gray-700">
-          <span>发订套数：<span class="text-gray-900">{{ form.orderedSets || '—' }}</span></span>
-          <span>已收货套数：<span class="text-gray-900">{{ form.receivedSets || '—' }}</span></span>
-          <span>待收货套数：<span class="text-gray-900">{{ form.pendingSets || '—' }}</span></span>
+        <div class="bg-gray-50 rounded px-4 py-3 space-y-2 text-sm text-gray-700">
+          <div class="flex flex-wrap gap-x-10 gap-y-1">
+            <span>发订套数：<span class="text-gray-900">{{ form.orderedSets || '—' }}</span></span>
+            <span>已收货套数：<span class="text-gray-900">{{ form.receivedSets || '—' }}</span></span>
+            <span>已换货套数：<span class="text-gray-900">{{ form.exchangedSets || '—' }}</span></span>
+            <span>已退货套数：<span class="text-gray-900">{{ form.returnedSets || '—' }}</span></span>
+            <span>待收货套数：<span class="text-gray-900">{{ form.pendingSets || '—' }}</span></span>
+          </div>
+          <div class="flex items-center gap-1 min-w-0">
+            <span class="shrink-0">订单行备注：</span>
+            <div class="min-w-0 flex-1" @mouseenter="updateRemarkOverflow">
+              <HoverTooltip :text="remarkTooltipText" class="!block w-full min-w-0">
+                <span ref="remarkEl" class="block truncate text-gray-900">{{ orderLineRemark }}</span>
+              </HoverTooltip>
+            </div>
+          </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div class="flex items-center gap-3"><label class="text-sm text-gray-600 w-20 text-right shrink-0">ISBN</label><input v-model="form.isbn" type="text" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"></div>
@@ -90,12 +102,13 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 import BarcodeAllocatedResultModal from '@/modules/acceptance/components/BarcodeAllocatedResultModal.vue';
+import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import {
   calcBarcodeAllocation,
   isChineseAcceptanceLang,
-  parseReceiveCounts
+  resolveReceiveSetSummary
 } from '@/modules/acceptance/data/receive-by-item';
 
 const props = defineProps({
@@ -112,8 +125,31 @@ const emit = defineEmits(['close', 'confirm', 'preview']);
 
 const isForeign = computed(() => !isChineseAcceptanceLang(props.acceptanceLang));
 
+const orderLineRemark = computed(() => {
+  const text = props.row?.remarkText;
+  return text && String(text).trim() ? String(text).trim() : '—';
+});
+
+const remarkEl = ref(null);
+const remarkOverflow = ref(false);
+const remarkTooltipText = computed(() => (
+  orderLineRemark.value !== '—' && remarkOverflow.value ? orderLineRemark.value : ''
+));
+
+function updateRemarkOverflow() {
+  const el = remarkEl.value;
+  remarkOverflow.value = !!(el && el.scrollWidth > el.clientWidth);
+}
+
+watch(() => [props.open, orderLineRemark.value], async () => {
+  remarkOverflow.value = false;
+  if (!props.open) return;
+  await nextTick();
+  updateRemarkOverflow();
+});
+
 const form = reactive({
-  orderedSets: '', receivedSets: '', pendingSets: '',
+  orderedSets: '', receivedSets: '', exchangedSets: '', returnedSets: '', pendingSets: '',
   isbn: '', author: '', title: '',
   price: '', currency: 'CNY', actualPrice: '',
   volumesPerSet: '', receiveSets: '', barcodeStart: '', remark: ''
@@ -131,15 +167,17 @@ const barcodeResult = ref({
 watch(() => [props.open, props.row], ([open, row]) => {
   if (!open || !row) return;
   barcodeResultOpen.value = false;
-  const counts = parseReceiveCounts(row.counts);
-  form.orderedSets = String(row.orderedSets ?? counts.ordered);
-  form.receivedSets = String(row.receivedSets ?? counts.received);
-  form.pendingSets = String(row.pendingSets ?? counts.pending);
+  const summary = resolveReceiveSetSummary(row);
+  form.orderedSets = String(summary.ordered);
+  form.receivedSets = String(summary.received);
+  form.exchangedSets = String(summary.exchange);
+  form.returnedSets = String(summary.returned);
+  form.pendingSets = String(summary.pending);
   form.isbn = row.isbn || '';
   form.author = row.author || '';
   form.title = row.title || '';
   form.volumesPerSet = String(row.copies || '');
-  form.receiveSets = String(row.defaultReceiveSets ?? row.pendingSets ?? counts.pending);
+  form.receiveSets = String(row.defaultReceiveSets ?? summary.pending);
   form.barcodeStart = row.barcodeStart || '';
   form.remark = row.receiveRemark || '';
   if (isForeign.value) {

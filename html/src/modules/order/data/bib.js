@@ -107,31 +107,31 @@ export const bibRelatedOrderLines = [
 
 export const pendingOrdersForBib = [
   {
-    orderId: 'PG001B20250617001', subscriber: 'ceshi', site: '首都华威桥馆', method: '现采',
+    orderId: 'PG001B20250617001', orderName: '2026年度地质勘查专题采购', subscriber: 'ceshi', site: '首都华威桥馆', method: '现采',
     resourceType: '纸质书', language: '中文', supplier: '湖南长沙',
     budget: '2026年首都图书馆图书购置费中文普通图书(一)', discount: '0.80',
     orderStatus: 'issued', createTime: '2026-06-10 14:20:00'
   },
   {
-    orderId: 'PG001B202406030001', subscriber: 'ceshi', site: '首都华威桥馆', method: '现采',
+    orderId: 'PG001B202406030001', orderName: '中文普通图书现采批次（一）', subscriber: 'ceshi', site: '首都华威桥馆', method: '现采',
     resourceType: '纸质书', language: '中文', supplier: '湖南长沙',
     budget: '2024年首都图书馆图书购置费中文普通图书(一)', discount: '0.80',
     orderStatus: 'pending', createTime: '2024-06-03 09:47:52'
   },
   {
-    orderId: 'PG001B202406030005', subscriber: 'ceshi', site: '首都华威桥馆', method: '现采',
+    orderId: 'PG001B202406030005', orderName: '中文视听资料采购（含较长名称用于截断展示验证）', subscriber: 'ceshi', site: '首都华威桥馆', method: '现采',
     resourceType: '纸质书', language: '中文', supplier: '北京新华',
     budget: '2024年首都图书馆图书购置费中文普通图书(四)', discount: '0.80',
     orderStatus: 'pendingImport', createTime: '2024-06-03 14:30:00'
   },
   {
-    orderId: 'PG001B202406030006', subscriber: 'ceshi', site: '首都大兴机场分馆', method: '现采',
+    orderId: 'PG001B202406030006', orderName: '外文视听资料补配', subscriber: 'ceshi', site: '首都大兴机场分馆', method: '现采',
     resourceType: '视听资料', language: '中文', supplier: '湖北三新',
     budget: '2024年首都图书馆视听资料购置费', discount: '0.80',
     orderStatus: 'pending', createTime: '2024-06-04 09:15:30'
   },
   {
-    orderId: 'PG001B20250512003', subscriber: 'ceshi', site: '北京城市图书馆', method: '现采',
+    orderId: 'PG001B20250512003', orderName: '新华书店现采待发订', subscriber: 'ceshi', site: '北京城市图书馆', method: '现采',
     resourceType: '纸质书', language: '中文', supplier: '湖南长沙',
     budget: '2024年首都图书馆图书购置费中文普通图书(二)', discount: '0.80',
     orderStatus: 'pending', createTime: '2025-05-12 10:30:00'
@@ -302,6 +302,7 @@ function mergeJoinOrderPools(storeOrders, staticOrders) {
 function normalizeJoinOrderCandidate(order) {
   return {
     orderId: order.orderId,
+    orderName: order.orderName || '',
     subscriber: order.subscriber,
     site: order.site,
     method: order.method,

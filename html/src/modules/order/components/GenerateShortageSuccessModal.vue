@@ -9,8 +9,7 @@
           </svg>
         </div>
         <div class="text-sm text-gray-800 space-y-1 pt-1">
-          <p>催缺单生成成功，已自动过滤已收货书目</p>
-          <p>是否立即查看？</p>
+          <p v-for="(line, index) in displayLines" :key="index">{{ line }}</p>
         </div>
       </div>
       <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
@@ -26,9 +25,18 @@
 </template>
 
 <script setup>
-defineProps({
-  open: { type: Boolean, default: false }
+import { computed } from 'vue';
+
+const props = defineProps({
+  open: { type: Boolean, default: false },
+  /** 提示正文行；为空时使用催缺默认文案 */
+  lines: { type: Array, default: null }
 });
 
 const emit = defineEmits(['cancel', 'confirm']);
+
+const displayLines = computed(() => {
+  if (Array.isArray(props.lines) && props.lines.length) return props.lines;
+  return ['催缺单生成成功，已自动过滤已收货书目', '是否立即查看？'];
+});
 </script>

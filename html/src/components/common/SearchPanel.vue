@@ -41,6 +41,22 @@
                 class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500"
               >
             </div>
+            <div v-else-if="field.type === 'selectText'" class="flex flex-1 items-center">
+              <select
+                v-model="model[field.selectKey]"
+                class="w-20 shrink-0 border border-gray-300 rounded-l px-1 py-1.5 text-sm focus:outline-none focus:border-sky-500 bg-white"
+              >
+                <option v-for="opt in field.options" :key="opt.value ?? opt" :value="opt.value ?? opt">
+                  {{ opt.label ?? opt }}
+                </option>
+              </select>
+              <input
+                v-model="model[field.key]"
+                type="text"
+                :placeholder="field.placeholder || '请输入'"
+                class="flex-1 min-w-0 border border-l-0 border-gray-300 rounded-r px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500"
+              >
+            </div>
             <input
               v-else
               v-model="model[field.key]"

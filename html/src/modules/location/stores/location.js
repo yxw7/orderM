@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import {
+  buildBranchSelectOptions,
   buildSiteFilterOptions,
+  getActiveBranches,
   getActiveSiteNames,
   getActiveSites,
   initialBranchRows,
@@ -37,6 +39,14 @@ export const useLocationStore = defineStore('location', {
 
     activeSiteFilterOptions(state) {
       return buildSiteFilterOptions(state.siteRows);
+    },
+
+    activeBranches(state) {
+      return getActiveBranches(state.branchRows);
+    },
+
+    activeBranchSelectOptions(state) {
+      return buildBranchSelectOptions(state.branchRows);
     }
   },
 

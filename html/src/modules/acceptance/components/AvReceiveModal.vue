@@ -6,7 +6,23 @@
         <button type="button" class="text-gray-400 text-xl" @click="emit('close')">&times;</button>
       </div>
       <div class="px-6 py-5 overflow-y-auto space-y-4">
-        <div class="bg-gray-50 rounded px-4 py-3 text-sm text-gray-700">{{ summaryText }}</div>
+        <div class="bg-gray-50 rounded px-4 py-3 space-y-2 text-sm text-gray-700">
+          <div class="flex flex-wrap gap-x-10 gap-y-1">
+            <span>发订套数：<span class="text-gray-900">{{ summary.ordered }}</span></span>
+            <span>已收货套数：<span class="text-gray-900">{{ summary.received }}</span></span>
+            <span>已换货套数：<span class="text-gray-900">{{ summary.exchange }}</span></span>
+            <span>已退货套数：<span class="text-gray-900">{{ summary.returned }}</span></span>
+            <span>待收货套数：<span class="text-gray-900">{{ summary.pending }}</span></span>
+          </div>
+          <div class="flex items-center gap-1 min-w-0">
+            <span class="shrink-0">订单行备注：</span>
+            <div class="min-w-0 flex-1" @mouseenter="updateRemarkOverflow">
+              <HoverTooltip :text="remarkTooltipText" class="!block w-full min-w-0">
+                <span ref="remarkEl" class="block truncate text-gray-900">{{ orderLineRemark }}</span>
+              </HoverTooltip>
+            </div>
+          </div>
+        </div>
         <div class="grid grid-cols-3 gap-4">
           <div class="flex items-center gap-3"><label class="text-sm text-gray-600 w-20 text-right shrink-0">ISBN</label><input v-model="form.isbn" type="text" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"></div>
           <div class="flex items-center gap-3"><label class="text-sm text-gray-600 w-16 text-right shrink-0">ISRC</label><input v-model="form.isrc" type="text" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"></div>
@@ -83,10 +99,11 @@
 </template>
 
 <script setup>
-import { computed, reactive, watch } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
+import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import {
   isChineseAcceptanceLang,
-  parseReceiveCounts,
+  resolveReceiveSetSummary,
   RECEIVE_CARRIER_OPTIONS
 } from '@/modules/acceptance/data/receive-by-item';
 
@@ -102,24 +119,42 @@ const carrierOptions = RECEIVE_CARRIER_OPTIONS.filter(Boolean);
 
 const isForeign = computed(() => !isChineseAcceptanceLang(props.acceptanceLang));
 
+const orderLineRemark = computed(() => {
+  const text = props.row?.remarkText;
+  return text && String(text).trim() ? String(text).trim() : '—';
+});
+
+const remarkEl = ref(null);
+const remarkOverflow = ref(false);
+const remarkTooltipText = computed(() => (
+  orderLineRemark.value !== '—' && remarkOverflow.value ? orderLineRemark.value : ''
+));
+
+function updateRemarkOverflow() {
+  const el = remarkEl.value;
+  remarkOverflow.value = !!(el && el.scrollWidth > el.clientWidth);
+}
+
+const summary = computed(() => (
+  props.row ? resolveReceiveSetSummary(props.row) : { ordered: '—', received: '—', exchange: '—', returned: '—', pending: '—' }
+));
+
 const form = reactive({
   isbn: '', isrc: '', barcode: '', catalogNo: '', carrier: '', format: '',
   title: '', author: '', price: '', currency: 'CNY', actualPrice: '',
   vinylColor: '', brand: '', limitedNo: '', copies: '', receiveSets: '', remark: ''
 });
 
-const summaryText = computed(() => {
-  if (!props.row) return '';
-  const counts = parseReceiveCounts(props.row.counts);
-  const ordered = props.row.orderedSets ?? counts.ordered;
-  const received = props.row.receivedSets ?? counts.received;
-  const pending = props.row.pendingSets ?? counts.pending;
-  return `发订套数：${ordered}，已收货套数：${received}，待收货套数：${pending}`;
+watch(() => [props.open, orderLineRemark.value], async () => {
+  remarkOverflow.value = false;
+  if (!props.open) return;
+  await nextTick();
+  updateRemarkOverflow();
 });
 
 watch(() => [props.open, props.row], ([open, row]) => {
   if (!open || !row) return;
-  const counts = parseReceiveCounts(row.counts);
+  const summary = resolveReceiveSetSummary(row);
   form.isbn = row.isbn || '';
   form.isrc = row.isrc || '';
   form.barcode = row.barcode || '';
@@ -132,7 +167,7 @@ watch(() => [props.open, props.row], ([open, row]) => {
   form.brand = row.label || '';
   form.limitedNo = row.limitedNo || '';
   form.copies = String(row.copies || '');
-  form.receiveSets = String(row.defaultReceiveSets ?? row.pendingSets ?? counts.pending);
+  form.receiveSets = String(row.defaultReceiveSets ?? summary.pending);
   form.remark = row.receiveRemark || '';
   if (isForeign.value) {
     form.price = row.originalPrice || row.price || '';

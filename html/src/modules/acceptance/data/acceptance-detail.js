@@ -46,7 +46,14 @@ export const acceptanceHeaderDefaults = {
   totalNetPrice: '¥338.40'
 };
 
-import { formatSpeciesReason, enrichVolumeRowsWithPricing } from '@/modules/acceptance/data/detail-utils';
+import { reactive } from 'vue';
+import {
+  formatSpeciesReason,
+  enrichVolumeRowsWithPricing,
+  parseSpeciesCounts,
+  updateSpeciesCounts,
+  sumSpeciesSetStats
+} from '@/modules/acceptance/data/detail-utils';
 
 function formatReason(row) {
   return formatSpeciesReason(row);
@@ -86,6 +93,98 @@ export const acceptanceAvSpeciesColumns = [
   { key: 'reason', label: '换/退/撤销收货原因' },
   { key: 'actions', label: '操作', sticky: true }
 ];
+
+/** 验收详情按种明细运行时（可写，供逐条收货累计与写回） */
+const speciesRuntime = reactive({
+  纸质书: acceptanceSpeciesRows.map(r => ({ ...r })),
+  视听资料: acceptanceAvSpeciesRows.map(r => ({ ...r }))
+});
+
+function nowAcceptanceTime() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+function formatPriceLabel(price) {
+  if (price == null || price === '') return '—';
+  const s = String(price).trim();
+  if (s.startsWith('¥')) return s;
+  return `¥${s}`;
+}
+
+export function getSpeciesRuntimeRows(resourceType) {
+  return resourceType === '视听资料' ? speciesRuntime['视听资料'] : speciesRuntime['纸质书'];
+}
+
+export function sumAcceptanceSpeciesSetStats(resourceType) {
+  return sumSpeciesSetStats(getSpeciesRuntimeRows(resourceType));
+}
+
+/**
+ * 将逐条收货的收/换/退写入验收详情按种明细（按订单行号 upsert）
+ * @param {{ resourceType: string, orderLine: string, flow: 'receive'|'exchange'|'return', sets: number, meta?: object }} payload
+ */
+export function applyAcceptanceSpeciesFlow(payload) {
+  const {
+    resourceType,
+    orderLine,
+    flow,
+    sets,
+    meta = {}
+  } = payload || {};
+  const qty = Number(sets) || 0;
+  if (!orderLine || qty <= 0) return null;
+
+  const rows = getSpeciesRuntimeRows(resourceType);
+  const isAv = resourceType === '视听资料';
+  let row = rows.find(r => r.orderLine === orderLine);
+  if (!row) {
+    row = {
+      id: rows.reduce((max, r) => Math.max(max, Number(r.id) || 0), 0) + 1,
+      orderLine,
+      isbn: meta.isbn || meta.isrc || '',
+      title: meta.title || '',
+      author: meta.author || '',
+      price: formatPriceLabel(meta.price),
+      currency: meta.currency || 'CNY',
+      counts: '0 / 0 / 0 / 0',
+      lastTime: nowAcceptanceTime(),
+      lastInspector: meta.inspector || '当前馆员',
+      reason: ''
+    };
+    if (isAv) {
+      row.carrier = meta.carrier || '';
+      row.productBarcode = meta.barcode || meta.productBarcode || '';
+      row.catalogNo = meta.catalogNo || '';
+      row.piecesInSet = Number(meta.copies) || Number(meta.piecesInSet) || 1;
+    }
+    rows.push(row);
+  }
+
+  const current = parseSpeciesCounts(row);
+  const patch = {};
+  if (!current.ordered && meta.orderedSets != null) {
+    patch.ordered = Number(meta.orderedSets) || 0;
+  }
+  if (flow === 'receive') {
+    patch.received = current.received + qty;
+  } else if (flow === 'exchange') {
+    patch.exchange = current.exchange + qty;
+    if (meta.reason) row.exchangeReason = meta.reason;
+  } else if (flow === 'return') {
+    patch.returned = current.returned + qty;
+    if (meta.reason) row.returnReason = meta.reason;
+  } else {
+    return null;
+  }
+
+  updateSpeciesCounts(row, patch);
+  row.lastTime = nowAcceptanceTime();
+  if (meta.inspector) row.lastInspector = meta.inspector;
+  row.reason = formatSpeciesReason(row);
+  return row;
+}
 
 export const acceptanceBookVolumeRows = [
   { id: 1, barcode: '001T268700006', isbn: '9787518359066', title: '现代精细油藏描述', author: '陈欢庆 著', price: '¥110.00', netPrice: '¥66.00', unitPrice: '¥36.67', currency: 'CNY', volumesInSet: 3, receiver: '杨晓娴', receiveTime: '2026-06-02 09:51:57' },
@@ -159,10 +258,29 @@ export function getAcceptanceDetailConfig(type, viewMode, detailRows, volumeRows
       ? { rows, fields: acceptanceAvVolumeSearchFields, columns: acceptanceAvVolumeColumns, exportLabel: '导出收货明细' }
       : { rows, fields: acceptanceBookVolumeSearchFields, columns: acceptanceBookVolumeColumns, exportLabel: '导出收货明细' };
   }
-  const rows = (detailRows ?? (isAv ? acceptanceAvSpeciesRows : acceptanceSpeciesRows)).map(r => ({ ...r, reason: formatReason(r) }));
+  const source = detailRows ?? getSpeciesRuntimeRows(isAv ? '视听资料' : '纸质书');
+  const rows = source.map(r => ({ ...r, reason: formatReason(r) }));
   return isAv
     ? { rows, fields: acceptanceAvSpeciesSearchFields, columns: acceptanceAvSpeciesColumns, exportLabel: '导出验收明细' }
     : { rows, fields: acceptanceSpeciesSearchFields, columns: acceptanceSpeciesColumns, exportLabel: '导出验收明细' };
+}
+
+/**
+ * 验收单头部汇总（与验收详情页同逻辑）
+ * @param {string} resourceType
+ * @param {object[]} [speciesRows] 按种明细行；缺省时取该类型默认明细
+ * @returns {{ totalSpecies: string, totalVolumes: string, totalListPrice: string, totalNetPrice: string }}
+ */
+export function calcAcceptanceHeaderTotals(resourceType, speciesRows) {
+  const type = resourceType || '纸质书';
+  const rows = speciesRows ?? getAcceptanceDetailConfig(type, 'species').rows;
+  const isAv = type === '视听资料';
+  return {
+    totalSpecies: String(rows.length),
+    totalVolumes: isAv ? '3' : '12',
+    totalListPrice: isAv ? '¥1068.00' : '¥423.00',
+    totalNetPrice: isAv ? '¥854.40' : '¥338.40'
+  };
 }
 
 export function getDefaultDetailRows(type, counts) {

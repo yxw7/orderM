@@ -61,6 +61,9 @@
     <template #cell-orderId="{ row }">
       <button type="button" class="text-sky-600 hover:underline" @click="$emit('go-lines', row.orderId)">{{ row.orderId }}</button>
     </template>
+    <template #cell-orderName="{ row }">
+      <WrapCell :text="row.orderName" max-width-class="max-w-[200px]" />
+    </template>
     <template #cell-issueRemark="{ row }">
       <span v-if="!row.issueRemark?.trim()" class="text-gray-300">查看</span>
       <span v-else class="text-sky-600 hover:underline cursor-pointer" :title="row.issueRemark">查看</span>
@@ -115,7 +118,7 @@ const {
   toggleAllColumns,
   moveColumn,
   setColumnPin
-} = useColumnDisplay('order-list-columns-v2', ORDER_LIST_COLUMNS);
+} = useColumnDisplay('order-list-columns-v3', ORDER_LIST_COLUMNS);
 
 const search = ref({});
 const filteredRows = ref([...store.orders]);

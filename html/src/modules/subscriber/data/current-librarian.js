@@ -10,6 +10,9 @@ export const NO_ASSOCIATED_SUBSCRIBER_CREATE_ORDER_MESSAGE = '您没有关联订
 /** 当前登录馆员未关联订户时无法加入订单的提示文案 */
 export const NO_ASSOCIATED_SUBSCRIBER_JOIN_ORDER_MESSAGE = '您没有关联订户，无法加入订单';
 
+/** 当前登录馆员未关联订户时无法导入发货单的提示文案 */
+export const NO_ASSOCIATED_SUBSCRIBER_IMPORT_PERMISSION_MESSAGE = '您没有关联订户，无操作权限';
+
 /**
  * 解析馆员关联订户名称列表
  * @param {string} [text]

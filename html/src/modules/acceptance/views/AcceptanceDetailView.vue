@@ -91,7 +91,8 @@
 
     <AcceptanceExportConfigModal
       :open="exportConfigOpen"
-      :fields="exportFields"
+      :resource-type="header.type === '视听资料' ? '视听资料' : '纸质书'"
+      :view-mode="viewMode"
       @close="exportConfigOpen = false"
       @confirm="onExportConfigSave"
     />
@@ -99,6 +100,11 @@
       :open="revokeOpen"
       @close="revokeOpen = false"
       @confirm="submitRevoke"
+    />
+    <PrdSpecDrawer
+      v-if="!embedded"
+      page-id="acceptance-detail"
+      :active-tab="viewMode"
     />
   </div>
 </template>
@@ -112,12 +118,14 @@ import DropdownButton from '@/components/common/DropdownButton.vue';
 import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import AcceptanceExportConfigModal from '@/modules/acceptance/components/AcceptanceExportConfigModal.vue';
 import RevokeReceiveModal from '@/modules/acceptance/components/RevokeReceiveModal.vue';
-import { SPECIES_EXPORT_FIELDS, VOLUME_EXPORT_FIELDS } from '@/modules/acceptance/constants';
+import PrdSpecDrawer from '@/components/common/PrdSpecDrawer.vue';
 import { createAcceptanceRows } from '@/modules/acceptance/data/acceptance-list';
 import {
   getAcceptanceDetailConfig,
   acceptanceHeaderDefaults,
-  getDefaultDetailRows
+  getDefaultDetailRows,
+  calcAcceptanceHeaderTotals,
+  getSpeciesRuntimeRows
 } from '@/modules/acceptance/data/acceptance-detail';
 import {
   filterDetailRows,
@@ -188,19 +196,17 @@ const header = computed(() => {
   const row = listRow.value;
   const ctx = contextAcceptance.value;
   if (!row && !ctx) return acceptanceHeaderDefaults;
-  const cfg = getAcceptanceDetailConfig(row?.type || ctx?.type || '纸质书', 'species', detailRows.value);
+  const type = row?.type || ctx?.type || '纸质书';
+  const totals = calcAcceptanceHeaderTotals(type, detailRows.value);
   return {
     acceptanceId: row?.acceptanceId || ctx?.acceptanceId || acceptanceHeaderDefaults.acceptanceId,
     name: row?.name || ctx?.name || '—',
-    type: row?.type || ctx?.type || '—',
+    type,
     lang: row?.lang || ctx?.lang || '—',
     shipNo: row?.shipNo || ctx?.shipNo || '—',
     supplier: row?.supplier || ctx?.supplier || '—',
     remark: row?.remarkText || ctx?.remarkText || '—',
-    totalSpecies: String(cfg.rows.length),
-    totalVolumes: row?.type === '视听资料' ? '3' : '12',
-    totalListPrice: row?.type === '视听资料' ? '¥1068.00' : '¥423.00',
-    totalNetPrice: row?.type === '视听资料' ? '¥854.40' : '¥338.40'
+    ...totals
   };
 });
 
@@ -212,10 +218,6 @@ const tableColumns = computed(() =>
   viewMode.value === 'volume'
     ? detailConfig.value.columns
     : detailConfig.value.columns
-);
-
-const exportFields = computed(() =>
-  viewMode.value === 'volume' ? VOLUME_EXPORT_FIELDS : SPECIES_EXPORT_FIELDS
 );
 
 const pagedRows = computed(() => {
@@ -309,6 +311,18 @@ function hasSpeciesOps(row) {
   return c.received || c.exchange || c.returned;
 }
 
+function syncRuntimeSpeciesCounts(row, patch) {
+  const runtimeRow = getSpeciesRuntimeRows(header.value.type).find(r => r.orderLine === row.orderLine);
+  if (!runtimeRow) return;
+  updateSpeciesCounts(runtimeRow, patch);
+  if (patch.exchange === 0) runtimeRow.exchangeReason = '';
+  if (patch.returned === 0) runtimeRow.returnReason = '';
+  if (Array.isArray(row.revokeReceiveReasons)) {
+    runtimeRow.revokeReceiveReasons = [...row.revokeReceiveReasons];
+  }
+  runtimeRow.reason = formatSpeciesReason(runtimeRow);
+}
+
 function openRevoke(row) {
   revokeTarget.value = row;
   revokeOpen.value = true;
@@ -320,6 +334,7 @@ function submitRevoke(reason) {
   updateSpeciesCounts(row, { received: 0 });
   row.revokeReceiveReasons = [reason];
   row.reason = formatSpeciesReason(row);
+  syncRuntimeSpeciesCounts(row, { received: 0 });
   persistContext();
   filterRows();
   revokeOpen.value = false;
@@ -332,6 +347,7 @@ function revokeExchange(row) {
   updateSpeciesCounts(row, { exchange: 0 });
   row.exchangeReason = '';
   row.reason = formatSpeciesReason(row);
+  syncRuntimeSpeciesCounts(row, { exchange: 0 });
   persistContext();
   filterRows();
 }
@@ -341,6 +357,7 @@ function revokeReturn(row) {
   updateSpeciesCounts(row, { returned: 0 });
   row.returnReason = '';
   row.reason = formatSpeciesReason(row);
+  syncRuntimeSpeciesCounts(row, { returned: 0 });
   persistContext();
   filterRows();
 }

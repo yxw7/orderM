@@ -61,13 +61,44 @@
         </label>
       </div>
     </div>
+    <div v-if="showBranchScope">
+      <div class="text-sm text-gray-700 mb-3">
+        查重范围
+        <span class="text-gray-400">（未选择时按不限范围查重）</span>
+      </div>
+      <div class="h-40 overflow-y-auto border border-gray-200 rounded px-3 py-2">
+        <div class="flex flex-col gap-y-2 text-sm text-gray-700">
+          <label
+            v-for="opt in branchPatterns"
+            :key="opt.value"
+            class="inline-flex items-center gap-2"
+            :class="submitting ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'"
+          >
+            <input
+              v-model="selectedBranchPatterns"
+              type="checkbox"
+              :value="opt.value"
+              class="rounded text-sky-600"
+              :disabled="submitting"
+            >
+            <span>{{ opt.label }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
   </FormModal>
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue';
 import FormModal from '@/modules/order/components/FormModal.vue';
-import { DEDUP_FIELDS_BY_RESOURCE_TYPE, getDedupDefaultFieldKeys } from '@/modules/order/data/dedup';
+import {
+  DEDUP_BRANCH_PATTERNS,
+  findEmptyDedupFieldsOnLines,
+  formatEmptyDedupFieldsMessage,
+  getDedupDefaultFieldKeys,
+  getDedupFields
+} from '@/modules/order/data/dedup';
 import { useOrderStore } from '@/modules/order/stores/order';
 
 const props = defineProps({
@@ -87,9 +118,12 @@ const duplicateTypeOptions = [
 
 const duplicateType = ref('all');
 const selectedFields = ref([]);
+const selectedBranchPatterns = ref([]);
 const submitting = ref(false);
 
-const fields = computed(() => DEDUP_FIELDS_BY_RESOURCE_TYPE[props.resourceType] || DEDUP_FIELDS_BY_RESOURCE_TYPE['纸质书']);
+const fields = computed(() => getDedupFields(props.resourceType, props.languageCategory));
+const branchPatterns = DEDUP_BRANCH_PATTERNS;
+const showBranchScope = computed(() => duplicateType.value === 'all' || duplicateType.value === 'holding');
 
 const selectAll = computed({
   get: () => fields.value.length > 0 && selectedFields.value.length === fields.value.length,
@@ -124,11 +158,22 @@ async function submit() {
     return;
   }
 
+  const emptyFieldIssues = findEmptyDedupFieldsOnLines(
+    store.lines,
+    store.dedupTargetLineNos,
+    selectedFields.value
+  );
+  if (emptyFieldIssues.length) {
+    window.alert(formatEmptyDedupFieldsMessage(emptyFieldIssues));
+    return;
+  }
+
   submitting.value = true;
   try {
     await store.submitDedup({
       duplicateType: duplicateType.value,
-      fieldKeys: [...selectedFields.value]
+      fieldKeys: [...selectedFields.value],
+      branchPatterns: showBranchScope.value ? [...selectedBranchPatterns.value] : []
     });
   } catch {
     window.alert('查重失败，请稍后重试');

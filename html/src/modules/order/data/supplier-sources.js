@@ -1,42 +1,43 @@
 /**
  * 供应商主数据（mock）：对应代理商、出版社管理、个人管理、资源商管理四套应用。
+ * 每条含 resourceTypes，供检索等按资源类型收窄选项。
  * @typedef {'代理商' | '出版社管理' | '个人管理' | '资源商管理'} SupplierSourceModule
  * @typedef {'书商' | '拍卖行' | '捐赠' | '团体捐赠' | '交换'} SupplierType
  * @typedef {'使用中' | '已停用'} SupplierStatus
- * @typedef {{ id: string, name: string, sourceModule: SupplierSourceModule, type: SupplierType | '', status: SupplierStatus, discount: string }} SupplierRecord
+ * @typedef {{ id: string, name: string, sourceModule: SupplierSourceModule, type: SupplierType | '', status: SupplierStatus, discount: string, resourceTypes: string[] }} SupplierRecord
  */
 
 /** @type {SupplierRecord[]} */
 export const SUPPLIER_MASTER_RECORDS = [
   // 代理商 — 书商
-  { id: 'agent-hncs', name: '湖南长沙', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80' },
-  { id: 'agent-hbsx', name: '湖北三新', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80' },
-  { id: 'agent-bjxh', name: '北京新华', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80' },
-  { id: 'agent-cnpi', name: 'CNPIEC', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.75' },
-  { id: 'agent-bjrt', name: '北京人天', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80' },
-  { id: 'agent-zgsd', name: '中国书店', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.82' },
-  { id: 'agent-bwz', name: '北京百万庄图书大厦有限公司', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80' },
-  { id: 'agent-bjtsds', name: '北京图书大厦', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80' },
-  { id: 'agent-zj', name: '浙江新华', sourceModule: '代理商', type: '书商', status: '已停用', discount: '0.80' },
+  { id: 'agent-hncs', name: '湖南长沙', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80', resourceTypes: ['纸质书'] },
+  { id: 'agent-hbsx', name: '湖北三新', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80', resourceTypes: ['纸质书', '视听资料'] },
+  { id: 'agent-bjxh', name: '北京新华', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80', resourceTypes: ['纸质书'] },
+  { id: 'agent-cnpi', name: 'CNPIEC', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.75', resourceTypes: ['纸质书'] },
+  { id: 'agent-bjrt', name: '北京人天', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80', resourceTypes: ['纸质书', '视听资料'] },
+  { id: 'agent-zgsd', name: '中国书店', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.82', resourceTypes: ['纸质书'] },
+  { id: 'agent-bwz', name: '北京百万庄图书大厦有限公司', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80', resourceTypes: ['纸质书'] },
+  { id: 'agent-bjtsds', name: '北京图书大厦', sourceModule: '代理商', type: '书商', status: '使用中', discount: '0.80', resourceTypes: ['纸质书'] },
+  { id: 'agent-zj', name: '浙江新华', sourceModule: '代理商', type: '书商', status: '已停用', discount: '0.80', resourceTypes: ['纸质书'] },
   // 代理商 — 拍卖行
-  { id: 'agent-zgjd', name: '中国嘉德', sourceModule: '代理商', type: '拍卖行', status: '使用中', discount: '1.00' },
+  { id: 'agent-zgjd', name: '中国嘉德', sourceModule: '代理商', type: '拍卖行', status: '使用中', discount: '1.00', resourceTypes: ['纸质书'] },
   // 出版社管理
-  { id: 'pub-nlc', name: '国家图书馆出版社', sourceModule: '出版社管理', type: '', status: '使用中', discount: '1.00' },
-  { id: 'pub-hep', name: '高等教育出版社', sourceModule: '出版社管理', type: '', status: '使用中', discount: '1.00' },
-  { id: 'pub-ptp', name: '人民邮电出版社', sourceModule: '出版社管理', type: '', status: '使用中', discount: '1.00' },
-  { id: 'pub-inactive', name: '示例停用出版社', sourceModule: '出版社管理', type: '', status: '已停用', discount: '1.00' },
+  { id: 'pub-nlc', name: '国家图书馆出版社', sourceModule: '出版社管理', type: '', status: '使用中', discount: '1.00', resourceTypes: ['纸质书'] },
+  { id: 'pub-hep', name: '高等教育出版社', sourceModule: '出版社管理', type: '', status: '使用中', discount: '1.00', resourceTypes: ['纸质书'] },
+  { id: 'pub-ptp', name: '人民邮电出版社', sourceModule: '出版社管理', type: '', status: '使用中', discount: '1.00', resourceTypes: ['纸质书'] },
+  { id: 'pub-inactive', name: '示例停用出版社', sourceModule: '出版社管理', type: '', status: '已停用', discount: '1.00', resourceTypes: ['纸质书'] },
   // 个人管理 — 捐赠
-  { id: 'person-wang', name: '王明', sourceModule: '个人管理', type: '捐赠', status: '使用中', discount: '' },
-  { id: 'person-li', name: '李华', sourceModule: '个人管理', type: '捐赠', status: '使用中', discount: '' },
-  { id: 'person-zhang', name: '张伟', sourceModule: '个人管理', type: '捐赠', status: '使用中', discount: '' },
-  { id: 'person-inactive', name: '示例停用捐赠人', sourceModule: '个人管理', type: '捐赠', status: '已停用', discount: '' },
+  { id: 'person-wang', name: '王明', sourceModule: '个人管理', type: '捐赠', status: '使用中', discount: '', resourceTypes: ['纸质书'] },
+  { id: 'person-li', name: '李华', sourceModule: '个人管理', type: '捐赠', status: '使用中', discount: '', resourceTypes: ['纸质书'] },
+  { id: 'person-zhang', name: '张伟', sourceModule: '个人管理', type: '捐赠', status: '使用中', discount: '', resourceTypes: ['纸质书', '视听资料'] },
+  { id: 'person-inactive', name: '示例停用捐赠人', sourceModule: '个人管理', type: '捐赠', status: '已停用', discount: '', resourceTypes: ['纸质书'] },
   // 资源商管理 — 团体捐赠
-  { id: 'res-ttjz', name: '某团体捐赠单位', sourceModule: '资源商管理', type: '团体捐赠', status: '使用中', discount: '' },
-  { id: 'res-charity', name: '首都图书馆之友基金会', sourceModule: '资源商管理', type: '团体捐赠', status: '使用中', discount: '' },
+  { id: 'res-ttjz', name: '某团体捐赠单位', sourceModule: '资源商管理', type: '团体捐赠', status: '使用中', discount: '', resourceTypes: ['纸质书', '视听资料'] },
+  { id: 'res-charity', name: '首都图书馆之友基金会', sourceModule: '资源商管理', type: '团体捐赠', status: '使用中', discount: '', resourceTypes: ['纸质书'] },
   // 资源商管理 — 交换
-  { id: 'res-xjy', name: '新纪元资源商', sourceModule: '资源商管理', type: '交换', status: '使用中', discount: '1.00' },
-  { id: 'res-exchange', name: '国家图书馆交换中心', sourceModule: '资源商管理', type: '交换', status: '使用中', discount: '1.00' },
-  { id: 'res-inactive', name: '示例停用交换单位', sourceModule: '资源商管理', type: '交换', status: '已停用', discount: '1.00' }
+  { id: 'res-xjy', name: '新纪元资源商', sourceModule: '资源商管理', type: '交换', status: '使用中', discount: '1.00', resourceTypes: ['纸质书', '视听资料'] },
+  { id: 'res-exchange', name: '国家图书馆交换中心', sourceModule: '资源商管理', type: '交换', status: '使用中', discount: '1.00', resourceTypes: ['纸质书'] },
+  { id: 'res-inactive', name: '示例停用交换单位', sourceModule: '资源商管理', type: '交换', status: '已停用', discount: '1.00', resourceTypes: ['纸质书'] }
 ];
 
 /**
@@ -89,6 +90,22 @@ export function getSupplierOptionsByMethod(method) {
     default:
       return [];
   }
+}
+
+/**
+ * 按资源类型并集获取「使用中」供应商名称（供应商属性 resourceTypes 与给定类型有交集）。
+ * @param {string[]} resourceTypes
+ * @returns {string[]}
+ */
+export function getSupplierOptionsByResourceTypes(resourceTypes) {
+  const typeSet = new Set((resourceTypes || []).filter(Boolean));
+  if (!typeSet.size) return [];
+  return mergeSupplierNames([
+    SUPPLIER_MASTER_RECORDS.filter(record => {
+      if (record.status !== '使用中') return false;
+      return (record.resourceTypes || []).some(type => typeSet.has(type));
+    })
+  ]);
 }
 
 /**

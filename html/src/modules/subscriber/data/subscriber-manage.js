@@ -1,4 +1,4 @@
-import { getSiteName } from '@/modules/subscriber/data/locations';
+import { getBranchLabel } from '@/modules/subscriber/data/locations';
 
 export const RESOURCE_TYPE_OPTIONS = ['纸质书', '视听资料'];
 
@@ -41,27 +41,28 @@ export const subscriberSearchFields = [
   { key: 'createDate', label: '创建日期', type: 'dateRange', startKey: 'startDate', endKey: 'endDate', extra: true }
 ];
 
+/** branchId 对应馆址管理-分馆列表 */
 const subscriberRowsRaw = [
-  { name: '少儿外文', siteId: 'site-1', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026首都图书馆图书购置费中文普通图书(三)', '2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书', '2026城市图书馆图书购置费工具书', '2026城市图书馆图书购置费经济管理'], barcodeTypes: ['外文少儿图书'], status: 'active', created: '2026-05-22', remark: '', hasLibrarian: true },
-  { name: '少儿中文', siteId: 'site-1', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026首都图书馆图书购置费中文普通图书(三)', '2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书', '2026城市图书馆图书购置费工具书', '2026城市图书馆图书购置费经济管理'], barcodeTypes: ['中文少儿普通图书'], status: 'active', created: '2026-05-22', remark: '', hasLibrarian: true },
-  { name: '成人外文', siteId: 'site-1', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书'], barcodeTypes: ['英文成人图书', '小语种成人图书'], status: 'active', created: '2026-05-21', remark: '', hasLibrarian: true },
-  { name: '成人中文', siteId: 'site-1', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026城市图书馆图书购置费工具书'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2026-05-20', remark: '', hasLibrarian: true },
-  { name: '古籍民国图书', siteId: 'site-1', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费', '2026城市图书馆图书购置费'], barcodeTypes: ['地方文献'], status: 'disabled', created: '2026-05-18', remark: '', hasLibrarian: false },
-  { name: '采编中心', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京人天', '2025CNPIEC'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-25', remark: '', hasLibrarian: true },
-  { name: '视听中心', siteId: 'site-1', types: ['视听资料'], budgets: ['2025北京新华', '2025北京人天'], barcodeTypes: ['成人视听'], status: 'active', created: '2025-01-22', remark: '', hasLibrarian: true },
-  { name: '地方文献', siteId: 'site-1', types: ['纸质书'], budgets: ['2025中国嘉德'], barcodeTypes: ['地方文献'], status: 'active', created: '2025-01-21', remark: '', hasLibrarian: true },
-  { name: '历史文献', siteId: 'site-4', types: ['纸质书'], budgets: ['2025北京新华'], barcodeTypes: ['地方文献'], status: 'active', created: '2025-01-18', remark: '', hasLibrarian: true },
-  { name: '少儿阅读', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京人天'], barcodeTypes: ['中文少儿普通图书', '少儿连环画图书'], status: 'active', created: '2025-01-17', remark: '', hasLibrarian: true },
-  { name: '外文书刊', siteId: 'site-1', types: ['纸质书'], budgets: ['2025CNPIEC', '2025北京人天'], barcodeTypes: ['英文成人图书'], status: 'active', created: '2025-01-16', remark: '', hasLibrarian: true },
-  { name: '期刊中心', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京新华', '2025中国嘉德'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-15', remark: '', hasLibrarian: true },
-  { name: '数字资源', siteId: 'site-3', types: ['视听资料'], budgets: ['2025数字资源采购'], barcodeTypes: ['成人视听', '少儿视听'], status: 'active', created: '2025-01-14', remark: '', hasLibrarian: true },
-  { name: '参考咨询', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京人天'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-13', remark: '', hasLibrarian: false },
-  { name: '特藏部', siteId: 'site-4', types: ['纸质书'], budgets: ['2025古籍采购', '2025中国嘉德'], barcodeTypes: ['地方文献'], status: 'active', created: '2025-01-12', remark: '', hasLibrarian: true },
-  { name: '流通部', siteId: 'site-1', types: ['纸质书'], budgets: ['2025北京新华'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-11', remark: '', hasLibrarian: true },
-  { name: '东馆采编', siteId: 'site-2', types: ['纸质书'], budgets: ['2025北京人天', '2025北京新华'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-10', remark: '', hasLibrarian: true },
-  { name: '西馆采编', siteId: 'site-1', types: ['纸质书'], budgets: ['2025CNPIEC'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-09', remark: '', hasLibrarian: true },
+  { name: '少儿外文', branchId: 'branch-2', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026首都图书馆图书购置费中文普通图书(三)', '2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书', '2026城市图书馆图书购置费工具书', '2026城市图书馆图书购置费经济管理'], barcodeTypes: ['外文少儿图书'], status: 'active', created: '2026-05-22', remark: '', hasLibrarian: true },
+  { name: '少儿中文', branchId: 'branch-2', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026首都图书馆图书购置费中文普通图书(三)', '2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书', '2026城市图书馆图书购置费工具书', '2026城市图书馆图书购置费经济管理'], barcodeTypes: ['中文少儿普通图书'], status: 'active', created: '2026-05-22', remark: '', hasLibrarian: true },
+  { name: '成人外文', branchId: 'branch-6', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书'], barcodeTypes: ['英文成人图书', '小语种成人图书'], status: 'active', created: '2026-05-21', remark: '', hasLibrarian: true },
+  { name: '成人中文', branchId: 'branch-6', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026城市图书馆图书购置费工具书'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2026-05-20', remark: '', hasLibrarian: true },
+  { name: '古籍民国图书', branchId: 'branch-3', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费', '2026城市图书馆图书购置费'], barcodeTypes: ['地方文献'], status: 'disabled', created: '2026-05-18', remark: '', hasLibrarian: false },
+  { name: '采编中心', branchId: 'branch-6', types: ['纸质书'], budgets: ['2025北京人天', '2025CNPIEC'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-25', remark: '', hasLibrarian: true },
+  { name: '视听中心', branchId: 'branch-9', types: ['视听资料'], budgets: ['2025北京新华', '2025北京人天'], barcodeTypes: ['成人视听'], status: 'active', created: '2025-01-22', remark: '', hasLibrarian: true },
+  { name: '地方文献', branchId: 'branch-1', types: ['纸质书'], budgets: ['2025中国嘉德'], barcodeTypes: ['地方文献'], status: 'active', created: '2025-01-21', remark: '', hasLibrarian: true },
+  { name: '历史文献', branchId: 'branch-12', types: ['纸质书'], budgets: ['2025北京新华'], barcodeTypes: ['地方文献'], status: 'active', created: '2025-01-18', remark: '', hasLibrarian: true },
+  { name: '少儿阅读', branchId: 'branch-2', types: ['纸质书'], budgets: ['2025北京人天'], barcodeTypes: ['中文少儿普通图书', '少儿连环画图书'], status: 'active', created: '2025-01-17', remark: '', hasLibrarian: true },
+  { name: '外文书刊', branchId: 'branch-6', types: ['纸质书'], budgets: ['2025CNPIEC', '2025北京人天'], barcodeTypes: ['英文成人图书'], status: 'active', created: '2025-01-16', remark: '', hasLibrarian: true },
+  { name: '期刊中心', branchId: 'branch-4', types: ['纸质书'], budgets: ['2025北京新华', '2025中国嘉德'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-15', remark: '', hasLibrarian: true },
+  { name: '数字资源', branchId: 'branch-6', types: ['视听资料'], budgets: ['2025数字资源采购'], barcodeTypes: ['成人视听', '少儿视听'], status: 'active', created: '2025-01-14', remark: '', hasLibrarian: true },
+  { name: '参考咨询', branchId: 'branch-6', types: ['纸质书'], budgets: ['2025北京人天'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-13', remark: '', hasLibrarian: false },
+  { name: '特藏部', branchId: 'branch-12', types: ['纸质书'], budgets: ['2025古籍采购', '2025中国嘉德'], barcodeTypes: ['地方文献'], status: 'active', created: '2025-01-12', remark: '', hasLibrarian: true },
+  { name: '流通部', branchId: 'branch-6', types: ['纸质书'], budgets: ['2025北京新华'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-11', remark: '', hasLibrarian: true },
+  { name: '东馆采编', branchId: 'branch-10', types: ['纸质书'], budgets: ['2025北京人天', '2025北京新华'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-10', remark: '', hasLibrarian: true },
+  { name: '西馆采编', branchId: 'branch-6', types: ['纸质书'], budgets: ['2025CNPIEC'], barcodeTypes: ['中文成人普通'], status: 'active', created: '2025-01-09', remark: '', hasLibrarian: true },
   {
-    name: 'ceshi', siteId: 'site-1', types: ['纸质书', '视听资料'],
+    name: 'ceshi', branchId: 'branch-6', types: ['纸质书', '视听资料'],
     budgets: [
       '2024年首都图书馆图书购置费中文普通图书(一)',
       '2024年首都图书馆图书购置费中文普通图书(二)',
@@ -75,7 +76,7 @@ const subscriberRowsRaw = [
 export const subscriberRows = subscriberRowsRaw.map((row, index) => ({
   ...row,
   id: index + 1,
-  siteName: getSiteName(row.siteId)
+  siteName: getBranchLabel(row.branchId)
 }));
 
 export const activeSubscriberOptions = subscriberRows
@@ -158,5 +159,5 @@ export function getTodayString() {
 }
 
 export function enrichSubscriberRow(row) {
-  return { ...row, siteName: getSiteName(row.siteId) };
+  return { ...row, siteName: getBranchLabel(row.branchId) };
 }
