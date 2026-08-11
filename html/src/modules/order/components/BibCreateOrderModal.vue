@@ -193,31 +193,22 @@ function restoreFromCache() {
   isRestoring.value = true;
   const cached = loadCreateOrderFormCache();
   resetForm();
-  if (!cached) {
-    isRestoring.value = false;
-    return;
-  }
 
-  form.orderName = cached.orderName ?? '';
-  form.subscriber = cached.subscriber ?? '';
-  form.resourceType = cached.resourceType ?? '';
-  form.method = cached.method ?? '';
+  form.resourceType = cached.resourceType || '';
+  form.method = cached.method || '';
   if (form.method && !BIB_CREATE_ORDER_METHOD_OPTIONS.includes(form.method)) {
     form.method = '';
   }
-  form.budget = cached.budget ?? '';
-  form.language = cached.language ?? '';
-  form.supplier = cached.supplier ?? '';
-  form.discount = cached.discount ?? '';
-  form.sites = Array.isArray(cached.sites) ? [...cached.sites] : [];
+  form.budget = cached.budget || '';
+  form.language = cached.language || '';
+  form.supplier = cached.supplier || '';
   if (form.supplier && !isSupplierValidForMethod(form.method, form.supplier)) {
     form.supplier = '';
-    form.discount = '';
   }
   if (isBudgetOptionalForMethod(form.method)) {
     form.budget = '';
   }
-  syncFieldsWithSubscriber();
+  form.discount = getSupplierDiscountByName(form.supplier);
   isRestoring.value = false;
 }
 
@@ -268,24 +259,15 @@ function onDiscountInput(event) {
 }
 
 function persistCache() {
-  saveCreateOrderFormCache({
-    orderName: form.orderName,
-    subscriber: form.subscriber,
-    resourceType: form.resourceType,
-    method: form.method,
-    budget: form.budget,
-    language: form.language,
-    supplier: form.supplier,
-    discount: form.discount,
-    sites: [...form.sites]
-  });
+  saveCreateOrderFormCache(form);
 }
 
 /**
- * 按书目 MARC 格式预填语种（CNMARC→中文，否则→外文）
+ * 按书目 MARC 格式预填语种（CNMARC→中文，否则→外文）；缓存语种优先
  * @param {Record<string, unknown> | null} bibRow
  */
 function applyMarcLanguageDefault(bibRow) {
+  if (form.language) return;
   const language = resolveLanguageFromMarcFormat(bibRow);
   if (language && LANGUAGE_OPTIONS.includes(language)) {
     form.language = language;
@@ -298,12 +280,8 @@ watch(() => form.supplier, syncDiscountWithSupplier);
 
 watch(
   () => [props.open, props.bibRow],
-  ([isOpen, bibRow], oldValue) => {
-    const wasOpen = oldValue?.[0];
-    if (!isOpen) {
-      if (wasOpen) persistCache();
-      return;
-    }
+  ([isOpen, bibRow]) => {
+    if (!isOpen) return;
     if (!subscriberOptions.value.length) {
       window.alert(NO_ASSOCIATED_SUBSCRIBER_CREATE_ORDER_MESSAGE);
       emit('close');

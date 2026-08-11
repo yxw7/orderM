@@ -2,7 +2,7 @@
   <div class="order-line-list-panel flex flex-col flex-1 min-h-0 overflow-hidden">
     <OrderLineSearchPanel
       v-model="search"
-      @search="filterRows"
+      @search="onSearch"
       @reset="resetSearch"
     />
     <div class="relative z-20 flex items-center gap-2 mb-4 shrink-0 flex-wrap">
@@ -17,21 +17,23 @@
     </button>
     <button
       type="button"
-      class="px-4 py-1.5 text-sm rounded border"
-      :class="canChangeSupplier ? 'border-gray-300 text-gray-600 bg-white hover:bg-gray-50' : 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'"
-      :disabled="!canChangeSupplier"
-      @click="openChangeSupplierModal"
-    >
-      更换供应商
-    </button>
-    <button
-      type="button"
       class="px-4 py-1.5 text-sm rounded"
       :class="canDedup ? 'bg-teal-500 text-white hover:bg-teal-600' : 'border border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'"
       :disabled="!canDedup"
       @click="store.openBatchDedupModal(selectedIds)"
     >
       查重
+    </button>
+    <button
+      type="button"
+      class="px-4 py-1.5 text-sm rounded border"
+      :class="canBatchChangeSupplierAction
+        ? 'border-gray-300 text-gray-600 bg-white hover:bg-gray-50'
+        : 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'"
+      :disabled="!canBatchChangeSupplierAction"
+      @click="openBatchChangeSupplier"
+    >
+      更换供应商
     </button>
     <button type="button" class="px-4 py-1.5 bg-orange-500 text-white text-sm rounded hover:bg-orange-600" @click="openCancelModal">
       撤订
@@ -63,8 +65,16 @@
     <OrderLineChangeSupplierModal
       :open="changeSupplierOpen"
       :source-order="changeSupplierSourceOrder"
+      :source-line="changeSupplierSourceLine"
       @close="changeSupplierOpen = false"
       @confirm="confirmChangeSupplier"
+    />
+    <BatchChangeSupplierModal
+      :open="batchChangeSupplierOpen"
+      :source-lines="selectedLines"
+      :source-order="batchChangeSupplierSourceOrder"
+      @close="batchChangeSupplierOpen = false"
+      @confirm="confirmBatchChangeSupplier"
     />
   </div>
   <DataTable
@@ -147,6 +157,14 @@
         查重
       </button>
       <button type="button" class="text-sky-600 hover:underline mr-2" @click.stop="store.openModal('editLine', { lineNo: row.orderLineNo, line: row })">编辑</button>
+      <button
+        v-if="canChangeSupplierLine(row)"
+        type="button"
+        class="text-sky-600 hover:underline mr-2"
+        @click.stop="openChangeSupplierModal(row)"
+      >
+        更换供应商
+      </button>
       <button type="button" class="text-sky-600 hover:underline" @click.stop="store.openModal('cancelOrder', { lineNo: row.orderLineNo })">撤订</button>
     </template>
   </DataTable>
@@ -173,6 +191,7 @@ import ActualBibRecordNoMarker from '@/modules/order/components/ActualBibRecordN
 import CatalogRecordWindowStack from '@/modules/order/components/CatalogRecordWindowStack.vue';
 import GenerateShortageSuccessModal from '@/modules/order/components/GenerateShortageSuccessModal.vue';
 import OrderLineChangeSupplierModal from '@/modules/order/components/OrderLineChangeSupplierModal.vue';
+import BatchChangeSupplierModal from '@/modules/order/components/BatchChangeSupplierModal.vue';
 import { useCatalogRecordWindows } from '@/modules/order/composables/useCatalogRecordWindows';
 import { useShortageStore } from '@/modules/acceptance/stores/shortage';
 import { useOrderStore } from '@/modules/order/stores/order';
@@ -180,11 +199,13 @@ import {
   canOrderLineGenerateShortage,
   generateShortageOrdersByOrderId
 } from '@/modules/order/data/shortage-generate';
-import { canChangeSupplierSelection } from '@/modules/order/data/order-line-change-supplier';
+import { canShowChangeSupplierAction } from '@/modules/order/data/order-line-change-supplier';
+import { canBatchChangeSupplier } from '@/modules/order/data/batch-change-supplier';
 import { ORDER_LINE_COLUMNS, canBatchDedup } from '@/modules/order/constants';
 import {
   createDefaultOrderLineSearch,
-  filterOrderLineRows
+  filterOrderLineRows,
+  validateOrderLinePriceRange
 } from '@/modules/order/data/order-line-filter';
 import { canDedupOrderLine } from '@/modules/order/data/dedup';
 import { getOrderLineListActualBibRecordNos } from '@/modules/order/data/order-line-detail';
@@ -225,13 +246,22 @@ const pageSize = ref(50);
 const shortageSuccessOpen = ref(false);
 const lastGeneratedShortages = ref([]);
 const changeSupplierOpen = ref(false);
+const batchChangeSupplierOpen = ref(false);
 const changeSupplierSuccessOpen = ref(false);
 const lastChangeSupplierOrderId = ref('');
+const lastChangeSupplierSummary = ref(null);
+const changeSupplierSourceLine = ref(null);
 
 const changeSupplierSuccessLines = computed(() => {
+  const summary = lastChangeSupplierSummary.value;
+  if (summary?.orderId) {
+    return [
+      `已生成新订单 ${summary.orderId}，订单行种数 ${summary.species}，套数 ${summary.sets}，册数 ${summary.volumes}，是否立即查看？`
+    ];
+  }
   const orderId = lastChangeSupplierOrderId.value || '—';
   return [
-    `已生成新订单 ${orderId}，原行未收货已按更换供应商撤订，是否立即查看？`
+    `已生成新订单 ${orderId}，原行对应套数已撤订，是否立即查看？`
   ];
 });
 
@@ -256,9 +286,17 @@ const canShortage = computed(() => {
   return selectedLines.value.every(r => canOrderLineGenerateShortage(r));
 });
 
-const canChangeSupplier = computed(() => canChangeSupplierSelection(selectedLines.value).ok);
+const canBatchChangeSupplierAction = computed(() =>
+  canBatchChangeSupplier(store.lines, selectedIds.value, store.orders)
+);
 
 const changeSupplierSourceOrder = computed(() => {
+  const orderId = changeSupplierSourceLine.value?.orderId;
+  if (!orderId) return null;
+  return store.orders.find(order => order.orderId === orderId) || null;
+});
+
+const batchChangeSupplierSourceOrder = computed(() => {
   const orderId = selectedLines.value[0]?.orderId;
   if (!orderId) return null;
   return store.orders.find(order => order.orderId === orderId) || null;
@@ -276,6 +314,10 @@ function canDedupLine(row) {
   return canDedupOrderLine(row, store.orders);
 }
 
+function canChangeSupplierLine(row) {
+  return canShowChangeSupplierAction(row);
+}
+
 function openCatalogRecordWindow(recordNo, orderLineRow) {
   openCatalogRecordWindowInternal({ recordNo, orderLineRow });
 }
@@ -287,6 +329,15 @@ function onCatalogRecordWindowLayout({ recordNo, x, y, width, height }) {
 function filterRows() {
   filteredRows.value = filterOrderLineRows(store.lines, search.value);
   page.value = 1;
+}
+
+function onSearch() {
+  const priceCheck = validateOrderLinePriceRange(search.value);
+  if (!priceCheck.valid) {
+    window.alert(priceCheck.message);
+    return;
+  }
+  filterRows();
 }
 
 function resetSearch() {
@@ -320,24 +371,48 @@ function openShortageModal() {
   shortageSuccessOpen.value = true;
 }
 
-function openChangeSupplierModal() {
-  const check = canChangeSupplierSelection(selectedLines.value);
-  if (!check.ok) {
-    window.alert(check.reason || '当前勾选不满足更换供应商条件');
+function openChangeSupplierModal(row) {
+  if (!canShowChangeSupplierAction(row)) {
+    window.alert('当前订单行不满足更换供应商条件');
     return;
   }
+  changeSupplierSourceLine.value = row;
   changeSupplierOpen.value = true;
 }
 
 function confirmChangeSupplier(form) {
-  const result = store.changeSupplierGenerateOrder(selectedIds.value, form);
+  const lineNo = changeSupplierSourceLine.value?.orderLineNo;
+  if (!lineNo) {
+    window.alert('订单行不存在');
+    return;
+  }
+  const result = store.changeSupplierGenerateOrder(lineNo, form);
   if (!result.ok) {
     window.alert(result.message || '生成新订单失败');
     return;
   }
   changeSupplierOpen.value = false;
-  selectedIds.value = [];
+  changeSupplierSourceLine.value = null;
   lastChangeSupplierOrderId.value = result.newOrderId || '';
+  lastChangeSupplierSummary.value = null;
+  changeSupplierSuccessOpen.value = true;
+}
+
+function openBatchChangeSupplier() {
+  if (!canBatchChangeSupplierAction.value) return;
+  batchChangeSupplierOpen.value = true;
+}
+
+function confirmBatchChangeSupplier(form) {
+  const lineNos = selectedLines.value.map(line => line.orderLineNo);
+  const result = store.batchChangeSupplierGenerateOrder(lineNos, form);
+  if (!result.ok) {
+    window.alert(result.message || '生成新订单失败');
+    return;
+  }
+  batchChangeSupplierOpen.value = false;
+  lastChangeSupplierOrderId.value = result.newOrderId || '';
+  lastChangeSupplierSummary.value = result.summary || null;
   changeSupplierSuccessOpen.value = true;
 }
 

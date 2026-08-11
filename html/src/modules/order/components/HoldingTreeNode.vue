@@ -6,7 +6,10 @@
   >
     <div
       class="holding-tree-node__row"
-      :class="{ 'holding-tree-node__row--clickable': hasChildren(node) }"
+      :class="{
+        'holding-tree-node__row--clickable': true,
+        'holding-tree-node__row--selected': isLeaf(node) && isSelected(index)
+      }"
       :style="rowIndentStyle"
       @click="handleRowClick(node, index)"
     >
@@ -50,6 +53,10 @@ const rowIndentStyle = computed(() => {
 const expandedNodeIds = inject('holdingTreeExpandedIds');
 /** @type {((pathKey: string) => void)|undefined} */
 const toggleNode = inject('holdingTreeToggleNode');
+/** @type {((payload: { node: Object, pathKey: string }) => void)|undefined} */
+const selectLeaf = inject('holdingTreeSelectLeaf');
+/** @type {import('vue').Ref<string>|undefined} */
+const selectedKey = inject('holdingTreeSelectedKey');
 
 /**
  * 节点是否有子级
@@ -58,6 +65,15 @@ const toggleNode = inject('holdingTreeToggleNode');
  */
 function hasChildren(node) {
   return Boolean(node.children?.length);
+}
+
+/**
+ * 是否为叶子（四级馆藏地 / 未关联馆藏）
+ * @param {Object} node
+ * @returns {boolean}
+ */
+function isLeaf(node) {
+  return !hasChildren(node);
 }
 
 /**
@@ -79,13 +95,25 @@ function isExpanded(index) {
 }
 
 /**
- * 点击行切换展开状态
+ * 叶子是否选中
+ * @param {number} index
+ * @returns {boolean}
+ */
+function isSelected(index) {
+  return selectedKey?.value === pathKey(index);
+}
+
+/**
+ * 点击行：分支展开/收起；叶子触发选中筛选
  * @param {Object} node - 树节点
  * @param {number} index - 同级索引
  */
 function handleRowClick(node, index) {
-  if (!hasChildren(node)) return;
-  toggleNode?.(pathKey(index));
+  if (hasChildren(node)) {
+    toggleNode?.(pathKey(index));
+    return;
+  }
+  selectLeaf?.({ node, pathKey: pathKey(index) });
 }
 </script>
 
@@ -105,6 +133,14 @@ function handleRowClick(node, index) {
 
 .holding-tree-node__row--clickable:hover {
   background: #f9fafb;
+}
+
+.holding-tree-node__row--selected {
+  background: #e0f2fe;
+}
+
+.holding-tree-node__row--selected:hover {
+  background: #bae6fd;
 }
 
 .holding-tree-node__toggle,

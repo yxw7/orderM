@@ -152,17 +152,9 @@
             class="px-5 py-1.5 text-sm rounded text-white"
             :class="parseResult?.canProceed ? 'bg-sky-600 hover:bg-sky-700' : 'bg-gray-300 cursor-not-allowed'"
             :disabled="!parseResult?.canProceed"
-            @click="goStep(3)"
+            @click="startImport"
           >
             下一步
-          </button>
-          <button
-            v-else-if="currentStep === 3 && importStatus !== 'loading'"
-            type="button"
-            class="px-5 py-1.5 text-sm bg-sky-600 text-white rounded hover:bg-sky-700"
-            @click="handleImport"
-          >
-            入库
           </button>
         </template>
       </div>
@@ -264,12 +256,9 @@ function downloadResult() {
   if (parseResult.value) downloadImportResult(parseResult.value);
 }
 
-function goStep(step) {
-  currentStep.value = step;
-  if (step === 3) importStatus.value = 'idle';
-}
-
-function handleImport() {
+function startImport() {
+  if (!parseResult.value?.canProceed) return;
+  currentStep.value = 3;
   importStatus.value = 'loading';
   window.setTimeout(() => {
     emit('import', parseResult.value);

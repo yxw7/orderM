@@ -24,12 +24,12 @@
             </div>
             <div class="flex items-center gap-2">
               <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0 w-20">行状态</label>
-              <select
+              <SiteMultiSelect
                 v-model="model.lineStatus"
-                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-sky-500"
-              >
-                <option v-for="opt in lineStatusOptions" :key="opt" :value="opt">{{ opt }}</option>
-              </select>
+                class="flex-1 min-w-0"
+                :options="lineStatusOptions"
+                placeholder="请选择"
+              />
             </div>
           </div>
 
@@ -129,19 +129,19 @@
             </div>
             <div class="flex items-center gap-2">
               <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0 w-20">供应商</label>
-              <SearchableSingleSelect
+              <SiteMultiSelect
                 v-model="model.supplier"
                 class="flex-1 min-w-0"
-                :options="supplierSelectOptions"
+                :options="supplierOptions"
                 placeholder="请选择"
               />
             </div>
             <div class="flex items-center gap-2">
               <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0 w-20">预算</label>
-              <SearchableSingleSelect
+              <SiteMultiSelect
                 v-model="model.budget"
                 class="flex-1 min-w-0"
-                :options="budgetSelectOptions"
+                :options="budgetOptions"
                 placeholder="请选择"
               />
             </div>
@@ -156,6 +156,28 @@
               >
                 <option v-for="opt in dedupFilterOptions" :key="opt" :value="opt">{{ opt }}</option>
               </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0 w-20">定价</label>
+              <div class="flex-1 min-w-0 flex items-center gap-1">
+                <input
+                  :value="model.priceMin"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="最低"
+                  class="w-0 flex-1 min-w-0 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-sky-500"
+                  @input="onPriceInput('priceMin', $event)"
+                >
+                <span class="text-sm text-gray-400 shrink-0">-</span>
+                <input
+                  :value="model.priceMax"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="最高"
+                  class="w-0 flex-1 min-w-0 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-sky-500"
+                  @input="onPriceInput('priceMax', $event)"
+                >
+              </div>
             </div>
           </div>
         </div>
@@ -187,18 +209,20 @@ import {
   ORDER_LINE_CRITERION_FIELDS,
   ORDER_LINE_DEDUP_FILTER_OPTIONS,
   ORDER_LINE_LOGIC_OPTIONS,
+  ORDER_LINE_STATUS_FILTER_OPTIONS,
   getOrderLineSearchBudgetOptions,
   getOrderLineSearchSupplierOptions
 } from '@/modules/order/data/order-line-filter';
+import { sanitizeDecimalInput } from '@/modules/order/data/order-field-input';
 import SearchExpandToggle from '@/components/common/SearchExpandToggle.vue';
-import SearchableSingleSelect from '@/components/common/SearchableSingleSelect.vue';
+import SiteMultiSelect from '@/components/common/SiteMultiSelect.vue';
 import { useSiteSelectOptions } from '@/composables/use-site-options';
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
   lineStatusOptions: {
     type: Array,
-    default: () => ['全部', '待发订', '已发订', '处理中', '已关闭']
+    default: () => ORDER_LINE_STATUS_FILTER_OPTIONS
   },
   carrierOptions: {
     type: Array,
@@ -231,16 +255,15 @@ const logicOptions = ORDER_LINE_LOGIC_OPTIONS;
 const { activeSiteFilterOptions } = useSiteSelectOptions();
 const siteOptions = activeSiteFilterOptions;
 
-const supplierSelectOptions = computed(() =>
-  getOrderLineSearchSupplierOptions().map(name => ({ value: name, label: name }))
-);
-
-const budgetSelectOptions = computed(() =>
-  getOrderLineSearchBudgetOptions().map(name => ({ value: name, label: name }))
-);
+const supplierOptions = computed(() => getOrderLineSearchSupplierOptions());
+const budgetOptions = computed(() => getOrderLineSearchBudgetOptions());
 
 const model = computed({
   get: () => props.modelValue,
   set: val => emit('update:modelValue', val)
 });
+
+function onPriceInput(key, event) {
+  model.value[key] = sanitizeDecimalInput(event.target.value);
+}
 </script>

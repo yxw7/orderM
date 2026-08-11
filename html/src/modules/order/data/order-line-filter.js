@@ -18,8 +18,67 @@ export const ORDER_LINE_LOGIC_OPTIONS = [
 /** 馆藏/订单重复检索选项 */
 export const ORDER_LINE_DEDUP_FILTER_OPTIONS = ['全部', '有', '无'];
 
+/** 行状态多选检索选项（不含「全部」） */
+export const ORDER_LINE_STATUS_FILTER_OPTIONS = ['待发订', '已发订', '处理中', '已关闭'];
+
 function isBlankSelect(value) {
   return !value || value === '全部';
+}
+
+/**
+ * 多选检索：未选不过滤；已选则按「或」命中
+ * @param {string|null|undefined} rowValue
+ * @param {string[]|undefined} selected
+ * @returns {boolean}
+ */
+function matchMultiSelectFilter(rowValue, selected) {
+  if (!Array.isArray(selected) || !selected.length) return true;
+  return selected.includes(rowValue);
+}
+
+/**
+ * 解析定价检索输入为数值；空串返回 null
+ * @param {string|null|undefined} raw
+ * @returns {number|null}
+ */
+function parsePriceFilterValue(raw) {
+  const text = String(raw ?? '').trim();
+  if (!text) return null;
+  const num = parseFloat(text);
+  return Number.isFinite(num) ? num : null;
+}
+
+/**
+ * 校验定价区间：两端均有有效值且下限 > 上限时无效
+ * @param {{ priceMin?: string, priceMax?: string }} search
+ * @returns {{ valid: boolean, message?: string }}
+ */
+export function validateOrderLinePriceRange(search = {}) {
+  const min = parsePriceFilterValue(search.priceMin);
+  const max = parsePriceFilterValue(search.priceMax);
+  if (min != null && max != null && min > max) {
+    return { valid: false, message: '定价下限不能大于上限' };
+  }
+  return { valid: true };
+}
+
+/**
+ * 匹配定价区间（闭区间；可只填一端；不区分币种）
+ * @param {string|number|null|undefined} price
+ * @param {string|undefined} priceMin
+ * @param {string|undefined} priceMax
+ * @returns {boolean}
+ */
+function matchPriceRange(price, priceMin, priceMax) {
+  const min = parsePriceFilterValue(priceMin);
+  const max = parsePriceFilterValue(priceMax);
+  if (min == null && max == null) return true;
+
+  const value = parseFloat(String(price ?? '').replace(/^[¥￥]/, ''));
+  if (!Number.isFinite(value)) return false;
+  if (min != null && value < min) return false;
+  if (max != null && value > max) return false;
+  return true;
 }
 
 /**
@@ -73,7 +132,7 @@ export function createDefaultOrderLineSearch(presetOrderId = '') {
   return {
     orderId: presetOrderId || '',
     orderLineNo: '',
-    lineStatus: '全部',
+    lineStatus: [],
     criteria: [
       { field: 'resourceId', value: '', logicAfter: 'and' },
       { field: 'title', value: '', logicAfter: 'and' },
@@ -85,10 +144,12 @@ export function createDefaultOrderLineSearch(presetOrderId = '') {
     isShortage: '全部',
     holdingDuplicate: '全部',
     orderDuplicate: '全部',
+    priceMin: '',
+    priceMax: '',
     bibRecordNo: '',
     site: '全部',
-    supplier: '',
-    budget: ''
+    supplier: [],
+    budget: []
   };
 }
 
@@ -117,7 +178,7 @@ export function filterOrderLineRows(rows, search = {}) {
   const filtered = rows.filter(row => {
     if (orderId && !row.orderId.includes(orderId)) return false;
     if (orderLineNo && !row.orderLineNo.includes(orderLineNo)) return false;
-    if (!isBlankSelect(search.lineStatus) && row.lineStatus !== search.lineStatus) return false;
+    if (!matchMultiSelectFilter(row.lineStatus, search.lineStatus)) return false;
     if (!matchCompositeCriteria(row, search.criteria)) return false;
     if (!isBlankSelect(search.carrier) && row.carrier !== search.carrier) return false;
     if (!isBlankSelect(search.acceptanceStatus)) {
@@ -131,10 +192,11 @@ export function filterOrderLineRows(rows, search = {}) {
     if (!isBlankSelect(search.isShortage) && row.isShortage !== search.isShortage) return false;
     if (!matchDedupFilter(row.holdingDuplicate, search.holdingDuplicate)) return false;
     if (!matchDedupFilter(row.orderDuplicate, search.orderDuplicate)) return false;
+    if (!matchPriceRange(row.price, search.priceMin, search.priceMax)) return false;
     if (bibRecordNo && !String(row.bibRecordNo || '').includes(bibRecordNo)) return false;
     if (!isBlankSelect(search.site) && row.site !== search.site) return false;
-    if (search.supplier && row.supplier !== search.supplier) return false;
-    if (search.budget && row.budget !== search.budget) return false;
+    if (!matchMultiSelectFilter(row.supplier, search.supplier)) return false;
+    if (!matchMultiSelectFilter(row.budget, search.budget)) return false;
     return true;
   });
 

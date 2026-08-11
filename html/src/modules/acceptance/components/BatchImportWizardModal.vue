@@ -87,7 +87,7 @@
           <!-- Step 2: Mapping -->
           <div v-else-if="currentStep === 2" class="flex flex-col h-full min-h-0">
             <p class="text-sm text-gray-600 mb-4 shrink-0">
-              将文件列映射到系统标准字段（标<span class="text-red-500">*</span>字段为必填）
+              将文件列映射到系统标准字段（标<span class="text-red-500">*</span>字段为必填；当前资源类型：{{ resourceType }}）
             </p>
             <div class="flex flex-wrap items-center gap-3 mb-4 shrink-0">
               <label class="text-sm text-gray-600 whitespace-nowrap">映射模板</label>
@@ -142,7 +142,7 @@
                             </option>
                           </optgroup>
                           <option v-for="field in group.fields" v-else :key="field.value + col" :value="field.value">
-                            {{ field.label }}
+                            {{ field.label }}{{ field.required ? ' *' : '' }}
                           </option>
                         </template>
                       </select>

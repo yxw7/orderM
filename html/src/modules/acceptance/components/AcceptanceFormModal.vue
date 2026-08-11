@@ -84,6 +84,10 @@ import {
   ADD_BARCODE_TYPE_OPTIONS,
   EDIT_BARCODE_TYPE_OPTIONS
 } from '@/modules/acceptance/constants';
+import {
+  loadAcceptanceFormCache,
+  saveAcceptanceFormCache
+} from '@/modules/order/data/bib-order-form-cache';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -126,6 +130,27 @@ function resetForm() {
   form.remark = '';
 }
 
+function applyAcceptanceCache() {
+  const cached = loadAcceptanceFormCache();
+  const resourceTypes = ACCEPTANCE_RESOURCE_TYPES;
+  const languages = ACCEPTANCE_LANGUAGES;
+  const methods = ACCEPTANCE_METHODS;
+  const suppliers = ACCEPTANCE_SUPPLIERS;
+
+  if (cached.resourceType && resourceTypes.includes(cached.resourceType)) {
+    form.resourceType = cached.resourceType;
+  }
+  if (cached.language && languages.includes(cached.language)) {
+    form.language = cached.language;
+  }
+  if (cached.method && methods.includes(cached.method)) {
+    form.method = cached.method;
+  }
+  if (cached.supplier && suppliers.includes(cached.supplier)) {
+    form.supplier = cached.supplier;
+  }
+}
+
 function fillFromRow(row) {
   form.name = row.name;
   form.resourceType = row.type;
@@ -145,7 +170,11 @@ watch(
   ([isOpen, mode, row]) => {
     if (!isOpen) return;
     resetForm();
-    if (mode === 'edit' && row) fillFromRow(row);
+    if (mode === 'edit' && row) {
+      fillFromRow(row);
+      return;
+    }
+    if (mode === 'add') applyAcceptanceCache();
   }
 );
 
@@ -165,6 +194,9 @@ function submit() {
   if (form.autoBarcode && (!form.barcodeType.trim() || !form.initialBarcode.trim())) {
     window.alert('请填写条码号类型和初始条码号');
     return;
+  }
+  if (props.mode === 'add') {
+    saveAcceptanceFormCache(form);
   }
   emit('submit', { ...form });
 }

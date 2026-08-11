@@ -5,15 +5,20 @@
 </template>
 
 <script setup>
-import { provide, ref, watch } from 'vue';
+import { computed, provide, ref, watch } from 'vue';
 import HoldingTreeNode from '@/modules/order/components/HoldingTreeNode.vue';
 
 const props = defineProps({
   /** @type {import('vue').PropType<Object[]>} */
-  nodes: { type: Array, default: () => [] }
+  nodes: { type: Array, default: () => [] },
+  /** 当前选中的四级叶子 pathKey */
+  selectedKey: { type: String, default: '' }
 });
 
+const emit = defineEmits(['select-leaf']);
+
 const expandedNodeIds = ref(new Set());
+const selectedKeyRef = computed(() => props.selectedKey);
 
 /**
  * 收集所有可展开分支节点路径
@@ -50,6 +55,14 @@ function toggleNode(pathKey) {
   expandedNodeIds.value = next;
 }
 
+/**
+ * 选中四级叶子（馆藏地 / 未关联馆藏）
+ * @param {{ node: Object, pathKey: string }} payload
+ */
+function selectLeaf(payload) {
+  emit('select-leaf', payload);
+}
+
 watch(
   () => props.nodes,
   nodes => initExpandedNodes(nodes),
@@ -58,6 +71,8 @@ watch(
 
 provide('holdingTreeExpandedIds', expandedNodeIds);
 provide('holdingTreeToggleNode', toggleNode);
+provide('holdingTreeSelectLeaf', selectLeaf);
+provide('holdingTreeSelectedKey', selectedKeyRef);
 </script>
 
 <style scoped>

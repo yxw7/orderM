@@ -40,7 +40,7 @@ export {
 export const BATCH_IMPORT_STEPS = [
   { step: 1, title: '上传文件' },
   { step: 2, title: '字段映射' },
-  { step: 3, title: '数据校验' },
+  { step: 3, title: '解析文件' },
   { step: 4, title: '确认验收' }
 ];
 

@@ -3,7 +3,10 @@
     <div
       ref="triggerRef"
       class="min-h-[38px] border rounded px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-text bg-white focus-within:border-sky-500"
-      :class="error ? 'border-red-400' : open ? 'border-sky-500' : 'border-gray-300'"
+      :class="[
+        error ? 'border-red-400' : open ? 'border-sky-500' : 'border-gray-300',
+        disabled ? 'bg-gray-50 opacity-60 cursor-not-allowed' : ''
+      ]"
       @click="openDropdown"
     >
       <span
@@ -25,6 +28,7 @@
         type="text"
         class="flex-1 min-w-[4rem] border-0 outline-none text-sm text-gray-700 bg-transparent py-0.5"
         :placeholder="selectedLabel ? '' : placeholder"
+        :disabled="disabled"
         @focus="openDropdown"
         @keydown.down.prevent="moveHighlight(1)"
         @keydown.up.prevent="moveHighlight(-1)"
@@ -47,6 +51,7 @@
               type="button"
               class="w-full text-left px-3 py-2 text-gray-700"
               :class="index === highlightIndex ? 'bg-gray-100' : 'hover:bg-gray-50'"
+              @mousedown.prevent
               @click.stop="select(opt)"
               @mouseenter="highlightIndex = index"
             >
@@ -67,7 +72,8 @@ const props = defineProps({
   modelValue: { type: String, default: '' },
   options: { type: Array, default: () => [] },
   placeholder: { type: String, default: '请选择' },
-  error: { type: String, default: '' }
+  error: { type: String, default: '' },
+  disabled: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -119,6 +125,7 @@ function updateDropdownPosition() {
 }
 
 async function openDropdown() {
+  if (props.disabled) return;
   open.value = true;
   highlightIndex.value = 0;
   await nextTick();
@@ -135,9 +142,11 @@ function closeDropdown() {
 function select(opt) {
   emit('update:modelValue', opt.value);
   closeDropdown();
+  nextTick(() => inputRef.value?.blur());
 }
 
 function clear() {
+  if (props.disabled) return;
   emit('update:modelValue', '');
   keyword.value = '';
   nextTick(() => inputRef.value?.focus());

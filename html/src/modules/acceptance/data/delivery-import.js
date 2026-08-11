@@ -337,7 +337,24 @@ function normalizeProfileBucket(raw) {
 export function listMappingTemplates(ctx) {
   const store = loadTemplateStore();
   const bucket = normalizeProfileBucket(store[buildTemplateProfileKey(ctx)]);
-  return bucket.templates.map(t => ({ name: t.name, mapping: { ...t.mapping } }));
+  return bucket.templates.map(t => ({
+    name: t.name,
+    mapping: { ...t.mapping },
+    headerRow: t.headerRow != null ? Number(t.headerRow) : undefined,
+    mustMatchFields: Array.isArray(t.mustMatchFields)
+      ? t.mustMatchFields.filter(Boolean).map(String)
+      : undefined
+  }));
+}
+
+/**
+ * @param {{ supplier?: string, type?: string, lang?: string }} ctx
+ * @param {string} name
+ * @returns {{ name: string, mapping: Record<string, string>, headerRow?: number, mustMatchFields?: string[] }|null}
+ */
+export function getMappingTemplateEntry(ctx, name) {
+  if (!name) return null;
+  return listMappingTemplates(ctx).find(t => t.name === name) || null;
 }
 
 /**
@@ -346,8 +363,7 @@ export function listMappingTemplates(ctx) {
  * @returns {Record<string, string>|null}
  */
 export function getMappingTemplateByName(ctx, name) {
-  if (!name) return null;
-  const found = listMappingTemplates(ctx).find(t => t.name === name);
+  const found = getMappingTemplateEntry(ctx, name);
   return found?.mapping || null;
 }
 
@@ -355,17 +371,35 @@ export function getMappingTemplateByName(ctx, name) {
  * @param {{ supplier?: string, type?: string, lang?: string }} ctx
  * @param {string} name
  * @param {Record<string, string>} mapping
+ * @param {{ headerRow?: number, mustMatchFields?: string[] }} [meta]
  */
-export function saveMappingTemplate(ctx, name, mapping) {
+export function saveMappingTemplate(ctx, name, mapping, meta = {}) {
   const trimmed = (name || '').trim();
   if (!trimmed) return;
   const profileKey = buildTemplateProfileKey(ctx);
   const store = loadTemplateStore();
   const bucket = normalizeProfileBucket(store[profileKey]);
   const idx = bucket.templates.findIndex(t => t.name === trimmed);
-  const entry = { name: trimmed, mapping: { ...mapping } };
-  if (idx >= 0) bucket.templates[idx] = entry;
-  else bucket.templates.push(entry);
+  const headerRow = Number(meta?.headerRow);
+  const mustMatchFields = Array.isArray(meta?.mustMatchFields)
+    ? [...new Set(meta.mustMatchFields.filter(Boolean).map(String))]
+    : undefined;
+  const entry = {
+    name: trimmed,
+    mapping: { ...mapping },
+    ...(Number.isFinite(headerRow) && headerRow >= 1 ? { headerRow: Math.floor(headerRow) } : {}),
+    ...(mustMatchFields ? { mustMatchFields } : {})
+  };
+  if (idx >= 0) {
+    const prev = bucket.templates[idx];
+    bucket.templates[idx] = {
+      ...entry,
+      headerRow: entry.headerRow ?? prev.headerRow,
+      mustMatchFields: mustMatchFields ?? prev.mustMatchFields
+    };
+  } else {
+    bucket.templates.push(entry);
+  }
   store[profileKey] = bucket;
   saveTemplateStore(store);
 }

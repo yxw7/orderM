@@ -19,6 +19,7 @@ import { issueOrder as performIssueOrder } from '@/modules/order/data/order-issu
 import { applyOrderImport } from '@/modules/order/data/order-import';
 import { deletePendingOrder } from '@/modules/order/data/order-delete';
 import { buildOrderLineChangeSupplierResult } from '@/modules/order/data/order-line-change-supplier';
+import { buildSelectedLinesChangeSupplierResult } from '@/modules/order/data/batch-change-supplier';
 import { BATCH_DEDUP_MAX_COUNT } from '@/modules/order/constants';
 
 export const useOrderStore = defineStore('order', {
@@ -250,25 +251,25 @@ export const useOrderStore = defineStore('order', {
     },
 
     /**
-     * 订单行列表更换供应商：迁出未收货套数并生成待发订新订单
-     * @param {string[]} lineIds - 列表行 id
-     * @param {{ orderName: string, supplier: string, budget: string, remark?: string }} form
+     * 订单行行内更换供应商：按指定套数迁出并生成待发订新订单
+     * @param {string} orderLineNo
+     * @param {{ orderName: string, supplier: string, budget: string, remark?: string, sets: string|number }} form
      * @returns {{ ok: boolean, message?: string, newOrderId?: string }}
      */
-    changeSupplierGenerateOrder(lineIds, form) {
-      const selectedLines = this.lines.filter(line => lineIds.includes(line.id));
-      if (!selectedLines.length) {
-        return { ok: false, message: '请先勾选订单行' };
+    changeSupplierGenerateOrder(orderLineNo, form) {
+      const sourceLine = this.lines.find(line => line.orderLineNo === orderLineNo);
+      if (!sourceLine) {
+        return { ok: false, message: '订单行不存在' };
       }
 
-      const sourceOrder = this.orders.find(order => order.orderId === selectedLines[0].orderId);
+      const sourceOrder = this.orders.find(order => order.orderId === sourceLine.orderId);
       if (!sourceOrder) {
         return { ok: false, message: '未找到原订单' };
       }
 
       const result = buildOrderLineChangeSupplierResult({
         sourceOrder,
-        selectedLines,
+        sourceLine,
         form,
         existingOrders: this.orders
       });
@@ -281,8 +282,43 @@ export const useOrderStore = defineStore('order', {
 
       return {
         ok: true,
-        message: `已生成新订单 ${result.newOrder.orderId}，原行未收货已按更换供应商撤订`,
+        message: `已生成新订单 ${result.newOrder.orderId}，原行对应套数已撤订`,
         newOrderId: result.newOrder.orderId
+      };
+    },
+
+    /**
+     * 工具栏批量更换供应商：按勾选行可迁出套数生成 1 条待发订新订单
+     * @param {string[]} orderLineNos
+     * @param {{ orderName: string, supplier: string, budget: string, reason: string, remark?: string }} form
+     * @returns {{ ok: boolean, message?: string, newOrderId?: string, summary?: object }}
+     */
+    batchChangeSupplierGenerateOrder(orderLineNos, form) {
+      const sourceLines = (orderLineNos || [])
+        .map(no => this.lines.find(line => line.orderLineNo === no))
+        .filter(Boolean);
+      if (!sourceLines.length) {
+        return { ok: false, message: '请先勾选订单行' };
+      }
+
+      const result = buildSelectedLinesChangeSupplierResult({
+        sourceLines,
+        orders: this.orders,
+        existingOrders: this.orders,
+        form
+      });
+      if (!result.ok) {
+        return { ok: false, message: result.message };
+      }
+
+      this.applyLinePatches(result.patches);
+      this.addOrderWithLines(result.newOrder, result.newLines);
+
+      return {
+        ok: true,
+        message: `已生成新订单 ${result.summary.orderId}`,
+        newOrderId: result.summary.orderId,
+        summary: result.summary
       };
     },
 

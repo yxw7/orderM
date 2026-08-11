@@ -162,9 +162,8 @@ export function joinValidationOutcomes(types, reasons) {
  * @returns {string}
  */
 export function getSystemFieldDisplay(line, fieldKey, lang) {
-  if (fieldKey === 'listPrice') return getLineListPrice(line, lang);
+  if (fieldKey === 'listPrice' || fieldKey === 'price') return getLineListPrice(line, lang);
   if (fieldKey === 'netPrice') return getLineNetPrice(line);
-  if (fieldKey === 'price') return normalizeMoney(getOrderLineMatchFieldValue(line, 'price'));
   if (fieldKey === 'receiveQty') return String(Number(line.pendingSets) || 0);
   if (fieldKey === 'volCount') return String(Number(line.copies ?? line.piecesInSet) || 0);
   if (fieldKey === 'orderLine') return String(line.orderLine || '');
@@ -240,6 +239,7 @@ export function buildMappedShipRows(parsedRows, columnMapping, fileColumns) {
       rowNo: index + 1,
       orderLineNo: fieldValues.orderLine || '',
       listPrice: fieldValues.listPrice ?? '',
+      price: fieldValues.price ?? '',
       netPrice: fieldValues.netPrice ?? '',
       receiveSets: fieldValues.receiveQty ?? '',
       copiesInSet: fieldValues.volCount ?? '',
@@ -259,7 +259,8 @@ export function buildMappedShipRows(parsedRows, columnMapping, fileColumns) {
  *   getFieldLabel: (key: string) => string,
  *   lang?: string,
  *   acceptanceCtx?: { type?: string, lang?: string, method?: string, supplier?: string }|null,
- *   allPool?: object[]
+ *   allPool?: object[],
+ *   mustMatchFields?: string[]
  * }} options
  * @returns {object}
  */
@@ -267,6 +268,9 @@ export function validateMappedShipRow(shipRow, options) {
   const { mode, pool, getFieldLabel } = options;
   const mappedKeys = shipRow.mappedKeys || [];
   const fieldValues = shipRow.fieldValues || {};
+  const mustMatchSet = Array.isArray(options.mustMatchFields)
+    ? new Set(options.mustMatchFields.filter(Boolean))
+    : null;
 
   const base = {
     ...shipRow,
@@ -283,12 +287,17 @@ export function validateMappedShipRow(shipRow, options) {
   const receiveSets = normalizeQty(fieldValues.receiveQty ?? shipRow.receiveSets);
   const copiesInSet = normalizeQty(fieldValues.volCount ?? shipRow.copiesInSet);
   const listPrice = normalizeMoney(fieldValues.listPrice ?? shipRow.listPrice);
+  const price = normalizeMoney(fieldValues.price ?? shipRow.price);
   const netPrice = normalizeMoney(fieldValues.netPrice ?? shipRow.netPrice);
+  const resourceType = String(options.acceptanceCtx?.type || '').trim();
+  const isAv = resourceType === '视听资料';
+  /** 纸质书必填定价；视听必填码洋 */
+  const moneyOk = isAv ? Boolean(listPrice) : Boolean(price || listPrice);
 
   if (!String(shipRow.orderLineNo || fieldValues.orderLine || '').trim()) {
     return { ...base, result: '数据错误', failReason: '数据解析失败', resultTypes: ['数据错误'] };
   }
-  if (!listPrice || !netPrice) {
+  if (!moneyOk || !netPrice) {
     return { ...base, result: '数据错误', failReason: '数据解析失败', resultTypes: ['数据错误'] };
   }
   if (receiveSets == null || copiesInSet == null) {
@@ -344,8 +353,10 @@ export function validateMappedShipRow(shipRow, options) {
   if (mode === 'precheck') {
     const compareKeys = mappedKeys.filter(key => key && key !== MATCH_KEY_FIELD);
     compareKeys.forEach(key => {
-      // 套数已非法时，收货套数不再重复记「不一致」
-      if (key === 'receiveQty' && types.includes('套数非法')) return;
+      // 收货套数仅由 0＜套数≤待收 判定
+      if (key === 'receiveQty') return;
+      // 若传入须一致列表，则仅校验列表内字段；未传则保持旧行为（全部比对，兼容批验收）
+      if (mustMatchSet && !mustMatchSet.has(key)) return;
       const shipRaw = fieldValues[key] ?? '';
       const { equal, shipDisplay, systemDisplay } = compareMappedField(key, shipRaw, line, lang);
       if (!equal) {
@@ -369,7 +380,8 @@ export function validateMappedShipRow(shipRow, options) {
     // 收货写入用发货单值
     receiveSets,
     copiesInSet,
-    listPrice,
+    listPrice: listPrice || price,
+    price: price || listPrice,
     netPrice
   };
 }
@@ -423,6 +435,55 @@ export function exportMappedValidationResult(validatedRows, fileColumns, fileNam
 </Workbook>`;
 
   const downloadName = String(fileName || `校验结果_${Date.now()}.xls`)
+    .replace(/\.csv$/i, '.xls')
+    .replace(/\.xlsx$/i, '.xls');
+  const blob = new Blob([`\uFEFF${xml}`], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = downloadName.endsWith('.xls') ? downloadName : `${downloadName}.xls`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * 仅导出失败行：原发货单列 + 失败原因（不含校验结果列）
+ * @param {object[]} validatedRows
+ * @param {string[]} fileColumns
+ * @param {string} [fileName]
+ */
+export function exportFailedMappedRows(validatedRows, fileColumns, fileName) {
+  const failed = (validatedRows || []).filter(r => r.result && r.result !== '通过');
+  const cols = fileColumns?.length
+    ? fileColumns
+    : (failed[0]?.fileColumns || Object.keys(failed[0]?.sourceRow || {}));
+  const headers = [...cols, '失败原因'];
+  const dataRows = failed.map(r => {
+    const source = r.sourceRow || {};
+    return [...cols.map(c => source[c] ?? ''), r.failReason ?? ''];
+  });
+
+  const xmlRows = [headers, ...dataRows]
+    .map(row => {
+      const cells = row
+        .map(cell => `<Cell><Data ss:Type="String">${escapeExcelXml(cell)}</Data></Cell>`)
+        .join('');
+      return `<Row>${cells}</Row>`;
+    })
+    .join('');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Worksheet ss:Name="失败数据">
+  <Table>${xmlRows}</Table>
+ </Worksheet>
+</Workbook>`;
+
+  const downloadName = String(fileName || `失败数据_${Date.now()}.xls`)
     .replace(/\.csv$/i, '.xls')
     .replace(/\.xlsx$/i, '.xls');
   const blob = new Blob([`\uFEFF${xml}`], { type: 'application/vnd.ms-excel;charset=utf-8;' });

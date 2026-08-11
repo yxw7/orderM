@@ -28,9 +28,8 @@
     />
     <DedupResultDrawer
       :open="store.dedupDrawerOpen"
-      :duplicate-type="store.dedupDrawerType"
+      :entry-type="store.dedupDrawerType"
       :line="store.dedupDrawerLine"
-      :results="dedupDrawerResults"
       @close="store.closeDedupDrawer()"
     />
 
@@ -42,7 +41,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import OrderListPanel from '@/modules/order/components/OrderListPanel.vue';
 import OrderLineListPanel from '@/modules/order/components/OrderLineListPanel.vue';
@@ -64,14 +63,6 @@ const tabs = [
 ];
 
 const lineFilterOrderId = ref('');
-
-const dedupDrawerResults = computed(() => {
-  const line = store.dedupDrawerLine;
-  if (!line) return [];
-  return store.dedupDrawerType === 'holding'
-    ? (line.holdingDedupResults || [])
-    : (line.orderDedupResults || []);
-});
 
 onMounted(() => {
   syncTabFromRoute();

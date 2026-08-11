@@ -1,0 +1,1 @@
+import{a1 as a,q as n,G as c}from"./app-BG142QKe.js";function b(){const o=n(),e=c(),t=a();function s(u){const r=o.path;t.tabs.length>1&&t.closeTab(r),e.push(u)}return{goBackAndCloseTab:s}}export{b as u};

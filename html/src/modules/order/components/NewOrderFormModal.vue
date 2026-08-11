@@ -156,6 +156,7 @@ import { defaultNewOrderForm } from '@/modules/order/data/orders';
 import { validateNewOrderForm } from '@/modules/order/data/order-create';
 import { getSupplierOptionsByMethod, getSupplierDiscountByName, isSupplierValidForMethod } from '@/modules/order/data/supplier-sources';
 import { sanitizeDecimalInput } from '@/modules/order/data/order-field-input';
+import { loadCreateOrderFormCache, saveCreateOrderFormCache } from '@/modules/order/data/bib-order-form-cache';
 
 const props = defineProps({
   open: { type: Boolean, default: false }
@@ -167,6 +168,7 @@ const { activeSiteNames } = useSiteSelectOptions();
 
 const form = ref({ ...defaultNewOrderForm });
 const errors = ref({});
+const isRestoring = ref(false);
 
 /** @type {import('vue').ComputedRef<string[]>} */
 const supplierOptions = computed(() => getSupplierOptionsByMethod(form.value.method));
@@ -174,13 +176,44 @@ const supplierOptions = computed(() => getSupplierOptionsByMethod(form.value.met
 /** @type {import('vue').ComputedRef<boolean>} */
 const budgetOptional = computed(() => isBudgetOptionalForMethod(form.value.method));
 
+function applyCreateOrderCache() {
+  const cached = loadCreateOrderFormCache();
+  if (cached.resourceType && RESOURCE_TYPE_OPTIONS.includes(cached.resourceType)) {
+    form.value.resourceType = cached.resourceType;
+  }
+  if (cached.language && LANGUAGE_OPTIONS.includes(cached.language)) {
+    form.value.language = cached.language;
+  }
+  if (cached.method && METHOD_OPTIONS.includes(cached.method)) {
+    form.value.method = cached.method;
+  }
+  if (cached.budget && NEW_ORDER_BUDGET_OPTIONS.includes(cached.budget)) {
+    form.value.budget = cached.budget;
+  }
+  if (cached.supplier) {
+    form.value.supplier = cached.supplier;
+  }
+
+  if (isBudgetOptionalForMethod(form.value.method)) {
+    form.value.budget = '';
+  }
+  if (form.value.supplier && !isSupplierValidForMethod(form.value.method, form.value.supplier)) {
+    form.value.supplier = '';
+  }
+  form.value.discount = getSupplierDiscountByName(form.value.supplier);
+}
+
 watch(() => props.open, open => {
   if (!open) return;
+  isRestoring.value = true;
   form.value = { ...defaultNewOrderForm };
   errors.value = {};
+  applyCreateOrderCache();
+  isRestoring.value = false;
 });
 
 watch(() => form.value.method, method => {
+  if (isRestoring.value) return;
   if (isBudgetOptionalForMethod(method)) {
     form.value.budget = '';
     delete errors.value.budget;
@@ -192,6 +225,7 @@ watch(() => form.value.method, method => {
 });
 
 watch(() => form.value.supplier, supplier => {
+  if (isRestoring.value) return;
   form.value.discount = getSupplierDiscountByName(supplier);
 });
 
@@ -211,6 +245,7 @@ function submit() {
     if (first) window.alert(first);
     return;
   }
+  saveCreateOrderFormCache(form.value);
   emit('confirm', { ...form.value });
 }
 </script>

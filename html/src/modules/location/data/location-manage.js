@@ -22,7 +22,8 @@ export const LEVEL4_SITE_CODES = [
 
 export const LEVEL4_COLLECTION_CODES = [
   'CL001', 'CL002', 'CL003', 'CL004', 'CL005', 'CL006', 'CL007', 'CL008',
-  'CL009', 'CL010', 'STD02', 'STE02', 'STG02', 'STK02', 'STB01', 'STC01'
+  'CL009', 'CL010', 'STD02', 'STE02', 'STG02', 'STK02', 'STB01', 'STC01',
+  'ST01', 'ST02', 'ST03', 'ST04', 'ST05', 'ST06', 'ST07', 'ST10', 'ST100', 'ST101', 'ST102'
 ];
 
 export const LEVEL4_BRANCH_CODES = [
@@ -106,6 +107,18 @@ export const initialCollectionRows = [
   { id: 'col-2', branchId: 'branch-2', code: 'CL002', name: '首少.少儿钢琴厂书库', status: 'active', remark: '' },
   { id: 'col-3', branchId: 'branch-3', code: 'CL003', name: '历史文献阅览室', status: 'active', remark: '' },
   { id: 'col-4', branchId: 'branch-4', code: 'CL004', name: '首图刊.中文报刊阅览室', status: 'active', remark: '' },
+  // 四级馆藏地示例：首都图书馆(ST001) 下馆藏地（对照产品截图）
+  { id: 'col-st01', branchId: 'branch-6', code: 'ST01', name: '哲学社会科学图书借阅室 (4204)', status: 'active', remark: '' },
+  { id: 'col-st02', branchId: 'branch-6', code: 'ST02', name: '中文库本书库 (4)', status: 'active', remark: '' },
+  { id: 'col-st03', branchId: 'branch-6', code: 'ST03', name: '文学史地图书借阅室2106', status: 'active', remark: '' },
+  { id: 'col-st04', branchId: 'branch-6', code: 'ST04', name: '工具书阅览室 (5205)', status: 'active', remark: '' },
+  { id: 'col-st05', branchId: 'branch-6', code: 'ST05', name: '艺术文献阅览室 (5205)', status: 'active', remark: '' },
+  { id: 'col-st06', branchId: 'branch-6', code: 'ST06', name: '中文报刊外借室', status: 'active', remark: '' },
+  { id: 'col-st07', branchId: 'branch-6', code: 'ST07', name: '科技图书借阅室 (6204)', status: 'active', remark: '' },
+  { id: 'col-st10', branchId: 'branch-6', code: 'ST10', name: '综合图书借阅室 (7204)', status: 'active', remark: '' },
+  { id: 'col-st100', branchId: 'branch-6', code: 'ST100', name: '首图预约处', status: 'active', remark: '' },
+  { id: 'col-st101', branchId: 'branch-6', code: 'ST101', name: 'B座二层新书刊', status: 'active', remark: '' },
+  { id: 'col-st102', branchId: 'branch-6', code: 'ST102', name: 'B座三层文学图书', status: 'active', remark: '' },
   { id: 'col-5', branchId: 'branch-5', code: '', name: '测试停用馆藏地', status: 'inactive', remark: '' }
 ];
 
@@ -256,6 +269,63 @@ export function buildBranchSelectOptions(branchRows) {
     label: formatBranchLabel(branch),
     code: branch.code,
     name: branch.name
+  }));
+}
+
+/**
+ * 分馆下拉（value=分馆编码）：分馆编码 | 分馆名称
+ * 供查重范围等按编码选择的场景
+ */
+export function buildBranchCodeSelectOptions(branchRows) {
+  return getActiveBranches(branchRows).map(branch => ({
+    value: branch.code,
+    label: formatBranchLabel(branch),
+    code: branch.code,
+    name: branch.name
+  }));
+}
+
+export function getActiveCollections(collectionRows) {
+  return [...collectionRows]
+    .filter(row => row.status === 'active' && row.code)
+    .sort((a, b) => a.code.localeCompare(b.code, 'zh-CN'));
+}
+
+/** 馆藏地展示：馆藏地编码 | 馆藏地名称 */
+export function formatCollectionLabel(collection) {
+  if (!collection) return '';
+  if (!collection.code) return collection.name || '';
+  return `${collection.code} | ${collection.name}`;
+}
+
+/**
+ * 馆藏地下拉（value=馆藏地编码）；可选按分馆编码过滤
+ * @param {Object[]} collectionRows
+ * @param {Object[]} branchRows
+ * @param {string|string[]} [branchCode=''] 单个编码或编码数组；数组时取并集；空则不过滤分馆
+ */
+export function buildCollectionCodeSelectOptions(collectionRows, branchRows, branchCode = '') {
+  let rows = getActiveCollections(collectionRows);
+  const codes = (Array.isArray(branchCode) ? branchCode : [branchCode])
+    .map(code => String(code || '').trim())
+    .filter(Boolean);
+
+  if (codes.length) {
+    const branchIds = new Set(
+      branchRows
+        .filter(row => row.status === 'active' && codes.includes(row.code))
+        .map(row => row.id)
+    );
+    if (!branchIds.size) return [];
+    rows = rows.filter(row => branchIds.has(row.branchId));
+  }
+
+  return rows.map(collection => ({
+    value: collection.code,
+    label: formatCollectionLabel(collection),
+    code: collection.code,
+    name: collection.name,
+    branchId: collection.branchId
   }));
 }
 

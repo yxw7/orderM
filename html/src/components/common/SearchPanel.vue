@@ -8,7 +8,11 @@
             :key="field.key"
             class="flex items-center gap-2"
           >
-            <label class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0" :style="{ width: labelWidth }">
+            <label
+              v-if="field.label"
+              class="text-sm text-gray-600 whitespace-nowrap text-right shrink-0"
+              :style="{ width: labelWidth }"
+            >
               {{ field.label }}
             </label>
             <select
@@ -44,7 +48,8 @@
             <div v-else-if="field.type === 'selectText'" class="flex flex-1 items-center">
               <select
                 v-model="model[field.selectKey]"
-                class="w-20 shrink-0 border border-gray-300 rounded-l px-1 py-1.5 text-sm focus:outline-none focus:border-sky-500 bg-white"
+                :class="field.selectClass || 'min-w-[6.5rem]'"
+                class="shrink-0 border border-gray-300 rounded-l px-2 py-1.5 text-sm focus:outline-none focus:border-sky-500 bg-white"
               >
                 <option v-for="opt in field.options" :key="opt.value ?? opt" :value="opt.value ?? opt">
                   {{ opt.label ?? opt }}

@@ -113,15 +113,11 @@
       :row="selectedRow"
       :resource-type="current?.type || '纸质书'"
       :acceptance-lang="current?.lang || '中文'"
+      :acceptance-id="current?.id || ''"
       :needs-barcode-allocation="needsBarcodeAllocationEnabled"
-      :receive-reset-key="receiveResetKey"
-      :exchange-reset-key="exchangeResetKey"
-      :return-reset-key="returnResetKey"
       @close="dispositionOpen = false"
       @preview="onBarcodePreview"
-      @confirm-receive="onReceive"
-      @confirm-exchange="onExchange"
-      @confirm-return="onReturn"
+      @confirm="onDispositionConfirm"
     />
     <BarcodePreviewModal
       :open="barcodePreviewOpen"
@@ -163,6 +159,7 @@ import {
   applyAcceptanceSpeciesFlow,
   sumAcceptanceSpeciesSetStats
 } from '@/modules/acceptance/data/acceptance-detail';
+import { clearPreAcceptDraft } from '@/modules/acceptance/data/pre-accept-drafts';
 
 defineOptions({ name: 'ReceiveByItemView' });
 
@@ -208,9 +205,6 @@ const page = ref(1);
 const pageSize = ref(10);
 
 const dispositionOpen = ref(false);
-const receiveResetKey = ref(0);
-const exchangeResetKey = ref(0);
-const returnResetKey = ref(0);
 const barcodePreviewOpen = ref(false);
 const barcodePreview = ref({ allocated: '', unallocated: '无' });
 
@@ -389,33 +383,30 @@ function commitFlow(flow, sets, form = {}) {
   return true;
 }
 
-function afterDispositionSuccess(section) {
+/**
+ * 一次确定：按收 → 换 → 退依次写库；成功后一律关面板
+ * @param {{ receive?: object|null, exchange?: object|null, return?: object|null }} payload
+ */
+function onDispositionConfirm(payload) {
   const row = selectedRow.value;
-  const pending = row ? resolveReceiveSetSummary(row).pending : 0;
-  if (pending <= 0) {
-    dispositionOpen.value = false;
-    return;
+  const receive = payload?.receive || null;
+  const exchange = payload?.exchange || null;
+  const ret = payload?.return || null;
+
+  if (receive) {
+    if (!commitFlow('receive', receive.receiveSets, receive)) return;
+    if (current.value?.id && row?.orderLine) {
+      clearPreAcceptDraft(current.value.id, row.orderLine);
+    }
   }
-  if (section === 'receive') receiveResetKey.value += 1;
-  else if (section === 'exchange') exchangeResetKey.value += 1;
-  else if (section === 'return') returnResetKey.value += 1;
-}
+  if (exchange) {
+    if (!commitFlow('exchange', exchange.exchangeQty, exchange)) return;
+  }
+  if (ret) {
+    if (!commitFlow('return', ret.returnQty, ret)) return;
+  }
 
-function onReceive(form) {
-  if (!commitFlow('receive', form?.receiveSets, form || {})) return;
-  window.alert('收货成功');
-  afterDispositionSuccess('receive');
-}
-
-function onExchange(form) {
-  if (!commitFlow('exchange', form?.exchangeQty, form || {})) return;
-  window.alert('换货成功');
-  afterDispositionSuccess('exchange');
-}
-
-function onReturn(form) {
-  if (!commitFlow('return', form?.returnQty, form || {})) return;
-  window.alert('退货成功');
-  afterDispositionSuccess('return');
+  window.alert('提交成功');
+  dispositionOpen.value = false;
 }
 </script>

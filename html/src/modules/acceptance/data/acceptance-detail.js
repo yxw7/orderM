@@ -10,11 +10,26 @@ export const acceptanceSpeciesRows = [
 ];
 
 export const acceptanceSpeciesSearchFields = [
-  { key: 'searchField', label: '检索项', type: 'select', options: [{ value: 'isbn', label: 'ISBN' }, { value: 'orderLine', label: '订单行号' }, { value: 'title', label: '正题名' }] },
-  { key: 'keyword', label: '关键词' },
+  {
+    key: 'keyword',
+    label: '',
+    type: 'selectText',
+    selectKey: 'searchField',
+    options: [
+      { value: 'isbn', label: 'ISBN' },
+      { value: 'author', label: '作者' },
+      { value: 'title', label: '正题名' },
+      { value: 'orderLine', label: '订单行号' }
+    ]
+  },
   { key: 'inspector', label: '验收人' },
-  { key: 'startDate', label: '开始日期', type: 'date', extra: true },
-  { key: 'endDate', label: '结束日期', type: 'date', extra: true }
+  {
+    key: 'acceptTime',
+    label: '验收时间',
+    type: 'dateRange',
+    startKey: 'startDate',
+    endKey: 'endDate'
+  }
 ];
 
 export const acceptanceSpeciesColumns = [
@@ -68,11 +83,30 @@ export const acceptanceAvSpeciesRows = [
 ].map(r => ({ ...r, reason: formatReason(r) }));
 
 export const acceptanceAvSpeciesSearchFields = [
-  { key: 'searchField', label: '检索项', type: 'select', options: [{ value: 'isbn', label: 'ISBN/ISRC' }, { value: 'title', label: '题名' }, { value: 'orderLine', label: '订单行号' }, { value: 'carrier', label: '载体' }] },
-  { key: 'keyword', label: '关键词' },
+  {
+    key: 'keyword',
+    label: '',
+    type: 'selectText',
+    selectKey: 'searchField',
+    selectClass: 'min-w-[7.5rem]',
+    options: [
+      { value: 'isbn', label: 'ISBN/ISRC' },
+      { value: 'title', label: '题名' },
+      { value: 'author', label: '作者' },
+      { value: 'productBarcode', label: '商品条码' },
+      { value: 'catalogNo', label: '目录号' },
+      { value: 'carrier', label: '载体' },
+      { value: 'orderLine', label: '订单行号' }
+    ]
+  },
   { key: 'inspector', label: '验收人' },
-  { key: 'startDate', label: '开始日期', type: 'date', extra: true },
-  { key: 'endDate', label: '结束日期', type: 'date', extra: true }
+  {
+    key: 'acceptTime',
+    label: '验收时间',
+    type: 'dateRange',
+    startKey: 'startDate',
+    endKey: 'endDate'
+  }
 ];
 
 export const acceptanceAvSpeciesColumns = [
@@ -196,11 +230,26 @@ export const acceptanceBookVolumeRows = [
 ];
 
 export const acceptanceBookVolumeSearchFields = [
-  { key: 'searchField', label: '检索项', type: 'select', options: [{ value: 'barcode', label: '条码号' }, { value: 'isbn', label: 'ISBN' }, { value: 'title', label: '正题名' }] },
-  { key: 'keyword', label: '关键词' },
+  {
+    key: 'keyword',
+    label: '',
+    type: 'selectText',
+    selectKey: 'searchField',
+    options: [
+      { value: 'barcode', label: '条码号' },
+      { value: 'isbn', label: 'ISBN' },
+      { value: 'author', label: '作者' },
+      { value: 'title', label: '正题名' }
+    ]
+  },
   { key: 'receiver', label: '收货人' },
-  { key: 'startDate', label: '开始日期', type: 'date', extra: true },
-  { key: 'endDate', label: '结束日期', type: 'date', extra: true }
+  {
+    key: 'receiveTimeRange',
+    label: '收货时间',
+    type: 'dateRange',
+    startKey: 'startDate',
+    endKey: 'endDate'
+  }
 ];
 
 export const acceptanceBookVolumeColumns = [
@@ -225,11 +274,30 @@ export const acceptanceAvVolumeRows = [
 ];
 
 export const acceptanceAvVolumeSearchFields = [
-  { key: 'searchField', label: '检索项', type: 'select', options: [{ value: 'barcode', label: '条码号' }, { value: 'isbn', label: 'ISBN/ISRC' }, { value: 'title', label: '题名' }, { value: 'carrier', label: '载体' }] },
-  { key: 'keyword', label: '关键词' },
+  {
+    key: 'keyword',
+    label: '',
+    type: 'selectText',
+    selectKey: 'searchField',
+    selectClass: 'min-w-[7.5rem]',
+    options: [
+      { value: 'barcode', label: '条码号' },
+      { value: 'isbn', label: 'ISBN/ISRC' },
+      { value: 'title', label: '题名' },
+      { value: 'author', label: '作者' },
+      { value: 'productBarcode', label: '商品条码' },
+      { value: 'catalogNo', label: '目录号' },
+      { value: 'carrier', label: '载体' }
+    ]
+  },
   { key: 'receiver', label: '收货人' },
-  { key: 'startDate', label: '开始日期', type: 'date', extra: true },
-  { key: 'endDate', label: '结束日期', type: 'date', extra: true }
+  {
+    key: 'receiveTimeRange',
+    label: '收货时间',
+    type: 'dateRange',
+    startKey: 'startDate',
+    endKey: 'endDate'
+  }
 ];
 
 export const acceptanceAvVolumeColumns = [

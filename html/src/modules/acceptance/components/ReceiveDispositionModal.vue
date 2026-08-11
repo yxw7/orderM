@@ -9,10 +9,7 @@
       @click.stop
     >
       <div class="flex items-center justify-between px-6 py-4 border-b shrink-0">
-        <h2 class="text-base font-medium text-gray-800">
-          逐条收货/换货/退货
-          <span v-if="row?.orderLine" class="text-gray-500 font-normal">— {{ row.orderLine }}</span>
-        </h2>
+        <h2 class="text-base font-medium text-gray-800">逐条收货/换货/退货</h2>
         <button type="button" class="text-gray-400 text-xl leading-none" @click="emit('close')">&times;</button>
       </div>
 
@@ -34,22 +31,18 @@
         </div>
       </div>
 
-      <div class="flex border-b shrink-0 px-4 bg-white">
-        <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          type="button"
-          class="px-5 py-2.5 text-sm border-b-2 -mb-px transition-colors"
-          :class="activeTab === tab.key
-            ? `${tab.activeClass} border-current font-medium`
-            : 'border-transparent text-gray-500 hover:text-gray-700'"
-          @click="activeTab = tab.key"
-        >{{ tab.label }}</button>
-      </div>
-
-      <div class="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-3 text-sm">
+      <div class="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-6 text-sm">
         <!-- 收货 -->
-        <div v-show="activeTab === 'receive'" class="space-y-3">
+        <section class="space-y-3">
+          <div class="flex items-center gap-2 border-b border-gray-200 pb-1.5">
+            <h3 class="text-sm font-medium text-gray-800">收货</h3>
+            <span
+              v-if="hasPreAcceptDraft"
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs text-sky-700 bg-sky-50 border border-sky-100"
+            >
+              已带入预验收数据
+            </span>
+          </div>
           <template v-if="isAv">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="flex items-center gap-2">
@@ -135,7 +128,7 @@
             <div class="flex items-start gap-2">
               <label class="text-gray-600 w-16 text-right pt-1.5 shrink-0">收货备注</label>
               <div class="flex-1 relative">
-                <textarea v-model="avForm.remark" rows="3" maxlength="500" placeholder="请输入收货备注" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm resize-none" />
+                <textarea v-model="avForm.remark" rows="3" maxlength="500" placeholder="请输入收货备注（换/退货共用）" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm resize-none" />
                 <span class="absolute bottom-2 right-2 text-xs text-gray-400">{{ avForm.remark.length }}</span>
               </div>
             </div>
@@ -189,89 +182,70 @@
             </div>
             <div class="flex items-start gap-2">
               <label class="text-gray-600 w-16 text-right pt-1.5 shrink-0">收货备注</label>
-              <textarea
-                v-model="paperForm.remark"
-                rows="3"
-                maxlength="200"
-                placeholder="请输入收货备注"
-                class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm resize-none"
-              />
+              <div class="flex-1 relative">
+                <textarea
+                  v-model="paperForm.remark"
+                  rows="3"
+                  maxlength="500"
+                  placeholder="请输入收货备注（换/退货共用）"
+                  class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm resize-none"
+                />
+                <span class="absolute bottom-2 right-2 text-xs text-gray-400">{{ paperForm.remark.length }}</span>
+              </div>
             </div>
           </template>
-        </div>
+        </section>
 
         <!-- 换货 -->
-        <div v-show="activeTab === 'exchange'" class="space-y-3 max-w-xl">
-          <div class="flex items-center gap-2">
-            <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 换货数量</label>
-            <input v-model="exchangeForm.exchangeQty" type="text" placeholder="请输入" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
-          </div>
-          <div class="flex items-center gap-2">
-            <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 换货原因</label>
-            <select v-model="exchangeForm.exchangeReason" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
-              <option value="">请选择</option>
-              <option v-for="opt in EXCHANGE_REASON_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
-            </select>
-          </div>
-          <div class="flex items-start gap-2">
-            <label class="text-gray-600 w-20 text-right pt-1.5 shrink-0">换货备注</label>
-            <div class="flex-1 relative">
-              <textarea v-model="exchangeForm.remark" rows="4" maxlength="500" placeholder="请输入换货备注" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm resize-none" />
-              <span class="absolute bottom-2 right-2 text-xs text-gray-400">{{ exchangeForm.remark.length }} / 500</span>
+        <section class="space-y-3">
+          <h3 class="text-sm font-medium text-gray-800 border-b border-gray-200 pb-1.5">换货</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="flex items-center gap-2">
+              <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 换货数量</label>
+              <input v-model="exchangeForm.exchangeQty" type="text" placeholder="请输入" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 换货原因</label>
+              <select v-model="exchangeForm.exchangeReason" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
+                <option value="">请选择</option>
+                <option v-for="opt in EXCHANGE_REASON_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
+              </select>
             </div>
           </div>
-        </div>
+        </section>
 
         <!-- 退货 -->
-        <div v-show="activeTab === 'return'" class="space-y-3 max-w-xl">
-          <div class="flex items-center gap-2">
-            <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 退货数量</label>
-            <input v-model="returnForm.returnQty" type="text" placeholder="请输入" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
-          </div>
-          <div class="flex items-center gap-2">
-            <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 退货原因</label>
-            <select v-model="returnForm.returnReason" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
-              <option value="">请选择</option>
-              <option v-for="opt in RETURN_REASON_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
-            </select>
-          </div>
-          <div class="flex items-start gap-2">
-            <label class="text-gray-600 w-20 text-right pt-1.5 shrink-0">退货备注</label>
-            <div class="flex-1 relative">
-              <textarea v-model="returnForm.remark" rows="4" maxlength="500" placeholder="请输入退货备注" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm resize-none" />
-              <span class="absolute bottom-2 right-2 text-xs text-gray-400">{{ returnForm.remark.length }} / 500</span>
+        <section class="space-y-3">
+          <h3 class="text-sm font-medium text-gray-800 border-b border-gray-200 pb-1.5">退货</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="flex items-center gap-2">
+              <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 退货数量</label>
+              <input v-model="returnForm.returnQty" type="text" placeholder="请输入" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 退货原因</label>
+              <select v-model="returnForm.returnReason" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
+                <option value="">请选择</option>
+                <option v-for="opt in RETURN_REASON_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
+              </select>
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
       <div class="flex items-center justify-end gap-2 px-6 py-3 border-t bg-gray-50 rounded-b-lg shrink-0">
         <button type="button" class="px-5 py-1.5 text-sm border border-gray-300 rounded text-gray-600 hover:bg-gray-50" @click="emit('close')">关闭</button>
-        <template v-if="activeTab === 'receive'">
-          <button
-            v-if="!isAv && needsBarcodeAllocation"
-            type="button"
-            class="px-4 py-1.5 text-sm rounded bg-amber-500 text-white hover:bg-amber-600"
-            @click="onPaperPreview"
-          >预览</button>
-          <button
-            type="button"
-            class="px-4 py-1.5 text-sm bg-emerald-500 text-white rounded hover:bg-emerald-600"
-            @click="submitReceive"
-          >确认收货</button>
-        </template>
         <button
-          v-else-if="activeTab === 'exchange'"
+          v-if="!isAv && needsBarcodeAllocation"
           type="button"
-          class="px-4 py-1.5 text-sm bg-sky-600 text-white rounded hover:bg-sky-700"
-          @click="submitExchange"
-        >确认换货</button>
+          class="px-4 py-1.5 text-sm rounded bg-amber-500 text-white hover:bg-amber-600"
+          @click="onPaperPreview"
+        >预览</button>
         <button
-          v-else
           type="button"
-          class="px-4 py-1.5 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
-          @click="submitReturn"
-        >确认退货</button>
+          class="px-4 py-1.5 text-sm bg-emerald-500 text-white rounded hover:bg-emerald-600"
+          @click="submitAll"
+        >确定</button>
       </div>
     </div>
 
@@ -296,27 +270,19 @@ import {
   isChineseAcceptanceLang,
   resolveReceiveSetSummary
 } from '@/modules/acceptance/data/receive-by-item';
+import { getPreAcceptDraft } from '@/modules/acceptance/data/pre-accept-drafts';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
   row: { type: Object, default: null },
   resourceType: { type: String, default: '纸质书' },
   acceptanceLang: { type: String, default: '中文' },
-  needsBarcodeAllocation: { type: Boolean, default: false },
-  /** 成功提交后由父组件递增，用于清空对应区块 */
-  receiveResetKey: { type: Number, default: 0 },
-  exchangeResetKey: { type: Number, default: 0 },
-  returnResetKey: { type: Number, default: 0 }
+  /** 当前工作验收单号，用于读取预验收草稿 */
+  acceptanceId: { type: String, default: '' },
+  needsBarcodeAllocation: { type: Boolean, default: false }
 });
 
-const emit = defineEmits(['close', 'confirm-receive', 'confirm-exchange', 'confirm-return', 'preview']);
-
-const tabs = [
-  { key: 'receive', label: '收货', activeClass: 'text-emerald-600' },
-  { key: 'exchange', label: '换货', activeClass: 'text-sky-600' },
-  { key: 'return', label: '退货', activeClass: 'text-orange-600' }
-];
-const activeTab = ref('receive');
+const emit = defineEmits(['close', 'confirm', 'preview']);
 
 const currencyOptions = ['CNY', 'USD', 'EUR', 'GBP', 'JPY', 'HKD'];
 const currencyLabels = {
@@ -329,6 +295,9 @@ function currencyLabel(code) {
 const carrierOptions = RECEIVE_CARRIER_OPTIONS.filter(Boolean);
 const isAv = computed(() => props.resourceType === '视听资料');
 const isForeign = computed(() => !isChineseAcceptanceLang(props.acceptanceLang));
+const hasPreAcceptDraft = computed(() => (
+  Boolean(getPreAcceptDraft(props.acceptanceId, props.row?.orderLine))
+));
 
 const summary = computed(() => (
   props.row
@@ -364,8 +333,8 @@ const avForm = reactive({
   vinylColor: '', brand: '', limitedNo: '', copies: '', receiveSets: '', remark: ''
 });
 
-const exchangeForm = reactive({ exchangeQty: '', exchangeReason: '', remark: '' });
-const returnForm = reactive({ returnQty: '', returnReason: '', remark: '' });
+const exchangeForm = reactive({ exchangeQty: '', exchangeReason: '' });
+const returnForm = reactive({ returnQty: '', returnReason: '' });
 
 const barcodeResultOpen = ref(false);
 const barcodeResult = ref({
@@ -375,6 +344,21 @@ const barcodeResult = ref({
   unallocatedText: '',
   hasEmpty: false
 });
+/** @type {import('vue').Ref<object|null>} */
+const pendingConfirmPayload = ref(null);
+
+function receiveRemark() {
+  return isAv.value ? (avForm.remark || '') : (paperForm.remark || '');
+}
+
+/**
+ * @param {string|number} raw
+ * @returns {number} 有效正数或 0
+ */
+function positiveQty(raw) {
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
 
 function fillPaperFromRow(row) {
   const s = resolveReceiveSetSummary(row);
@@ -394,6 +378,7 @@ function fillPaperFromRow(row) {
     paperForm.currency = row.currency || 'CNY';
     paperForm.actualPrice = row.actualPrice || row.price || '';
   }
+  applyPreAcceptDraftToPaper(row);
 }
 
 function fillAvFromRow(row) {
@@ -421,6 +406,47 @@ function fillAvFromRow(row) {
     avForm.currency = row.currency || 'CNY';
     avForm.actualPrice = row.actualPrice || row.price || '';
   }
+  applyPreAcceptDraftToAv(row);
+}
+
+/**
+ * @param {object} row
+ */
+function applyPreAcceptDraftToPaper(row) {
+  const draft = getPreAcceptDraft(props.acceptanceId, row?.orderLine);
+  if (!draft) return;
+  if (draft.receiveSets !== '' && draft.receiveSets != null) {
+    paperForm.receiveSets = String(draft.receiveSets);
+  }
+  if (draft.price || draft.listPrice) {
+    paperForm.price = String(draft.price || draft.listPrice);
+  }
+  if (draft.netPrice !== '' && draft.netPrice != null) {
+    paperForm.actualPrice = String(draft.netPrice);
+  }
+  if (draft.copiesInSet !== '' && draft.copiesInSet != null) {
+    paperForm.volumesPerSet = String(draft.copiesInSet);
+  }
+}
+
+/**
+ * @param {object} row
+ */
+function applyPreAcceptDraftToAv(row) {
+  const draft = getPreAcceptDraft(props.acceptanceId, row?.orderLine);
+  if (!draft) return;
+  if (draft.receiveSets !== '' && draft.receiveSets != null) {
+    avForm.receiveSets = String(draft.receiveSets);
+  }
+  if (draft.listPrice || draft.price) {
+    avForm.price = String(draft.listPrice || draft.price);
+  }
+  if (draft.netPrice !== '' && draft.netPrice != null) {
+    avForm.actualPrice = String(draft.netPrice);
+  }
+  if (draft.copiesInSet !== '' && draft.copiesInSet != null) {
+    avForm.copies = String(draft.copiesInSet);
+  }
 }
 
 function fillExchangeFromRow(row) {
@@ -428,7 +454,6 @@ function fillExchangeFromRow(row) {
     ? String(row.defaultExchangeQty)
     : '';
   exchangeForm.exchangeReason = row?.defaultExchangeReason || '';
-  exchangeForm.remark = row?.defaultExchangeRemark || '';
 }
 
 function fillReturnFromRow(row) {
@@ -436,12 +461,12 @@ function fillReturnFromRow(row) {
     ? String(row.defaultReturnQty)
     : '';
   returnForm.returnReason = row?.defaultReturnReason || '';
-  returnForm.remark = row?.defaultReturnRemark || '';
 }
 
 function resetAllFromRow(row) {
   if (!row) return;
   barcodeResultOpen.value = false;
+  pendingConfirmPayload.value = null;
   fillPaperFromRow(row);
   fillAvFromRow(row);
   fillExchangeFromRow(row);
@@ -450,7 +475,6 @@ function resetAllFromRow(row) {
 
 watch(() => [props.open, props.row], ([open, row]) => {
   if (!open || !row) return;
-  activeTab.value = 'receive';
   resetAllFromRow(row);
 }, { immediate: true });
 
@@ -460,41 +484,6 @@ watch(() => [props.open, orderLineRemark.value], async () => {
   await nextTick();
   updateRemarkOverflow();
 });
-
-watch(() => props.receiveResetKey, (key, prev) => {
-  if (!props.open || !props.row || key === prev) return;
-  if (isAv.value) fillAvFromRow(props.row);
-  else fillPaperFromRow(props.row);
-});
-
-watch(() => props.exchangeResetKey, (key, prev) => {
-  if (!props.open || !props.row || key === prev) return;
-  fillExchangeFromRow(props.row);
-  exchangeForm.exchangeQty = '';
-  exchangeForm.exchangeReason = '';
-  exchangeForm.remark = '';
-});
-
-watch(() => props.returnResetKey, (key, prev) => {
-  if (!props.open || !props.row || key === prev) return;
-  fillReturnFromRow(props.row);
-  returnForm.returnQty = '';
-  returnForm.returnReason = '';
-  returnForm.remark = '';
-});
-
-function assertQtyWithinPending(qty) {
-  const pending = Number(summary.value.pending) || 0;
-  if (!qty || qty <= 0) {
-    window.alert('操作失败：套数无效');
-    return false;
-  }
-  if (qty > pending) {
-    window.alert(`超过待收货套数（当前待收 ${pending}）`);
-    return false;
-  }
-  return true;
-}
 
 function onPaperPreview() {
   if (!props.needsBarcodeAllocation) return;
@@ -506,7 +495,7 @@ function onPaperPreview() {
   emit('preview', { ...paperForm });
 }
 
-function validatePaperReceive() {
+function validatePaperReceiveFields() {
   if (!paperForm.title.trim()) {
     window.alert('请填写正题名');
     return false;
@@ -523,11 +512,10 @@ function validatePaperReceive() {
     window.alert('请输入条码初始号');
     return false;
   }
-  if (!assertQtyWithinPending(Number(paperForm.receiveSets))) return false;
   return true;
 }
 
-function validateAvReceive() {
+function validateAvReceiveFields() {
   if (!avForm.carrier) {
     window.alert('请选择载体');
     return false;
@@ -544,45 +532,103 @@ function validateAvReceive() {
     window.alert('请填写套内件数');
     return false;
   }
-  if (!assertQtyWithinPending(Number(avForm.receiveSets))) return false;
   return true;
 }
 
-function submitReceive() {
-  if (isAv.value) {
-    if (!validateAvReceive()) return;
-    emit('confirm-receive', { ...avForm });
-    return;
+/**
+ * @returns {{ receive: object|null, exchange: object|null, return: object|null }|null}
+ */
+function buildValidatedPayload() {
+  const receiveQty = positiveQty(isAv.value ? avForm.receiveSets : paperForm.receiveSets);
+  const exchangeQty = positiveQty(exchangeForm.exchangeQty);
+  const returnQty = positiveQty(returnForm.returnQty);
+
+  if (!receiveQty && !exchangeQty && !returnQty) {
+    window.alert('请至少填写一种处置套数');
+    return null;
   }
-  if (!validatePaperReceive()) return;
-  if (props.needsBarcodeAllocation) {
+
+  const pending = Number(summary.value.pending) || 0;
+  const total = receiveQty + exchangeQty + returnQty;
+  if (total > pending) {
+    window.alert(`处置套数合计不能大于待收套数（当前待收 ${pending}）`);
+    return null;
+  }
+
+  if (receiveQty) {
+    if (isAv.value) {
+      if (!validateAvReceiveFields()) return null;
+    } else if (!validatePaperReceiveFields()) {
+      return null;
+    }
+  }
+
+  if (exchangeQty && !exchangeForm.exchangeReason) {
+    window.alert('请选择换货原因');
+    return null;
+  }
+  if (returnQty && !returnForm.returnReason) {
+    window.alert('请选择退货原因');
+    return null;
+  }
+
+  const sharedRemark = receiveRemark();
+  /** @type {object|null} */
+  let receive = null;
+  if (receiveQty) {
+    receive = isAv.value
+      ? { ...avForm, receiveSets: String(receiveQty) }
+      : { ...paperForm, receiveSets: String(receiveQty) };
+  }
+
+  return {
+    receive,
+    exchange: exchangeQty
+      ? {
+          exchangeQty: String(exchangeQty),
+          exchangeReason: exchangeForm.exchangeReason,
+          remark: sharedRemark
+        }
+      : null,
+    return: returnQty
+      ? {
+          returnQty: String(returnQty),
+          returnReason: returnForm.returnReason,
+          remark: sharedRemark
+        }
+      : null
+  };
+}
+
+function submitAll() {
+  const payload = buildValidatedPayload();
+  if (!payload) return;
+
+  if (
+    payload.receive
+    && !isAv.value
+    && props.needsBarcodeAllocation
+  ) {
     barcodeResult.value = calcBarcodeAllocation(
       paperForm.barcodeStart,
       Number(paperForm.receiveSets),
       Number(paperForm.volumesPerSet)
     );
+    pendingConfirmPayload.value = {
+      ...payload,
+      receive: { ...payload.receive, barcodeResult: { ...barcodeResult.value } }
+    };
     barcodeResultOpen.value = true;
     return;
   }
-  emit('confirm-receive', { ...paperForm });
+
+  emit('confirm', payload);
 }
 
 function onBarcodeAcknowledge() {
   barcodeResultOpen.value = false;
-  emit('confirm-receive', { ...paperForm, barcodeResult: { ...barcodeResult.value } });
-}
-
-function submitExchange() {
-  if (!exchangeForm.exchangeQty.trim()) return window.alert('请填写换货数量');
-  if (!exchangeForm.exchangeReason) return window.alert('请选择换货原因');
-  if (!assertQtyWithinPending(Number(exchangeForm.exchangeQty))) return;
-  emit('confirm-exchange', { ...exchangeForm });
-}
-
-function submitReturn() {
-  if (!returnForm.returnQty.trim()) return window.alert('请填写退货数量');
-  if (!returnForm.returnReason) return window.alert('请选择退货原因');
-  if (!assertQtyWithinPending(Number(returnForm.returnQty))) return;
-  emit('confirm-return', { ...returnForm });
+  const payload = pendingConfirmPayload.value;
+  pendingConfirmPayload.value = null;
+  if (payload) emit('confirm', payload);
 }
 </script>

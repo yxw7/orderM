@@ -229,14 +229,11 @@ export function canGenerateShortage(acceptanceStatus) {
 export const BATCH_DEDUP_MAX_COUNT = 50;
 
 export function canBatchDedup(lines, selectedIds, orders = []) {
+  void orders;
   if (!selectedIds.length) return false;
   if (selectedIds.length > BATCH_DEDUP_MAX_COUNT) return false;
   const selected = lines.filter(r => selectedIds.includes(r.id));
-  const canDedup = row => {
-    if (row.lineStatus === '待发订') return true;
-    return orders.find(o => o.orderId === row.orderId)?.orderStatus === 'pending';
-  };
-  if (!selected.every(canDedup)) return false;
+  if (!selected.every(row => row.lineStatus === '待发订')) return false;
   const first = selected[0];
   return selected.every(r =>
     r.resourceType === first.resourceType && r.language === first.language

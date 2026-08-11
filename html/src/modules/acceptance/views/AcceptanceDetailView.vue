@@ -72,6 +72,13 @@
       :page-sizes="[10, 20, 50]"
       unit="条记录"
     >
+      <template #cell-orderLine="{ row }">
+        <button
+          type="button"
+          class="text-sky-600 hover:underline whitespace-nowrap"
+          @click="goOrderLine(row)"
+        >{{ row.orderLine }}</button>
+      </template>
       <template #cell-reason="{ row }">
         <HoverTooltip v-if="row.reason && !isReasonDisabled(row)" :text="row.reason">
           <span class="text-sky-600 hover:underline cursor-pointer">查看</span>
@@ -249,7 +256,7 @@ watch(
       viewMode.value = route.query.view === 'volume' ? 'volume' : 'species';
     }
     loadDetailData();
-    search.value = {};
+    search.value = createDefaultSearch();
     page.value = 1;
   },
   { immediate: true }
@@ -283,8 +290,19 @@ function switchView(mode) {
   if (!props.embedded) {
     router.replace({ path: route.path, query: mode === 'volume' ? { view: 'volume' } : {} });
   }
+  search.value = createDefaultSearch();
   filteredRows.value = filterDetailRows(detailConfig.value.rows, search.value, viewMode.value);
   page.value = 1;
+}
+
+function createDefaultSearch() {
+  const fields = detailConfig.value?.fields || [];
+  const selectText = fields.find(f => f.type === 'selectText');
+  if (selectText?.selectKey && selectText.options?.length) {
+    const first = selectText.options[0];
+    return { [selectText.selectKey]: first.value ?? first };
+  }
+  return {};
 }
 
 function filterRows() {
@@ -293,9 +311,14 @@ function filterRows() {
 }
 
 function resetSearch() {
-  search.value = {};
+  search.value = createDefaultSearch();
   filteredRows.value = [...detailConfig.value.rows];
   page.value = 1;
+}
+
+function goOrderLine(row) {
+  if (!row?.orderLine) return;
+  router.push({ name: 'order-line-detail', params: { lineNo: row.orderLine } });
 }
 
 function speciesCounts(row) {

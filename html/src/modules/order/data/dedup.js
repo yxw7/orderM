@@ -56,34 +56,13 @@ export function getDedupFields(resourceType, languageCategory) {
 }
 
 /**
- * 查重范围预设：分馆编码前缀通配符（产品写死）
- * value 为提交用模式；label 为复选展示文案
+ * 查重范围预设通配符【已废弃】：改为所属分馆 / 所属馆藏地选择
+ * @deprecated
  */
-export const DEDUP_BRANCH_PATTERNS = [
-  { value: 'ST*', label: 'ST* | 首都图书馆' },
-  { value: 'CP*', label: 'CP* | 昌平区图书馆' },
-  { value: 'CY*', label: 'CY* | 朝阳区图书馆' },
-  { value: 'DC*', label: 'DC* | 东城区图书馆' },
-  { value: 'CW*', label: 'CW* | 东城区图书馆' },
-  { value: 'DX*', label: 'DX* | 大兴区图书馆' },
-  { value: 'FS*', label: 'FS* | 房山区图书馆' },
-  { value: 'YS*', label: 'YS* | 燕山区图书馆' },
-  { value: 'FT*', label: 'FT* | 丰台区图书馆' },
-  { value: 'HD*', label: 'HD* | 海淀区图书馆' },
-  { value: 'HR*', label: 'HR* | 怀柔区图书馆' },
-  { value: 'MT*', label: 'MT* | 门头沟区图书馆' },
-  { value: 'MY*', label: 'MY* | 密云区图书馆' },
-  { value: 'PG*', label: 'PG* | 平谷区图书馆' },
-  { value: 'SJ*', label: 'SJ* | 石景山区图书馆' },
-  { value: 'SY*', label: 'SY* | 顺义区图书馆' },
-  { value: 'TZ*', label: 'TZ* | 通州区图书馆' },
-  { value: 'XC*', label: 'XC* | 西城区图书馆' },
-  { value: 'XW*', label: 'XW* | 西城区图书馆' },
-  { value: 'YQ*', label: 'YQ* | 延庆区图书馆' }
-];
+export const DEDUP_BRANCH_PATTERNS = [];
 
 /**
- * 前缀通配符是否匹配分馆编码（忽略大小写）
+ * 前缀通配符是否匹配分馆编码（忽略大小写）【兼容旧逻辑】
  * @param {string} pattern - 如 ST*
  * @param {string} branchCode
  * @returns {boolean}
@@ -98,7 +77,7 @@ export function matchesBranchPattern(pattern, branchCode) {
 }
 
 /**
- * 分馆编码是否命中任一已选通配符（空列表视为不限 / 全部命中）
+ * 分馆编码是否命中任一已选通配符（空列表视为不限 / 全部命中）【兼容旧逻辑】
  * @param {string} branchCode
  * @param {string[]} patterns
  * @returns {boolean}
@@ -252,6 +231,7 @@ export function filterHoldingDedupMarcFields(marcFields, languageCategory) {
  */
 function createHoldingDedupItem(patch = {}) {
   return {
+    holdingStatus: '编目中',
     barcode: '',
     callNo: '',
     ownerLibrary: '首都图书馆',
@@ -260,6 +240,9 @@ function createHoldingDedupItem(patch = {}) {
     currentLocation: '',
     circulationType: '001-成人外借',
     volumeDesc: '',
+    binding: '',
+    shelfIndexClass: '',
+    shelfIndex: '',
     checkInTime: '2024-06-15 10:20:00',
     ...patch
   };
@@ -305,33 +288,54 @@ export const HOLDING_DEDUP_CATALOG = [
         callNo: 'K25/1',
         homeLocation: '首少.少儿中文库本库',
         currentLocation: '首少.少儿中文库本库',
-        circulationType: '002-少儿外借'
+        circulationType: '002-少儿外借',
+        holdingStatus: '在架',
+        shelfIndexClass: '中图法',
+        shelfIndex: 'K25',
+        binding: '平装'
       }),
       createHoldingDedupItem({
         barcode: 'ST2024002002',
         callNo: 'K25/1',
         homeLocation: '生态书库',
-        currentLocation: '生态书库'
+        currentLocation: '生态书库',
+        holdingStatus: '已外借',
+        shelfIndexClass: '中图法',
+        shelfIndex: 'K25',
+        binding: '精装'
       }),
       createHoldingDedupItem({
         barcode: 'ST2024002003',
         callNo: 'K25/1',
         homeLocation: '集体外借部',
-        currentLocation: '集体外借部'
+        currentLocation: '集体外借部',
+        holdingStatus: '编目中',
+        shelfIndexClass: '中图法',
+        shelfIndex: 'K25',
+        binding: '平装'
       }),
       createHoldingDedupItem({
         barcode: 'ST2024002004',
         callNo: 'K25/1',
         homeLocation: '少儿外借部（新库）',
         currentLocation: '少儿外借部（新库）',
-        circulationType: '002-少儿外借'
+        circulationType: '002-少儿外借',
+        holdingStatus: '订购中',
+        shelfIndexClass: '中图法',
+        shelfIndex: 'K25',
+        binding: '平装'
       }),
       createHoldingDedupItem({
         barcode: 'ST2024002005',
         callNo: 'K25/1',
         homeLocation: '少儿外借部（新库）',
         currentLocation: '少儿外借部（新库）',
-        circulationType: '002-少儿外借'
+        circulationType: '002-少儿外借',
+        holdingStatus: '损坏',
+        volumeDesc: '上册',
+        shelfIndexClass: '中图法',
+        shelfIndex: 'K25',
+        binding: '精装'
       }),
       createHoldingDedupItem({
         barcode: 'ST2024002006',
@@ -339,6 +343,7 @@ export const HOLDING_DEDUP_CATALOG = [
         homeLocation: '',
         currentLibrary: '',
         currentLocation: '',
+        holdingStatus: '编目中',
         checkInTime: '2024-06-18 09:00:00'
       }),
       createHoldingDedupItem({
@@ -347,6 +352,7 @@ export const HOLDING_DEDUP_CATALOG = [
         homeLocation: '',
         currentLibrary: '',
         currentLocation: '',
+        holdingStatus: '剔除',
         checkInTime: '2024-06-18 09:05:00'
       })
     ],
@@ -599,9 +605,8 @@ export function matchesDedupFields(sourceRow, targetRow, fieldKeys) {
 }
 
 export function canDedupOrderLine(row, orders) {
-  const order = orders.find(o => o.orderId === row.orderId);
-  if (order?.orderStatus === 'pending') return true;
-  return row.lineStatus === '待发订';
+  void orders;
+  return row?.lineStatus === '待发订';
 }
 
 export function getOrderLineResourceType(row, orders) {
@@ -639,10 +644,19 @@ export function findOrderDuplicatesForCheck(row, allLines, orders, fieldKeys) {
 }
 
 export function performOrderLineDedup(lines, orders, orderLineNos, config) {
-  const { duplicateType, fieldKeys, branchPatterns = [] } = config;
+  const {
+    duplicateType,
+    fieldKeys,
+    branchCodes = [],
+    collectionCodes = [],
+    // 兼容旧单选字段
+    branchCode = '',
+    collectionCode = ''
+  } = config;
   const checkOrder = duplicateType === 'all' || duplicateType === 'order';
   const checkHolding = duplicateType === 'all' || duplicateType === 'holding';
-  const patterns = Array.isArray(branchPatterns) ? [...branchPatterns] : [];
+  const scopeBranchCodes = normalizeCodeList(branchCodes, branchCode);
+  const scopeCollectionCodes = normalizeCodeList(collectionCodes, collectionCode);
 
   orderLineNos.forEach(orderLineNo => {
     const target = lines.find(item => item.orderLineNo === orderLineNo);
@@ -658,9 +672,24 @@ export function performOrderLineDedup(lines, orders, orderLineNos, config) {
       autoAssociateFirstHoldingBib(target);
     }
     target.lastDedupFieldKeys = fieldKeys;
-    // 查重范围存档；未选通配符视为不限。Mock 馆藏树缺分馆编码时暂不裁剪结果
-    target.lastDedupBranchPatterns = patterns;
+    // 查重范围存档；未选分馆/馆藏地视为不限。Mock 暂不按范围裁剪结果
+    target.lastDedupBranchCodes = scopeBranchCodes;
+    target.lastDedupCollectionCodes = scopeCollectionCodes;
   });
+}
+
+/**
+ * @param {string[]|string} list
+ * @param {string} legacySingle
+ * @returns {string[]}
+ */
+function normalizeCodeList(list, legacySingle) {
+  const fromList = (Array.isArray(list) ? list : [list])
+    .map(code => String(code || '').trim())
+    .filter(Boolean);
+  if (fromList.length) return [...new Set(fromList)];
+  const single = String(legacySingle || '').trim();
+  return single ? [single] : [];
 }
 
 /**
@@ -721,6 +750,7 @@ export function countBibHoldingCopies(item) {
 
 /** 馆藏查重「单件」页签列定义 */
 export const HOLDING_DEDUP_ITEM_COLUMNS = [
+  { key: 'holdingStatus', label: '馆藏状态' },
   { key: 'barcode', label: '条码号' },
   { key: 'callNo', label: '索书号' },
   { key: 'ownerLibrary', label: '所属馆', minWidth: 'min-w-[140px]' },
@@ -729,7 +759,21 @@ export const HOLDING_DEDUP_ITEM_COLUMNS = [
   { key: 'currentLocation', label: '所在馆藏地', minWidth: 'min-w-[160px]' },
   { key: 'circulationType', label: '借阅类型' },
   { key: 'volumeDesc', label: '卷册描述' },
+  { key: 'binding', label: '装帧' },
+  { key: 'shelfIndexClass', label: '排架标引分类', minWidth: 'min-w-[120px]' },
+  { key: 'shelfIndex', label: '排架标引', minWidth: 'min-w-[120px]' },
   { key: 'checkInTime', label: '登到时间', minWidth: 'whitespace-nowrap' }
+];
+
+/** 馆藏状态枚举示例（原型展示用） */
+export const HOLDING_DEDUP_ITEM_STATUS_OPTIONS = [
+  '编目中',
+  '已外借',
+  '订购中',
+  '剔除',
+  '损坏',
+  '在架',
+  '阅览'
 ];
 
 /**
@@ -743,6 +787,22 @@ export function getHoldingDedupPhysicalItems(item) {
     id: `${item.bibRecordNo || 'item'}-${index + 1}`,
     ...row
   }));
+}
+
+/**
+ * 按四级叶子筛选单件（馆藏地名称或未关联馆藏）
+ * @param {Object[]} items - 单件列表
+ * @param {{ unassigned?: boolean, name?: string }|null} leafFilter - 叶子筛选；null 表示全部
+ * @returns {Object[]}
+ */
+export function filterHoldingDedupItemsByLeaf(items, leafFilter) {
+  if (!leafFilter) return items || [];
+  if (leafFilter.unassigned) {
+    return (items || []).filter(row => !String(row.homeLocation || '').trim());
+  }
+  const name = String(leafFilter.name || '').trim();
+  if (!name) return items || [];
+  return (items || []).filter(row => String(row.homeLocation || '').trim() === name);
 }
 
 /**

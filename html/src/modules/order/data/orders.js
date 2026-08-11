@@ -115,6 +115,7 @@ const rawOrderLines = [
     volumeNo: '—', volumeName: '—', price: '45.00', currency: 'CNY', copiesInSet: 1, sets: 3,
     lineStatus: '待发订', acceptanceStatus: '', settlementStatus: '待申请', isShortage: '否',
     flowStats: '3/0/0/0/0', issueTime: '2026-05-29 10:54:51', hasRemark: true,
+    remark: '请核对分册后再发订',
     textLanguage: '中文', resourceType: '纸质书', language: '中文',
     holdingDuplicate: null, orderDuplicate: null
   },
@@ -157,6 +158,7 @@ const rawOrderLines = [
     volumeNo: '—', volumeName: '—', price: '120.00', currency: 'CNY', copiesInSet: 1, sets: 2,
     lineStatus: '已关闭', acceptanceStatus: '收货完成', settlementStatus: '已结算', isShortage: '否',
     flowStats: '2/2/0/0/0', issueTime: '2026-05-28 14:20:33', hasRemark: true,
+    remark: '捐赠登记完成',
     textLanguage: '中文', resourceType: '纸质书', language: '中文',
     holdingDuplicate: false, orderDuplicate: false
   },
@@ -188,8 +190,20 @@ const rawOrderLines = [
     volumeNo: '分卷号', volumeName: '分卷名', price: '300.00', currency: 'CNY', copiesInSet: 1, sets: 2,
     lineStatus: '处理中', acceptanceStatus: '部分收货', settlementStatus: '待申请', isShortage: '否',
     flowStats: '2/1/0/0/0', issueTime: '2026-05-22 09:08:45', hasRemark: true,
+    remark: '外文音像请核对载体版本',
     textLanguage: '中文', productBarcode: '017685110221', catalogNo: 'CD-1102',
     resourceType: '视听资料', language: '外文'
+  },
+  {
+    id: 'PG001B20260528008-10', orderId: 'PG001B20260528008', site: '华威桥馆', orderLineNo: 'PG001B20260528008-10',
+    bibRecordNo: 'bjlib900120260528010', title: '城市更新与公共文化空间', resourceId: '9787565855382',
+    carrier: 'AP', author: '李明主编', publisher: '中国建筑工业出版社', publishTime: '2025',
+    volumeNo: '', volumeName: '', price: '78.00', currency: 'CNY', copiesInSet: 1, sets: 5,
+    lineStatus: '处理中', acceptanceStatus: '部分收货', settlementStatus: '待申请', isShortage: '否',
+    flowStats: '5/1/2/0/0', issueTime: '2026-05-28 17:34:43', hasRemark: true,
+    remark: '部分到货，缺货待换',
+    textLanguage: '中文', resourceType: '纸质书', language: '中文',
+    holdingDuplicate: null, orderDuplicate: null
   }
 ];
 

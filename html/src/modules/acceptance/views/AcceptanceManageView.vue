@@ -23,16 +23,6 @@
       >
         预验收
       </button>
-      <button
-        type="button"
-        class="px-4 py-1.5 text-sm rounded"
-        :class="canImport ? 'border border-sky-600 text-sky-600 bg-white hover:bg-sky-50' : 'border border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'"
-        :disabled="!canImport"
-        :title="importTitle"
-        @click="goDeliveryImport"
-      >
-        批验收
-      </button>
       <button type="button" class="px-4 py-1.5 bg-amber-500 text-white text-sm rounded hover:bg-amber-600" @click="openSettlement">
         申请结算
       </button>
@@ -109,14 +99,8 @@
     />
     <PreAcceptWizardModal
       :open="preAcceptOpen"
-      :ctx="batchImportCtx"
+      :ctx="preAcceptCtx"
       @close="preAcceptOpen = false"
-    />
-    <BatchImportWizardModal
-      :open="batchImportOpen"
-      :ctx="batchImportCtx"
-      @close="batchImportOpen = false"
-      @confirmed="onBatchImportConfirmed"
     />
     <PrdSpecDrawer page-id="acceptance-manage" />
   </div>
@@ -133,7 +117,6 @@ import AcceptanceFormModal from '@/modules/acceptance/components/AcceptanceFormM
 import AcceptanceSettlementModal from '@/modules/acceptance/components/AcceptanceSettlementModal.vue';
 import AcceptanceExportConfigModal from '@/modules/acceptance/components/AcceptanceExportConfigModal.vue';
 import PreAcceptWizardModal from '@/modules/acceptance/components/PreAcceptWizardModal.vue';
-import BatchImportWizardModal from '@/modules/acceptance/components/BatchImportWizardModal.vue';
 import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import { ACCEPTANCE_LIST_COLUMNS, ACCEPTANCE_LIST_EXPORT_FIELDS } from '@/modules/acceptance/constants';
 import {
@@ -166,7 +149,6 @@ const pageSize = ref(10);
 const settlementOpen = ref(false);
 const exportConfigOpen = ref(false);
 const preAcceptOpen = ref(false);
-const batchImportOpen = ref(false);
 const formModal = reactive({ open: false, mode: 'add', row: null });
 
 const pagedRows = computed(() => {
@@ -183,11 +165,11 @@ const canImport = computed(() => isImportableAcceptance(selectedRow.value));
 
 const importTitle = computed(() => {
   if (selectedIds.value.length !== 1) return '请勾选一条未开始或进行中的验收单';
-  if (!canImport.value) return '仅未开始或进行中的验收单可预验收/批验收';
+  if (!canImport.value) return '仅未开始或进行中的验收单可预验收';
   return '';
 });
 
-const batchImportCtx = computed(() => {
+const preAcceptCtx = computed(() => {
   if (!selectedRow.value) return acceptanceStore.current || {};
   return acceptanceFromRow(selectedRow.value);
 });
@@ -202,7 +184,7 @@ onActivated(() => {
   syncImportStatusesFromSource();
 });
 
-/** 批验收确认后 BASE_ROWS 可能已改为进行中，同步到当前列表 */
+/** 外部写入（如收货）可能改验收单状态，同步到当前列表 */
 function syncImportStatusesFromSource() {
   const fresh = createAcceptanceRows();
   const statusById = Object.fromEntries(fresh.map(r => [r.acceptanceId, r.status]));
@@ -291,28 +273,6 @@ function goPreAccept() {
   }
   setCurrent(selectedRow.value, true);
   preAcceptOpen.value = true;
-}
-
-function goDeliveryImport() {
-  if (!hasCurrentLibrarianAssociatedSubscribers()) {
-    window.alert(NO_ASSOCIATED_SUBSCRIBER_IMPORT_PERMISSION_MESSAGE);
-    return;
-  }
-  if (selectedIds.value.length !== 1) {
-    window.alert('请先在列表中勾选一条未开始或进行中的验收单');
-    return;
-  }
-  if (!canImport.value || !selectedRow.value) {
-    window.alert('请先在列表中勾选一条未开始或进行中的验收单');
-    return;
-  }
-  setCurrent(selectedRow.value, true);
-  batchImportOpen.value = true;
-}
-
-function onBatchImportConfirmed() {
-  batchImportOpen.value = false;
-  syncImportStatusesFromSource();
 }
 
 function openAdd() {
