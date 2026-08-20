@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>订户 — 基本信息 vs 权限配置线框（页签版）</title>
+  <style>
+    :root {
+      --bg: #f3f4f6; --line: #d1d5db; --muted: #6b7280; --accent: #0284c7;
+      --section: #e0f2fe; --warn: #fffbeb; --warn-b: #fde68a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg); color: #111827;
+    }
+    h1 { font-size: 1.2rem; margin: 0 0 6px; }
+    .intro { color: var(--muted); font-size: 0.88rem; margin-bottom: 20px; max-width: 980px; line-height: 1.5; }
+    .row { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .row { grid-template-columns: 1fr; } }
+    .card {
+      background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+      box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    }
+    .card-h { padding: 10px 14px; border-bottom: 1px solid var(--line); background: #fafafa; font-weight: 600; font-size: 0.9rem; }
+    .card-h span { font-weight: 400; color: var(--muted); font-size: 0.78rem; margin-left: 8px; }
+    .card-b { padding: 14px; background: #e5e7eb; }
+    .modal {
+      background: #fff; border: 1px solid #9ca3af; border-radius: 10px;
+      display: flex; flex-direction: column; max-height: 560px;
+      box-shadow: 0 10px 24px rgb(0 0 0 / 12%);
+    }
+    .mt { display: flex; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid var(--line); font-size: 0.88rem; font-weight: 600; }
+    .mf { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); background: #f9fafb; }
+    .btn { font-size: 0.72rem; padding: 5px 12px; border-radius: 4px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+    .btn.p { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .scroll { overflow: auto; padding: 12px 14px; flex: 1; min-height: 0; }
+    .f { display: flex; gap: 8px; margin-bottom: 9px; }
+    .lbl { width: 78px; flex-shrink: 0; text-align: right; font-size: 0.68rem; color: #4b5563; padding-top: 6px; }
+    .req { color: #ef4444; }
+    .c { flex: 1; min-height: 28px; border: 1px dashed #9ca3af; border-radius: 4px; background: #f9fafb; font-size: 0.65rem; color: #9ca3af; padding: 6px 8px; }
+    .c.solid { border-style: solid; border-color: var(--line); background: #fff; color: #374151; display: flex; flex-wrap: wrap; gap: 4px; }
+    .c.tall { min-height: 64px; }
+    .tag { font-size: 0.62rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 3px; padding: 2px 6px; }
+    .prio {
+      margin: 0 0 10px 86px; border: 1px solid var(--warn-b); background: var(--warn);
+      border-radius: 4px; padding: 8px; font-size: 0.65rem; max-height: 180px; overflow: auto;
+    }
+    .prio-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; color: #92400e; gap: 8px; }
+    .prio-h input { flex: 1; max-width: 140px; font-size: 0.65rem; padding: 3px 6px; border: 1px solid #fcd34d; border-radius: 3px; background: #fff; }
+    .pr { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed #fcd34d; }
+    .pr:last-child { border-bottom: 0; }
+    .ar { color: #b45309; letter-spacing: 1px; }
+    .list { background: #fff; border-radius: 8px; border: 1px solid var(--line); font-size: 0.72rem; overflow: hidden; }
+    .list-h, .list-r { display: grid; grid-template-columns: 36px 1fr 72px 100px; gap: 4px; padding: 8px 10px; align-items: center; }
+    .list-h { background: #f9fafb; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); }
+    .list-r { border-bottom: 1px solid #f3f4f6; }
+    .list-r:last-child { border-bottom: 0; }
+    .link { color: var(--accent); margin-right: 6px; }
+    .muted { color: var(--muted); }
+    .tabs {
+      display: flex; flex-shrink: 0; border-bottom: 1px solid var(--line); background: #f8fafc;
+    }
+    .tab {
+      flex: 1; text-align: center; font-size: 0.78rem; padding: 9px 8px; color: var(--muted);
+      border-bottom: 2px solid transparent; cursor: pointer; user-select: none;
+    }
+    .tab.on {
+      color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); background: #fff;
+    }
+    .pane { display: none; }
+    .pane.on { display: block; }
+    .hint { font-size: 0.65rem; color: #9ca3af; margin: 0 0 10px; }
+    .callout { margin-top: 16px; padding: 10px 12px; background: #fff; border-left: 3px solid var(--accent); font-size: 0.82rem; color: #374151; line-height: 1.5; }
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 800px) { .pair { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>订户拆分线框 v2 — 权限配置页签切换</h1>
+  <p class="intro">
+    基本信息保持「订户名称 + 备注」。权限配置弹窗内用页签切换：
+    <strong>业务范围</strong>、<strong>查重范围</strong>、
+    <strong>数据归属</strong>（仅预览占位，后续再做）。底部保存对已实现页签生效；数据归属页暂不可编辑。
+  </p>
+
+  <div class="row">
+    <div class="card">
+      <div class="card-h">订户列表操作</div>
+      <div class="card-b" style="background:#fff;padding:0;">
+        <div class="list">
+          <div class="list-h"><span>#</span><span>订户名称</span><span>状态</span><span>操作</span></div>
+          <div class="list-r">
+            <span>1</span><span>ceshi</span><span class="muted">使用中</span>
+            <span><span class="link">编辑</span><span class="link">权限配置</span></span>
+          </div>
+          <div class="list-r">
+            <span>2</span><span>成人中文</span><span class="muted">使用中</span>
+            <span><span class="link">编辑</span><span class="link">权限配置</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">① 基本信息（已确认）</div>
+      <div class="card-b">
+        <div class="modal" style="max-width:360px;margin:0 auto;max-height:300px;">
+          <div class="mt">编辑订户 <span class="muted">×</span></div>
+          <div class="scroll">
+            <div class="f"><div class="lbl"><span class="req">*</span> 订户名称</div><div class="c">ceshi</div></div>
+            <div class="f"><div class="lbl">备注</div><div class="c tall">请输入</div></div>
+          </div>
+          <div class="mf"><button class="btn">取消</button><button class="btn p">保存</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <div class="card-h">② 权限配置（页签）<span>点击页签可切换预览</span></div>
+    <div class="card-b">
+      <div class="modal" style="max-width:640px;margin:0 auto;" id="permModal">
+        <div class="mt">权限配置 — ceshi <span class="muted">×</span></div>
+        <div class="tabs">
+          <div class="tab on" data-tab="biz" onclick="switchTab(this)">业务范围</div>
+          <div class="tab" data-tab="dedup" onclick="switchTab(this)">查重范围</div>
+          <div class="tab" data-tab="owner" onclick="switchTab(this)">数据归属</div>
+        </div>
+        <div class="scroll">
+          <div class="pane on" id="pane-biz">
+            <p class="hint">配置订户可使用的业务权限范围；带 * 为必填。</p>
+            <div class="f"><div class="lbl">所属馆</div><div class="c">请选择 ▾</div></div>
+            <div class="f"><div class="lbl"><span class="req">*</span> 资源类型</div><div class="c solid"><span class="tag">纸质书</span><span class="tag">视听资料</span></div></div>
+            <div class="f"><div class="lbl"><span class="req">*</span> 预算名称</div><div class="c solid"><span class="tag">预算一</span><span class="tag">预算二</span><span class="tag">+3</span></div></div>
+            <div class="f"><div class="lbl"><span class="req">*</span> 条码类型</div><div class="c solid"><span class="tag">中文成人普通</span></div></div>
+          </div>
+          <div class="pane" id="pane-dedup">
+            <p class="hint">未选分馆/馆藏地视为不限；已选分馆顺序即优先展示所属馆（固定高度滚动，可搜索）。</p>
+            <div class="f"><div class="lbl">所属分馆</div><div class="c solid"><span class="tag">ST001 | 首都图书馆</span><span class="tag">ST002 | 月坛</span><span class="tag">…共 28 个</span></div></div>
+            <div class="prio">
+              <div class="prio-h">
+                <span>优先展示顺序</span>
+                <input placeholder="搜索分馆编码/名称" />
+              </div>
+              <div class="pr"><span>1. ST001 | 首都图书馆</span><span class="ar">↑ ↓</span></div>
+              <div class="pr"><span>2. ST002 | 月坛分馆</span><span class="ar">↑ ↓</span></div>
+              <div class="pr"><span>3. ST003 | 北工大分馆</span><span class="ar">↑ ↓</span></div>
+              <div class="pr"><span>4. ST004 | 东四分馆</span><span class="ar">↑ ↓</span></div>
+              <div class="pr"><span>5. ST005 | 小堡分馆</span><span class="ar">↑ ↓</span></div>
+              <div class="pr" style="color:#9ca3af;"><span>… 滚动查看其余已选 …</span><span></span></div>
+            </div>
+            <div class="f"><div class="lbl">所属馆藏地</div><div class="c solid"><span class="tag">ST01 | 哲社借阅室</span><span class="tag">…</span></div></div>
+          </div>
+          <div class="pane" id="pane-owner">
+            <div style="border:1px dashed #cbd5e1;border-radius:8px;padding:28px 16px;text-align:center;background:#f8fafc;margin-top:8px;">
+              <div style="font-size:0.85rem;font-weight:600;color:#64748b;margin-bottom:8px;">数据归属</div>
+              <div style="font-size:0.72rem;color:#94a3b8;line-height:1.6;">
+                预览页签 · 本版不实现<br>
+                后续用于配置订户数据归属相关规则
+              </div>
+              <div style="display:inline-block;margin-top:12px;font-size:0.65rem;padding:3px 10px;border-radius:999px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;">Coming soon</div>
+            </div>
+          </div>
+        </div>
+        <div class="mf"><button class="btn">取消</button><button class="btn p">保存</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    本版变更：权限配置页签为「业务范围 / 查重范围 / 数据归属」；数据归属仅占位预览，后续再做。
+    若线框 OK，请回复「线框确定」，再改 design spec。
+  </div>
+
+  <script>
+    function switchTab(el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+      el.classList.add('on');
+      const key = el.getAttribute('data-tab');
+      document.getElementById('pane-biz').classList.toggle('on', key === 'biz');
+      document.getElementById('pane-dedup').classList.toggle('on', key === 'dedup');
+      document.getElementById('pane-owner').classList.toggle('on', key === 'owner');
+    }
+  </script>
+</body>
+</html>

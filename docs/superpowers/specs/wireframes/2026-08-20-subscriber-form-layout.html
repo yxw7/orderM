@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>订户弹窗排版线框 — A / B / C</title>
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --panel: #fff;
+      --line: #d1d5db;
+      --muted: #6b7280;
+      --label: #4b5563;
+      --accent: #0284c7;
+      --section: #e0f2fe;
+      --tab: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: #111827;
+      padding: 24px;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 8px; }
+    .intro { color: var(--muted); font-size: 0.9rem; margin-bottom: 24px; max-width: 960px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+    .option {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+    }
+    .option-head {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fafafa;
+    }
+    .option-head strong { font-size: 1rem; }
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #047857;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .option-head p { margin: 6px 0 0; font-size: 0.8rem; color: var(--muted); line-height: 1.45; }
+    .option-body { padding: 16px; background: #e5e7eb; }
+    /* Modal chrome */
+    .modal {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #9ca3af;
+      max-width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      max-height: 520px;
+      box-shadow: 0 10px 25px rgb(0 0 0 / 12%);
+    }
+    .modal.wide { max-width: 100%; }
+    .modal-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.9rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .modal-title span.x { color: #9ca3af; font-weight: 400; }
+    .modal-foot {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 10px 14px;
+      border-top: 1px solid var(--line);
+      background: #f9fafb;
+      flex-shrink: 0;
+    }
+    .btn {
+      font-size: 0.75rem;
+      padding: 5px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #374151;
+    }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .scroll {
+      overflow-y: auto;
+      padding: 12px 14px;
+      flex: 1;
+      min-height: 0;
+    }
+    .sec-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--section);
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin: 4px 0 10px;
+    }
+    .field {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: flex-start;
+    }
+    .field .lbl {
+      width: 72px;
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 0.7rem;
+      color: var(--label);
+      padding-top: 6px;
+    }
+    .field .lbl .req { color: #ef4444; }
+    .ctrl {
+      flex: 1;
+      min-height: 28px;
+      border: 1px dashed #9ca3af;
+      border-radius: 4px;
+      background: #f9fafb;
+      font-size: 0.65rem;
+      color: #9ca3af;
+      padding: 6px 8px;
+    }
+    .ctrl.tall { min-height: 56px; }
+    .ctrl.tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      min-height: 36px;
+      color: #374151;
+      border-style: solid;
+      border-color: var(--line);
+      background: #fff;
+    }
+    .tag {
+      font-size: 0.65rem;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 3px;
+      padding: 2px 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tag .ord { color: var(--accent); font-weight: 600; }
+    .prio {
+      margin: 0 0 10px 80px;
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 0.65rem;
+    }
+    .prio-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3px 0;
+      border-bottom: 1px dashed #fcd34d;
+    }
+    .prio-row:last-child { border-bottom: 0; }
+    .arrows { color: #b45309; letter-spacing: 2px; }
+    /* Tabs for B */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--line);
+      background: var(--tab);
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      font-size: 0.75rem;
+      padding: 8px;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+    }
+    .tab.on {
+      color: var(--accent);
+      font-weight: 600;
+      border-bottom-color: var(--accent);
+      background: #fff;
+    }
+    /* Split for C */
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 12px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+    }
+    .split-pane {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px;
+      background: #fafafa;
+      overflow-y: auto;
+      max-height: 360px;
+    }
+    .split-pane h4 {
+      margin: 0 0 8px;
+      font-size: 0.72rem;
+      color: var(--accent);
+    }
+    .note {
+      margin-top: 24px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .note code { background: #e5e7eb; padding: 1px 6px; border-radius: 3px; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <h1>订户弹窗排版线框对比</h1>
+  <p class="intro">
+    对比三种布局：A 分组单列加宽 · B 顶部分页签 · C 左右分栏。
+    黄色块表示「已选分馆优先级」排序区。可直接在浏览器中打开本文件查看。
+  </p>
+
+  <div class="grid">
+    <!-- A -->
+    <div class="option">
+      <div class="option-head">
+        <strong>A. 分组单列 + 加宽</strong><span class="badge">推荐</span>
+        <p>约 max-w-3xl；基本信息 → 查重范围两段；单滚动条。</p>
+      </div>
+      <div class="option-body">
+        <div class="modal wide">
+          <div class="modal-title">新增订户 <span class="x">×</span></div>
+          <div class="scroll">
+            <div class="sec-title">基本信息</div>
+            <div class="field"><div class="lbl"><span class="req">*</span> 订户名称</div><div class="ctrl">请输入</div></div>
+            <div class="field"><div class="lbl">所属馆</div><div class="ctrl">请选择 ▾</div></div>
+            <div class="field"><div class="lbl"><span class="req">*</span> 资源类型</div><div class="ctrl tags"><span class="tag">纸质书</span></div></div>
+            <div class="field"><div class="lbl"><span class="req">*</span> 预算名称</div><div class="ctrl tags"><span class="tag">预算 A</span><span class="tag">预算 B</span></div></div>
+            <div class="field"><div class="lbl"><span class="req">*</span> 条码类型</div><div class="ctrl tags"><span class="tag">中文成人普通</span></div></div>
+            <div class="field"><div class="lbl">备注</div><div class="ctrl tall">请输入</div></div>
+
+            <div class="sec-title">查重范围（未选视为不限）</div>
+            <div class="field"><div class="lbl">所属分馆</div><div class="ctrl tags"><span class="tag">ST001 | 首都图书馆</span><span class="tag">ST002 | 月坛分馆</span></div></div>
+            <div class="prio">
+              <div style="margin-bottom:4px;color:#92400e;">优先展示顺序（上移 / 下移）</div>
+              <div class="prio-row"><span><span class="ord">1.</span> ST001 | 首都图书馆</span><span class="arrows">↑ ↓</span></div>
+              <div class="prio-row"><span><span class="ord">2.</span> ST002 | 月坛分馆</span><span class="arrows">↑ ↓</span></div>
+            </div>
+            <div class="field"><div class="lbl">所属馆藏地</div><div class="ctrl tags"><span class="tag">ST01 | 哲社借阅室</span></div></div>
+          </div>
+          <div class="modal-foot"><button class="btn">取消</button><button class="btn primary">提交</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="option">
+      <div class="option-head">
+        <strong>B. 顶部分页签</strong>
+        <p>「基本信息」/「查重范围」Tab；底部按钮保存整单。</p>
+      </div>
+      <div class="option-body">
+        <div class="modal">
+          <div class="modal-title">新增订户 <span class="x">×</span></div>
+          <div class="tabs">
+            <div class="tab on">基本信息</div>
+            <div class="tab">查重范围</div>
+          </div>
+          <div class="scroll">
+            <div class="field"><div class="lbl"><span class="req">*</span> 订户名称</div><div class="ctrl">请输入</div></div>
+            <div class="field"><div class="lbl">所属馆</div><div class="ctrl">请选择 ▾</div></div>
+            <div class="field"><div class="lbl"><span class="req">*</span> 资源类型</div><div class="ctrl">请选择</div></div>
+            <div class="field"><div class="lbl"><span class="req">*</span> 预算名称</div><div class="ctrl">请选择</div></div>
+            <div class="field"><div class="lbl"><span class="req">*</span> 条码类型</div><div class="ctrl">请选择</div></div>
+            <div class="field"><div class="lbl">备注</div><div class="ctrl tall">请输入</div></div>
+            <p style="font-size:0.65rem;color:#9ca3af;margin:8px 0 0;text-align:center;">← 切换「查重范围」Tab 编辑分馆/馆藏地 →</p>
+          </div>
+          <div class="modal-foot"><button class="btn">取消</button><button class="btn primary">提交</button></div>
+        </div>
+        <div class="modal" style="margin-top:12px;opacity:0.95;">
+          <div class="modal-title" style="font-size:0.8rem;color:var(--muted);">（切换后）查重范围 Tab</div>
+          <div class="tabs">
+            <div class="tab">基本信息</div>
+            <div class="tab on">查重范围</div>
+          </div>
+          <div class="scroll">
+            <div class="field"><div class="lbl">所属分馆</div><div class="ctrl tags"><span class="tag">ST001 | 首都图书馆</span></div></div>
+            <div class="prio">
+              <div class="prio-row"><span>1. ST001 | 首都图书馆</span><span class="arrows">↑ ↓</span></div>
+            </div>
+            <div class="field"><div class="lbl">所属馆藏地</div><div class="ctrl">请选择</div></div>
+          </div>
+          <div class="modal-foot"><button class="btn">取消</button><button class="btn primary">提交</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="option">
+      <div class="option-head">
+        <strong>C. 左右分栏</strong>
+        <p>约 max-w-4xl；左基本信息、右查重范围；窄屏需上下叠放。</p>
+      </div>
+      <div class="option-body">
+        <div class="modal wide">
+          <div class="modal-title">新增订户 <span class="x">×</span></div>
+          <div class="split">
+            <div class="split-pane">
+              <h4>基本信息</h4>
+              <div class="field"><div class="lbl"><span class="req">*</span> 名称</div><div class="ctrl">请输入</div></div>
+              <div class="field"><div class="lbl">所属馆</div><div class="ctrl">请选择</div></div>
+              <div class="field"><div class="lbl"><span class="req">*</span> 资源</div><div class="ctrl">多选</div></div>
+              <div class="field"><div class="lbl"><span class="req">*</span> 预算</div><div class="ctrl">多选</div></div>
+              <div class="field"><div class="lbl"><span class="req">*</span> 条码</div><div class="ctrl">多选</div></div>
+              <div class="field"><div class="lbl">备注</div><div class="ctrl tall">请输入</div></div>
+            </div>
+            <div class="split-pane">
+              <h4>查重范围</h4>
+              <div class="field"><div class="lbl">分馆</div><div class="ctrl tags"><span class="tag">ST001</span><span class="tag">ST002</span></div></div>
+              <div class="prio" style="margin-left:0;">
+                <div class="prio-row"><span>1. 首都图书馆</span><span class="arrows">↑ ↓</span></div>
+                <div class="prio-row"><span>2. 月坛分馆</span><span class="arrows">↑ ↓</span></div>
+              </div>
+              <div class="field"><div class="lbl">馆藏地</div><div class="ctrl">多选</div></div>
+            </div>
+          </div>
+          <div class="modal-foot"><button class="btn">取消</button><button class="btn primary">提交</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">
+    文件路径：<code>docs/superpowers/specs/wireframes/2026-08-20-subscriber-form-layout.html</code>
+    · 用浏览器打开后回复选 A / B / C（或说明要改的点）。
+  </p>
+</body>
+</html>
