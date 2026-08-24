@@ -6,17 +6,14 @@
     @close="emit('close')"
     @confirm="submit"
   >
-    <select v-model="reason" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-      <option value="">请选择撤订原因</option>
-      <option v-for="opt in CANCEL_REASON_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
-    </select>
+    <ReasonSelect v-model="reason" reason-type="cancel" placeholder="请选择撤订原因" />
   </FormModal>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue';
 import FormModal from '@/modules/order/components/FormModal.vue';
-import { CANCEL_REASON_OPTIONS } from '@/modules/acceptance/data/shortage-manage';
+import ReasonSelect from '@/components/common/ReasonSelect.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false }

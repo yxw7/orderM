@@ -42,16 +42,18 @@ function normalizeOrderLine(orderLine) {
  * @returns {object}
  */
 export function buildDraftFromValidatedRow(validatedRow) {
-  const fv = validatedRow?.fieldValues || {};
+  const fv = { ...(validatedRow?.fieldValues || {}) };
+  const receiveSets = String(validatedRow?.receiveSets ?? fv.receiveQty ?? '');
+  if (receiveSets !== '') fv.receiveQty = receiveSets;
   return {
     orderLine: String(validatedRow?.orderLineNo || fv.orderLine || '').trim(),
-    receiveSets: String(validatedRow?.receiveSets ?? fv.receiveQty ?? ''),
+    receiveSets,
     listPrice: String(validatedRow?.listPrice ?? fv.listPrice ?? ''),
     price: String(validatedRow?.price ?? fv.price ?? validatedRow?.listPrice ?? ''),
     netPrice: String(validatedRow?.netPrice ?? fv.netPrice ?? ''),
     copiesInSet: String(validatedRow?.copiesInSet ?? fv.volCount ?? ''),
-    /** 通过行全部已映射发货单值（含未勾选是否校验的差异字段） */
-    fieldValues: { ...fv },
+    /** 通过行全部已映射发货单值（含未勾选是否校验的差异字段）；超收套数已按待收截断 */
+    fieldValues: fv,
     updatedAt: Date.now()
   };
 }

@@ -8,15 +8,12 @@
   >
     <div class="bg-gray-50 rounded px-4 py-3 text-sm text-gray-700">{{ summaryText }}</div>
     <div class="flex items-center gap-3">
-      <label class="text-sm text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 退货数量</label>
+      <label class="text-sm text-gray-600 w-20 text-right shrink-0">退货数量</label>
       <input v-model="form.returnQty" type="text" placeholder="请输入" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm">
     </div>
     <div class="flex items-center gap-3">
-      <label class="text-sm text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 退货原因</label>
-      <select v-model="form.returnReason" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm">
-        <option value="">请选择</option>
-        <option v-for="opt in RETURN_REASON_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
-      </select>
+      <label class="text-sm text-gray-600 w-20 text-right shrink-0">退货原因</label>
+      <ReasonSelect v-model="form.returnReason" reason-type="return" class="flex-1" placeholder="请选择" />
     </div>
     <div class="flex items-start gap-3">
       <label class="text-sm text-gray-600 w-20 text-right pt-2 shrink-0">退货备注</label>
@@ -31,7 +28,8 @@
 <script setup>
 import { computed, reactive, watch } from 'vue';
 import FormModal from '@/modules/order/components/FormModal.vue';
-import { RETURN_REASON_OPTIONS, parseReceiveCounts } from '@/modules/acceptance/data/receive-by-item';
+import ReasonSelect from '@/components/common/ReasonSelect.vue';
+import { parseReceiveCounts } from '@/modules/acceptance/data/receive-by-item';
 
 const props = defineProps({
   open: { type: Boolean, default: false },

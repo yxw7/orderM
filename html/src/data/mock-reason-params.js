@@ -8,11 +8,25 @@ export const REASON_TYPE_LABELS = {
 export const defaultReasonData = {
   exchange: [
     { id: 'ex-1', content: '换货', status: 'active', sort: 1, creator: '赵付', created: '2026-05-22 08:55:41', remark: '' },
-    { id: 'ex-2', content: '残缺损', status: 'active', sort: 2, creator: '李会申测试账号', created: '2026-05-21 09:45:18', remark: '' }
+    { id: 'ex-2', content: '残缺损', status: 'active', sort: 2, creator: '李会申测试账号', created: '2026-05-21 09:45:18', remark: '' },
+    { id: 'ex-3', content: '缺页', status: 'active', sort: 3, creator: '赵付', created: '2026-05-22 08:56:00', remark: '' },
+    { id: 'ex-4', content: '错页', status: 'active', sort: 4, creator: '赵付', created: '2026-05-22 08:56:01', remark: '' },
+    { id: 'ex-5', content: '装订错误', status: 'active', sort: 5, creator: '赵付', created: '2026-05-22 08:56:02', remark: '' },
+    { id: 'ex-6', content: '纸张破损', status: 'active', sort: 6, creator: '赵付', created: '2026-05-22 08:56:03', remark: '' },
+    { id: 'ex-7', content: '装订不牢', status: 'active', sort: 7, creator: '赵付', created: '2026-05-22 08:56:04', remark: '' },
+    { id: 'ex-8', content: '书脊开裂', status: 'active', sort: 8, creator: '赵付', created: '2026-05-22 08:56:05', remark: '' },
+    { id: 'ex-9', content: '被污染或损坏', status: 'active', sort: 9, creator: '赵付', created: '2026-05-22 08:56:06', remark: '' }
   ],
   return: [
     { id: 'rt-1', content: '退货', status: 'active', sort: 1, creator: '赵付', created: '2026-05-22 08:55:48', remark: '' },
-    { id: 'rt-2', content: '损坏退货', status: 'active', sort: 2, creator: '李会申测试账号', created: '2026-05-21 09:46:09', remark: '' }
+    { id: 'rt-2', content: '损坏退货', status: 'active', sort: 2, creator: '李会申测试账号', created: '2026-05-21 09:46:09', remark: '' },
+    { id: 'rt-3', content: '缺页', status: 'active', sort: 3, creator: '赵付', created: '2026-05-22 08:56:10', remark: '' },
+    { id: 'rt-4', content: '错页', status: 'active', sort: 4, creator: '赵付', created: '2026-05-22 08:56:11', remark: '' },
+    { id: 'rt-5', content: '装订错误', status: 'active', sort: 5, creator: '赵付', created: '2026-05-22 08:56:12', remark: '' },
+    { id: 'rt-6', content: '纸张破损', status: 'active', sort: 6, creator: '赵付', created: '2026-05-22 08:56:13', remark: '' },
+    { id: 'rt-7', content: '装订不牢', status: 'active', sort: 7, creator: '赵付', created: '2026-05-22 08:56:14', remark: '' },
+    { id: 'rt-8', content: '书脊开裂', status: 'active', sort: 8, creator: '赵付', created: '2026-05-22 08:56:15', remark: '' },
+    { id: 'rt-9', content: '被污染或损坏', status: 'active', sort: 9, creator: '赵付', created: '2026-05-22 08:56:16', remark: '' }
   ],
   cancel: [
     { id: 'ca-1', content: '撤订', status: 'active', sort: 1, creator: '赵付', created: '2026-05-22 08:55:56', remark: '' },

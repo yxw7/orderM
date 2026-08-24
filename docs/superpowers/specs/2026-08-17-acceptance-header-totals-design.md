@@ -1,7 +1,7 @@
 # 验收单头汇总（总册数 / 总码洋 / 总实洋）设计
 
 **日期**：2026-08-17  
-**状态**：待确认  
+**状态**：已确认  
 **模块**：验收单详情头信息；逐条收货头汇总（共用计算）  
 **关联**：`calcAcceptanceHeaderTotals`；`applyAcceptanceSpeciesFlow`；按种演示数据；PRD `5.6.5.1`
 
@@ -15,7 +15,7 @@
 
 - 头汇总按按种明细实时计算
 - 金额口径为**套价**：只乘收货套数，不再乘套内册数/件数
-- 演示数据补齐套内册数/件数与实洋；缺字段贡献为 0
+- 演示数据补齐套内册数/件数与实洋；套内册数/件数缺失时默认 1，实洋/定价缺失时贡献为 0
 - 逐条收货 upsert 时写回套内册数/件数与实洋，保证后续操作后汇总仍正确
 
 ### 1.2 非目标
@@ -44,7 +44,7 @@
 
 | 指标 | 行贡献 | 字段 |
 |------|--------|------|
-| 册数 | `receivedSets_i × copiesInSet_i` | `counts` 中收货套数；纸质 `volumesInSet`，视听 `piecesInSet` |
+| 册数 | `receivedSets_i × copiesInSet_i` | `counts` 中收货套数；纸质 `volumesInSet`，视听 `piecesInSet`；**缺失时默认 1** |
 | 码洋 | `receivedSets_i × listPrice_i` | `price`（纸质定价 / 视听码洋） |
 | 实洋 | `receivedSets_i × netPrice_i` | `netPrice` |
 
@@ -57,14 +57,14 @@ totalListPrice = Σ 码洋行贡献
 totalNetPrice  = Σ 实洋行贡献
 ```
 
-### 3.1 缺字段规则（约定 B）
+### 3.1 缺字段规则
 
-- `volumesInSet` / `piecesInSet` 缺失或非数字 → 该行册数贡献 = `0`
+- `volumesInSet` / `piecesInSet` 缺失或非数字 → **默认按 `1`**
 - `netPrice` 缺失或非数字 → 该行实洋贡献 = `0`
 - `price` 缺失或非数字 → 该行码洋贡献 = `0`
 - `receivedSets` 取自 `parseSpeciesCounts(row).received`；无效按 `0`
 
-不做默认 `1`、不做折扣推算实洋。
+不做折扣推算实洋。
 
 ### 3.2 展示格式
 
@@ -113,7 +113,7 @@ totalNetPrice  = Σ 实洋行贡献
 ## 6. 验收标准
 
 1. 纸质书 / 视听验收详情头：总种数 = 按种行数；总册数 / 总码洋 / 总实洋符合第 3 节公式  
-2. 人为去掉某行 `netPrice` 或套内册数后，该行对应贡献为 0，其余行仍正常累计  
+2. 人为去掉某行 `netPrice` 后该行实洋贡献为 0；去掉套内册数后按默认 1 计算册数；其余行仍正常累计  
 3. 逐条收货写入套内册数与实洋后，再打开验收详情（或同页头汇总）数值随收货套数增加  
 4. 撤销收货使收货套数为 0 后，该行三项贡献为 0  
 5. 批验收汇总行为与改前一致  

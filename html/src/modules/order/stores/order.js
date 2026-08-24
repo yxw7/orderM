@@ -20,6 +20,7 @@ import { applyOrderImport } from '@/modules/order/data/order-import';
 import { deletePendingOrder } from '@/modules/order/data/order-delete';
 import { buildOrderLineChangeSupplierResult } from '@/modules/order/data/order-line-change-supplier';
 import { buildSelectedLinesChangeSupplierResult } from '@/modules/order/data/batch-change-supplier';
+import { getCurrentViewableSubscribers } from '@/modules/subscriber/data/current-librarian';
 import { BATCH_DEDUP_MAX_COUNT } from '@/modules/order/constants';
 
 export const useOrderStore = defineStore('order', {
@@ -116,6 +117,22 @@ export const useOrderStore = defineStore('order', {
       lines.forEach(line => {
         this.lines.unshift(line);
       });
+    },
+
+    /**
+     * 更换供应商：向已有订单追加订单行并更新订单头
+     * @param {{ targetOrderId: string, newLines: object[], patches: object[], orderPatch?: object }} result
+     */
+    appendChangeSupplierToExistingOrder(result) {
+      if (!result?.targetOrderId) return;
+      this.applyLinePatches(result.patches);
+      (result.newLines || []).forEach(line => {
+        this.lines.unshift(line);
+      });
+      const order = this.orders.find(item => item.orderId === result.targetOrderId);
+      if (order && result.orderPatch) {
+        Object.assign(order, result.orderPatch);
+      }
     },
 
     openDedupModal(lineNos) {
@@ -271,10 +288,22 @@ export const useOrderStore = defineStore('order', {
         sourceOrder,
         sourceLine,
         form,
-        existingOrders: this.orders
+        existingOrders: this.orders,
+        existingLines: this.lines,
+        viewableSubscribers: getCurrentViewableSubscribers()
       });
       if (!result.ok) {
         return { ok: false, message: result.message };
+      }
+
+      if (result.targetOrderId) {
+        this.appendChangeSupplierToExistingOrder(result);
+        return {
+          ok: true,
+          message: `已加入订单 ${result.targetOrderId}，原行对应套数已撤订`,
+          newOrderId: result.targetOrderId,
+          summary: result.summary
+        };
       }
 
       this.applyLinePatches(result.patches);
@@ -283,7 +312,8 @@ export const useOrderStore = defineStore('order', {
       return {
         ok: true,
         message: `已生成新订单 ${result.newOrder.orderId}，原行对应套数已撤订`,
-        newOrderId: result.newOrder.orderId
+        newOrderId: result.newOrder.orderId,
+        summary: result.summary
       };
     },
 
@@ -305,10 +335,22 @@ export const useOrderStore = defineStore('order', {
         sourceLines,
         orders: this.orders,
         existingOrders: this.orders,
+        existingLines: this.lines,
+        viewableSubscribers: getCurrentViewableSubscribers(),
         form
       });
       if (!result.ok) {
         return { ok: false, message: result.message };
+      }
+
+      if (result.targetOrderId) {
+        this.appendChangeSupplierToExistingOrder(result);
+        return {
+          ok: true,
+          message: `已加入订单 ${result.summary.orderId}`,
+          newOrderId: result.summary.orderId,
+          summary: result.summary
+        };
       }
 
       this.applyLinePatches(result.patches);

@@ -15,7 +15,9 @@ ${prdSection('', '页面要素')}
 ${prdSection('', '业务规则')}
 <ul>
 <li><strong>总种数</strong>（totalSpecies）：取当前验收单按种明细行数</li>
-<li><strong>总册数 / 总码洋 / 总实洋</strong>：按资源类型展示（纸质书与视听资料分别有对应汇总值；原型阶段为按类型固定展示，与页面实现一致）</li>
+<li><strong>总册数</strong>（totalVolumes）：Σ（收货套数 × 套内册数/件数）；套内册数/件数缺失时默认按 1</li>
+<li><strong>总码洋</strong>（totalListPrice）：Σ（收货套数 × 定价/码洋）；定价缺失时该行贡献为 0</li>
+<li><strong>总实洋</strong>（totalNetPrice）：Σ（收货套数 × 实洋）；实洋缺失时该行贡献为 0</li>
 <li>无验收单上下文时，头信息使用默认占位值</li>
 </ul>
 </div>

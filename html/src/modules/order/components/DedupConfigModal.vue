@@ -61,52 +61,19 @@
         </label>
       </div>
     </div>
-    <div v-if="showBranchScope" class="space-y-4">
-      <div class="text-sm text-gray-700">
-        查重范围
-        <span class="text-gray-400">（未选择时按不限范围查重）</span>
-      </div>
-      <div class="flex items-start gap-3">
-        <label class="text-sm text-gray-600 w-24 text-right pt-2 shrink-0">所属分馆</label>
-        <div class="flex-1 min-w-0">
-          <SearchableMultiSelect
-            v-model="selectedBranchCodes"
-            :options="branchOptions"
-            placeholder="请选择所属分馆"
-            :disabled="submitting"
-          />
-        </div>
-      </div>
-      <div class="flex items-start gap-3">
-        <label class="text-sm text-gray-600 w-24 text-right pt-2 shrink-0">所属馆藏地</label>
-        <div class="flex-1 min-w-0">
-          <SearchableMultiSelect
-            v-model="selectedCollectionCodes"
-            :options="collectionOptions"
-            placeholder="请选择所属馆藏地"
-            :disabled="submitting"
-          />
-        </div>
-      </div>
-    </div>
   </FormModal>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
-import SearchableMultiSelect from '@/components/common/SearchableMultiSelect.vue';
+import { computed, ref, watch } from 'vue';
 import FormModal from '@/modules/order/components/FormModal.vue';
-import {
-  buildBranchCodeSelectOptions,
-  buildCollectionCodeSelectOptions
-} from '@/modules/location/data/location-manage';
-import { useLocationStore } from '@/modules/location/stores/location';
 import {
   findEmptyDedupFieldsOnLines,
   formatEmptyDedupFieldsMessage,
   getDedupDefaultFieldKeys,
   getDedupFields
 } from '@/modules/order/data/dedup';
+import { resolveLibrarianDedupScope } from '@/modules/subscriber/data/current-librarian';
 import { useOrderStore } from '@/modules/order/stores/order';
 
 const props = defineProps({
@@ -117,7 +84,6 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const store = useOrderStore();
-const locationStore = useLocationStore();
 
 const duplicateTypeOptions = [
   { value: 'all', label: '不限' },
@@ -127,24 +93,10 @@ const duplicateTypeOptions = [
 
 const duplicateType = ref('all');
 const selectedFields = ref([]);
-const selectedBranchCodes = ref([]);
-const selectedCollectionCodes = ref([]);
 const submitting = ref(false);
 
 const fields = computed(() => getDedupFields(props.resourceType, props.languageCategory));
-const showBranchScope = computed(() => duplicateType.value === 'all' || duplicateType.value === 'holding');
-
-/** 四级馆藏地：使用中分馆（分馆编码 | 分馆名称） */
-const branchOptions = computed(() => buildBranchCodeSelectOptions(locationStore.branchRows));
-
-/** 四级馆藏地：已选分馆时取其下级馆藏地并集；未选分馆时展示全部使用中馆藏地 */
-const collectionOptions = computed(() =>
-  buildCollectionCodeSelectOptions(
-    locationStore.collectionRows,
-    locationStore.branchRows,
-    selectedBranchCodes.value
-  )
-);
+const includeHoldingScope = computed(() => duplicateType.value === 'all' || duplicateType.value === 'holding');
 
 const selectAll = computed({
   get: () => fields.value.length > 0 && selectedFields.value.length === fields.value.length,
@@ -159,19 +111,6 @@ watch(selectedFields, val => {
   selectAll.value = val.length === fields.value.length;
 }, { deep: true });
 
-watch(selectedBranchCodes, () => {
-  if (!selectedCollectionCodes.value.length) return;
-  const valid = new Set(collectionOptions.value.map(opt => opt.value));
-  const next = selectedCollectionCodes.value.filter(code => valid.has(code));
-  if (next.length !== selectedCollectionCodes.value.length) {
-    selectedCollectionCodes.value = next;
-  }
-}, { deep: true });
-
-onMounted(() => {
-  locationStore.ensureInitialized();
-});
-
 function toggleAll(event) {
   selectedFields.value = event.target.checked ? fields.value.map(f => f.value) : [];
 }
@@ -182,7 +121,7 @@ function handleClose() {
 }
 
 /**
- * 提交查重配置（防抖：加载中忽略重复点击）
+ * 提交查重配置（范围取自馆员关联订户编辑中的查重范围合并结果）
  */
 async function submit() {
   if (submitting.value) return;
@@ -202,13 +141,17 @@ async function submit() {
     return;
   }
 
+  const scope = includeHoldingScope.value
+    ? resolveLibrarianDedupScope()
+    : { branchCodes: [], collectionCodes: [] };
+
   submitting.value = true;
   try {
     await store.submitDedup({
       duplicateType: duplicateType.value,
       fieldKeys: [...selectedFields.value],
-      branchCodes: showBranchScope.value ? [...selectedBranchCodes.value] : [],
-      collectionCodes: showBranchScope.value ? [...selectedCollectionCodes.value] : []
+      branchCodes: scope.branchCodes,
+      collectionCodes: scope.collectionCodes
     });
   } catch {
     window.alert('查重失败，请稍后重试');

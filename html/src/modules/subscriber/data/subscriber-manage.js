@@ -24,7 +24,7 @@ export const SUBSCRIBER_STATUS_MAP = {
 export const SUBSCRIBER_COLUMNS = [
   { key: 'id', label: '序号' },
   { key: 'name', label: '订户名称' },
-  { key: 'siteName', label: '所属馆' },
+  { key: 'siteName', label: '单件所属馆' },
   { key: 'types', label: '资源类型' },
   { key: 'budgets', label: '预算名称', minWidth: 'min-w-[180px]' },
   { key: 'status', label: '订户状态' },
@@ -69,12 +69,16 @@ const subscriberRowsRaw = [
       '2024年首都图书馆图书购置费中文普通图书(三)',
       '2024年首都图书馆视听资料购置费'
     ],
-    barcodeTypes: ['中文成人普通'], status: 'active', created: '2026-06-17', remark: '', hasLibrarian: true
+    barcodeTypes: ['中文成人普通'], status: 'active', created: '2026-06-17', remark: '', hasLibrarian: true,
+    dedupBranchCodes: ['ST001', 'ST002', 'ST003'],
+    dedupCollectionCodes: []
   }
 ];
 
 export const subscriberRows = subscriberRowsRaw.map((row, index) => ({
   ...row,
+  dedupBranchCodes: row.dedupBranchCodes || [],
+  dedupCollectionCodes: row.dedupCollectionCodes || [],
   id: index + 1,
   siteName: getBranchLabel(row.branchId)
 }));
@@ -159,5 +163,44 @@ export function getTodayString() {
 }
 
 export function enrichSubscriberRow(row) {
-  return { ...row, siteName: getBranchLabel(row.branchId) };
+  return {
+    ...row,
+    dedupBranchCodes: [...(row.dedupBranchCodes || [])],
+    dedupCollectionCodes: [...(row.dedupCollectionCodes || [])],
+    siteName: getBranchLabel(row.branchId)
+  };
+}
+
+/**
+ * 按馆员关联订户顺序合并查重范围
+ * @param {Object[]} [subscriberList=subscriberRows] - 订户列表
+ * @param {string[]} [subscriberNames] - 关联订户名称（有序）；缺省时由调用方传入
+ * @returns {{ branchCodes: string[], collectionCodes: string[] }}
+ */
+export function mergeSubscriberDedupScope(subscriberList = subscriberRows, subscriberNames = []) {
+  const nameOrder = (subscriberNames || []).map(name => String(name || '').trim()).filter(Boolean);
+  const byName = new Map((subscriberList || []).map(row => [row.name, row]));
+  const branchCodes = [];
+  const seenBranch = new Set();
+  const collectionSet = new Set();
+
+  nameOrder.forEach(name => {
+    const row = byName.get(name);
+    if (!row) return;
+    (row.dedupBranchCodes || []).forEach(code => {
+      const normalized = String(code || '').trim();
+      if (!normalized || seenBranch.has(normalized)) return;
+      seenBranch.add(normalized);
+      branchCodes.push(normalized);
+    });
+    (row.dedupCollectionCodes || []).forEach(code => {
+      const normalized = String(code || '').trim();
+      if (normalized) collectionSet.add(normalized);
+    });
+  });
+
+  return {
+    branchCodes,
+    collectionCodes: [...collectionSet]
+  };
 }

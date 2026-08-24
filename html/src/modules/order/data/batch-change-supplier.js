@@ -3,12 +3,19 @@ import { isBudgetOptionalForMethod } from '@/modules/order/constants';
 import { isSupplierValidForMethod } from '@/modules/order/data/supplier-sources';
 import {
   CHANGE_SUPPLIER_CANCEL_REASON,
+  CHANGE_SUPPLIER_TARGET_JOIN,
+  CHANGE_SUPPLIER_TARGET_NEW,
+  buildChangeSupplierLineRow,
+  buildChangeSupplierSourceLineRemarkPatch,
+  computeOrderTotalsFromLines,
+  getChangeSupplierJoinOrderCandidates,
+  getChangeSupplierScopeFromLine,
   getMigratableSets,
+  getNextOrderLineSequence,
   suggestChangeSupplierOrderName
 } from '@/modules/order/data/order-line-change-supplier';
 import {
-  buildOrderLineCancelPatch,
-  formatFlowStats
+  buildOrderLineCancelPatch
 } from '@/modules/acceptance/data/shortage-actions';
 
 const BATCH_ALLOWED_LINE_STATUS = new Set(['已发订', '处理中']);
@@ -64,19 +71,30 @@ export function canBatchChangeSupplier(lines, selectedIds, orders = []) {
 
 /**
  * 批量弹窗表单校验（无套数；按行全量可迁出）
- * @param {{ orderName?: string, supplier?: string, budget?: string, reason?: string }} form
+ * @param {{ orderName?: string, targetOrderId?: string, targetMode?: string, supplier?: string, budget?: string, reason?: string }} form
  * @param {string} method
+ * @param {{ joinCandidates?: object[] }} [options]
  * @returns {{ ok: boolean, message?: string, errors: object }}
  */
-export function validateBatchChangeSupplierForm(form, method) {
+export function validateBatchChangeSupplierForm(form, method, options = {}) {
   /** @type {{ orderName?: string, supplier?: string, budget?: string, reason?: string }} */
   const errors = {};
+  const targetMode = form?.targetMode || CHANGE_SUPPLIER_TARGET_NEW;
 
-  const orderName = String(form?.orderName || '').trim();
-  if (!orderName) {
-    errors.orderName = '请输入订单名称';
-  } else if (orderName.length > ORDER_NAME_MAX_LENGTH) {
-    errors.orderName = `订单名称不能超过${ORDER_NAME_MAX_LENGTH}个字符`;
+  if (targetMode === CHANGE_SUPPLIER_TARGET_JOIN) {
+    const targetOrderId = String(form?.targetOrderId || '').trim();
+    if (!targetOrderId) {
+      errors.orderName = '请选择待发订订单';
+    } else if ((options.joinCandidates || []).every(order => order.orderId !== targetOrderId)) {
+      errors.orderName = '目标订单不可用，请重新选择';
+    }
+  } else {
+    const orderName = String(form?.orderName || '').trim();
+    if (!orderName) {
+      errors.orderName = '请输入订单名称';
+    } else if (orderName.length > ORDER_NAME_MAX_LENGTH) {
+      errors.orderName = `订单名称不能超过${ORDER_NAME_MAX_LENGTH}个字符`;
+    }
   }
 
   if (!String(form?.supplier || '').trim()) {
@@ -107,12 +125,16 @@ export function validateBatchChangeSupplierForm(form, method) {
  * @param {object[]} params.sourceLines
  * @param {object[]} params.orders
  * @param {object[]} params.existingOrders
- * @param {{ orderName: string, supplier: string, budget: string, reason: string, remark?: string }} params.form
+ * @param {{ orderName: string, targetOrderId?: string, targetMode?: string, supplier: string, budget: string, reason: string, remark?: string }} params.form
+ * @param {object[]} [params.existingLines]
+ * @param {string[]} [params.viewableSubscribers]
  */
 export function buildSelectedLinesChangeSupplierResult({
   sourceLines,
   orders,
   existingOrders,
+  existingLines = [],
+  viewableSubscribers = [],
   form
 }) {
   const lines = (sourceLines || []).filter(Boolean);
@@ -129,13 +151,8 @@ export function buildSelectedLinesChangeSupplierResult({
     return { ok: false, message: '未找到原订单' };
   }
 
-  const formCheck = validateBatchChangeSupplierForm(form, firstOrder.method);
-  if (!formCheck.ok) return { ok: false, message: formCheck.message };
-
-  const supplier = String(form.supplier || '').trim();
-  if (!isSupplierValidForMethod(firstOrder.method, supplier)) {
-    return { ok: false, message: '所选供应商不适用于原订单采选方式' };
-  }
+  const scope = getChangeSupplierScopeFromLine(lines[0], firstOrder);
+  const budgetOptional = isBudgetOptionalForMethod(firstOrder.method);
 
   const migratableLines = [];
   for (const line of lines) {
@@ -149,7 +166,68 @@ export function buildSelectedLinesChangeSupplierResult({
     migratableLines.push({ line, migrateSets });
   }
 
+  const supplier = String(form.supplier || '').trim();
+  if (!isSupplierValidForMethod(firstOrder.method, supplier)) {
+    return { ok: false, message: '所选供应商不适用于原订单采选方式' };
+  }
+
+  const joinCandidates = getChangeSupplierJoinOrderCandidates({
+    orders: existingOrders,
+    viewableSubscribers,
+    scope,
+    supplier: form.supplier,
+    budget: form.budget,
+    budgetOptional
+  });
+
+  const validatedForm = validateBatchChangeSupplierForm(form, firstOrder.method, { joinCandidates });
+  if (!validatedForm.ok) return { ok: false, message: validatedForm.message };
+
   const cancelReason = String(form.reason || '').trim() || CHANGE_SUPPLIER_CANCEL_REASON;
+  const targetMode = form.targetMode || CHANGE_SUPPLIER_TARGET_NEW;
+
+  if (targetMode === CHANGE_SUPPLIER_TARGET_JOIN) {
+    const targetOrderId = String(form.targetOrderId || '').trim();
+    const targetOrder = (existingOrders || []).find(order => order.orderId === targetOrderId);
+    if (!targetOrder || !joinCandidates.some(order => order.orderId === targetOrderId)) {
+      return { ok: false, message: '目标订单不可用，请重新选择' };
+    }
+
+    const patches = [];
+    let lineSeq = getNextOrderLineSequence(targetOrderId, existingLines);
+    const newLines = migratableLines.map(({ line: src, migrateSets }) => {
+      const patch = buildOrderLineCancelPatch(src, migrateSets, cancelReason);
+      if (patch) patches.push(patch);
+      const lineRemarkPatch = buildChangeSupplierSourceLineRemarkPatch(src, form.remark);
+      if (lineRemarkPatch) patches.push(lineRemarkPatch);
+      const orderLineNo = `${targetOrderId}-${lineSeq}`;
+      lineSeq += 1;
+      return buildChangeSupplierLineRow(src, targetOrder, migrateSets, orderLineNo);
+    });
+
+    const mergedLines = [...(existingLines || []), ...newLines];
+    const orderPatch = {
+      ...computeOrderTotalsFromLines(targetOrderId, mergedLines)
+    };
+
+    const totalSets = newLines.reduce((sum, line) => sum + (Number(line.sets) || 0), 0);
+
+    return {
+      ok: true,
+      targetOrderId,
+      newLines,
+      patches,
+      orderPatch,
+      summary: {
+        orderId: targetOrderId,
+        species: newLines.length,
+        sets: totalSets,
+        volumes: orderPatch.orderVolumes,
+        joined: true
+      }
+    };
+  }
+
   const orderName = String(form.orderName || '').trim()
     || suggestChangeSupplierOrderName(firstOrder.orderName, existingOrders);
 
@@ -168,59 +246,18 @@ export function buildSelectedLinesChangeSupplierResult({
     existingOrders
   );
   newOrder.orderStatus = 'pending';
-  newOrder.issueRemark = String(form.remark || '').trim();
+  newOrder.issueRemark = '';
   newOrder.source = '订单行批量更换供应商';
 
   const patches = [];
   const newLines = migratableLines.map(({ line: src, migrateSets }, index) => {
     const patch = buildOrderLineCancelPatch(src, migrateSets, cancelReason);
     if (patch) patches.push(patch);
+    const lineRemarkPatch = buildChangeSupplierSourceLineRemarkPatch(src, form.remark);
+    if (lineRemarkPatch) patches.push(lineRemarkPatch);
 
     const orderLineNo = `${newOrder.orderId}-${index + 1}`;
-    return {
-      id: orderLineNo,
-      orderId: newOrder.orderId,
-      site: newOrder.site,
-      orderLineNo,
-      bibRecordNo: src.bibRecordNo || '',
-      actualBibRecordNos: src.actualBibRecordNos ? [...src.actualBibRecordNos] : undefined,
-      title: src.title || '',
-      resourceId: src.resourceId || '',
-      carrier: src.carrier || '',
-      author: src.author || '',
-      publisher: src.publisher || '',
-      publishTime: src.publishTime || '',
-      volumeNo: src.volumeNo || '',
-      volumeName: src.volumeName || '',
-      price: src.price || '0.00',
-      currency: src.currency || 'CNY',
-      copiesInSet: Number(src.copiesInSet) || 1,
-      sets: migrateSets,
-      lineStatus: '待发订',
-      acceptanceStatus: '',
-      settlementStatus: '待申请',
-      isShortage: '否',
-      flowStats: formatFlowStats({
-        issued: migrateSets,
-        received: 0,
-        exchanged: 0,
-        returned: 0,
-        cancelled: 0
-      }),
-      issueTime: '',
-      hasRemark: false,
-      textLanguage: src.textLanguage || newOrder.language,
-      resourceType: src.resourceType || newOrder.resourceType,
-      language: src.language || newOrder.language,
-      budget: newOrder.budget,
-      supplier: newOrder.supplier,
-      orderName: newOrder.orderName,
-      sourceOrderLineNo: src.orderLineNo,
-      holdingDuplicate: null,
-      orderDuplicate: null,
-      productBarcode: src.productBarcode,
-      catalogNo: src.catalogNo
-    };
+    return buildChangeSupplierLineRow(src, newOrder, migrateSets, orderLineNo);
   });
 
   newOrder.orderSpecies = newLines.length;
@@ -243,7 +280,8 @@ export function buildSelectedLinesChangeSupplierResult({
       orderId: newOrder.orderId,
       species: newLines.length,
       sets: totalSets,
-      volumes: newOrder.orderVolumes
+      volumes: newOrder.orderVolumes,
+      joined: false
     }
   };
 }

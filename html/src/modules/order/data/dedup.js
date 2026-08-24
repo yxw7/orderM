@@ -1,4 +1,6 @@
-import { appConfig } from '@/config/app-config';
+import { initialBranchRows, initialCollectionRows } from '@/modules/location/data/location-manage';
+import { getCurrentLibrarianAssociatedSubscribers } from '@/modules/subscriber/data/current-librarian';
+import { mergeSubscriberDedupScope, subscriberRows } from '@/modules/subscriber/data/subscriber-manage';
 
 export const DEDUP_FIELD_LABELS = {
   title: '题名',
@@ -93,6 +95,9 @@ export const HOLDING_BIB_CARD_FIELDS = {
     中文: [
       { label: '书目记录号', key: 'bibRecordNo' },
       { label: '正题名', key: 'title' },
+      { label: '副题名', key: 'subTitle' },
+      { label: '分卷号', key: 'volumeNo' },
+      { label: '分卷名', key: 'volumeName' },
       { label: 'ISBN', key: 'isbn' },
       { label: '作者', key: 'author' },
       { label: '出版社', key: 'publisher' },
@@ -102,6 +107,9 @@ export const HOLDING_BIB_CARD_FIELDS = {
     外文: [
       { label: '书目记录号', key: 'bibRecordNo' },
       { label: '题名', key: 'title' },
+      { label: '副题名', key: 'subTitle' },
+      { label: '分卷号', key: 'volumeNo' },
+      { label: '分卷名', key: 'volumeName' },
       { label: 'ISBN', key: 'isbn' },
       { label: '责任者', key: 'author' },
       { label: '出版社', key: 'publisher' },
@@ -113,6 +121,9 @@ export const HOLDING_BIB_CARD_FIELDS = {
     中文: [
       { label: '书目记录号', key: 'bibRecordNo' },
       { label: '题名', key: 'title' },
+      { label: '副题名', key: 'subTitle' },
+      { label: '分卷号', key: 'volumeNo' },
+      { label: '分卷名', key: 'volumeName' },
       { label: '载体', key: 'carrier' },
       { label: 'ISBN/ISRC', key: 'isbnIsrc' },
       { label: '出版社', key: 'publisher' },
@@ -123,6 +134,9 @@ export const HOLDING_BIB_CARD_FIELDS = {
       { label: '书目记录号', key: 'bibRecordNo' },
       { label: 'ISRC', key: 'isrc' },
       { label: '题名', key: 'title' },
+      { label: '副题名', key: 'subTitle' },
+      { label: '分卷号', key: 'volumeNo' },
+      { label: '分卷名', key: 'volumeName' },
       { label: '载体', key: 'carrier' },
       { label: '商品条码', key: 'productBarcode' },
       { label: '目录号', key: 'catalogNo' },
@@ -166,6 +180,9 @@ export function getHoldingBibFieldDisplayValue(item, fieldKey) {
   const valueMap = {
     bibRecordNo: item.bibRecordNo,
     title: item.title,
+    subTitle: item.subTitle,
+    volumeNo: item.volumeNo,
+    volumeName: item.volumeName,
     author: item.author,
     publisher: item.publisher,
     publishTime: item.publishTime,
@@ -182,46 +199,6 @@ export function getHoldingBibFieldDisplayValue(item, fieldKey) {
   const rawValue = valueMap[fieldKey];
   if (rawValue == null || String(rawValue).trim() === '') return '—';
   return String(rawValue);
-}
-
-/** 馆藏查重 MARC 页签展示字段规则（按语种） */
-export const HOLDING_DEDUP_MARC_FIELD_PATTERNS = {
-  中文: ['010', '2XX', '3XX', '6XX', '7XX'],
-  外文: ['020', '1XX', '2XX', '3XX', '093']
-};
-
-/**
- * 判断 MARC 字段 tag 是否匹配展示规则
- * @param {string} fieldTag - MARC 字段 tag，如 010、200
- * @param {string} pattern - 规则，如 010、2XX、093
- * @returns {boolean}
- */
-function matchesMarcFieldPattern(fieldTag, pattern) {
-  const tag = String(fieldTag || '').trim();
-  if (!tag || !pattern) return false;
-
-  if (pattern.endsWith('XX') && pattern.length === 3) {
-    return tag.length === 3 && tag[0] === pattern[0] && /^\d{3}$/.test(tag);
-  }
-
-  return tag === pattern;
-}
-
-/**
- * 按语种过滤馆藏查重 MARC 展示字段
- * @param {Object[]} marcFields - MARC 字段列表
- * @param {string} languageCategory - 语种（中文/外文）
- * @returns {Object[]}
- */
-export function filterHoldingDedupMarcFields(marcFields, languageCategory) {
-  if (!marcFields?.length) return [];
-
-  const patterns = HOLDING_DEDUP_MARC_FIELD_PATTERNS[languageCategory]
-    || HOLDING_DEDUP_MARC_FIELD_PATTERNS['中文'];
-
-  return marcFields.filter(item =>
-    patterns.some(pattern => matchesMarcFieldPattern(item.field, pattern))
-  );
 }
 
 /**
@@ -243,6 +220,7 @@ function createHoldingDedupItem(patch = {}) {
     binding: '',
     shelfIndexClass: '',
     shelfIndex: '',
+    itemPrice: '58.00',
     checkInTime: '2024-06-15 10:20:00',
     ...patch
   };
@@ -251,6 +229,7 @@ function createHoldingDedupItem(patch = {}) {
 export const HOLDING_DEDUP_CATALOG = [
   {
     bibRecordNo: 'BIB2024002001', standardNo: '9787040456789', isbn: '978-7-04-045678-9', title: '中国现代史纲要',
+    subTitle: '高等学校思想政治理论课教材', volumeNo: '上', volumeName: '理论篇',
     author: '王顺生著', edition: '第2版', textLanguage: '中文', publisher: '高等教育出版社', publishTime: '2024',
     holdingTree: [
       {
@@ -264,24 +243,24 @@ export const HOLDING_DEDUP_CATALOG = [
                 children: [{ name: '首少.少儿中文库本库', copyCount: 1 }]
               }
             ]
-          },
+          }
+        ]
+      },
+      {
+        name: '平谷区图书馆',
+        children: [
           {
             name: '平谷区图书馆',
             children: [
-              {
-                name: '平谷区图书馆',
-                children: [
-                  { name: '生态书库', copyCount: 1 },
-                  { name: '集体外借部', copyCount: 1 },
-                  { name: '少儿外借部（新库）', copyCount: 2 }
-                ]
-              }
+              { name: '生态书库', copyCount: 1 },
+              { name: '集体外借部', copyCount: 1 },
+              { name: '少儿外借部（新库）', copyCount: 2 }
             ]
           }
         ]
       }
     ],
-    unassignedCopyCount: 2,
+    unassignedCopyCount: 4,
     physicalItems: [
       createHoldingDedupItem({
         barcode: 'ST2024002001',
@@ -297,7 +276,9 @@ export const HOLDING_DEDUP_CATALOG = [
       createHoldingDedupItem({
         barcode: 'ST2024002002',
         callNo: 'K25/1',
+        ownerLibrary: '平谷区图书馆',
         homeLocation: '生态书库',
+        currentLibrary: '平谷区图书馆',
         currentLocation: '生态书库',
         holdingStatus: '已外借',
         shelfIndexClass: '中图法',
@@ -307,7 +288,9 @@ export const HOLDING_DEDUP_CATALOG = [
       createHoldingDedupItem({
         barcode: 'ST2024002003',
         callNo: 'K25/1',
+        ownerLibrary: '平谷区图书馆',
         homeLocation: '集体外借部',
+        currentLibrary: '平谷区图书馆',
         currentLocation: '集体外借部',
         holdingStatus: '编目中',
         shelfIndexClass: '中图法',
@@ -317,7 +300,9 @@ export const HOLDING_DEDUP_CATALOG = [
       createHoldingDedupItem({
         barcode: 'ST2024002004',
         callNo: 'K25/1',
+        ownerLibrary: '平谷区图书馆',
         homeLocation: '少儿外借部（新库）',
+        currentLibrary: '平谷区图书馆',
         currentLocation: '少儿外借部（新库）',
         circulationType: '002-少儿外借',
         holdingStatus: '订购中',
@@ -328,7 +313,9 @@ export const HOLDING_DEDUP_CATALOG = [
       createHoldingDedupItem({
         barcode: 'ST2024002005',
         callNo: 'K25/1',
+        ownerLibrary: '平谷区图书馆',
         homeLocation: '少儿外借部（新库）',
+        currentLibrary: '平谷区图书馆',
         currentLocation: '少儿外借部（新库）',
         circulationType: '002-少儿外借',
         holdingStatus: '损坏',
@@ -340,6 +327,7 @@ export const HOLDING_DEDUP_CATALOG = [
       createHoldingDedupItem({
         barcode: 'ST2024002006',
         callNo: 'K25/1',
+        ownerLibrary: '',
         homeLocation: '',
         currentLibrary: '',
         currentLocation: '',
@@ -349,11 +337,33 @@ export const HOLDING_DEDUP_CATALOG = [
       createHoldingDedupItem({
         barcode: 'ST2024002007',
         callNo: 'K25/1',
+        ownerLibrary: '',
         homeLocation: '',
         currentLibrary: '',
         currentLocation: '',
         holdingStatus: '剔除',
         checkInTime: '2024-06-18 09:05:00'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002008',
+        callNo: 'K25/1',
+        ownerLibrary: '平谷区图书馆',
+        homeLocation: '',
+        currentLibrary: '平谷区图书馆',
+        currentLocation: '',
+        holdingStatus: '编目中',
+        checkInTime: '2024-06-18 09:10:00'
+      }),
+      createHoldingDedupItem({
+        barcode: 'ST2024002009',
+        callNo: 'K25/1',
+        ownerLibrary: '市少儿图书馆',
+        homeLocation: '',
+        currentLibrary: '首都图书馆',
+        currentLocation: '',
+        holdingStatus: '订购中',
+        circulationType: '002-少儿外借',
+        checkInTime: '2024-06-18 09:15:00'
       })
     ],
     marcFields: [
@@ -368,6 +378,7 @@ export const HOLDING_DEDUP_CATALOG = [
   },
   {
     bibRecordNo: 'BIB2024002002', standardNo: '9787565855375', isbn: '978-7-5658-5537-5', title: '地质勘查工程与生态修复',
+    subTitle: '理论与实践', volumeNo: '', volumeName: '',
     author: '张昕, 冯红彩, 张海燕主编', textLanguage: '中文', publisher: '汕头大学出版社', publishTime: '2026',
     holdingTree: [
       {
@@ -397,6 +408,7 @@ export const HOLDING_DEDUP_CATALOG = [
       createHoldingDedupItem({
         barcode: 'ST2024002103',
         callNo: 'P5/88',
+        ownerLibrary: '',
         homeLocation: '',
         currentLibrary: '',
         currentLocation: '',
@@ -466,7 +478,8 @@ export const HOLDING_DEDUP_CATALOG = [
   },
   {
     bibRecordNo: 'BIB2024003001', standardNo: 'CN-A1234567890', isrc: 'CN-A1234567890', isbn: '',
-    title: '布鲁克纳：第二交响曲', author: '安东·布鲁克纳', edition: 'CD',
+    title: '布鲁克纳：第二交响曲', subTitle: '维也纳爱乐现场录音', volumeNo: '2', volumeName: '第二交响曲',
+    author: '安东·布鲁克纳', edition: 'CD',
     textLanguage: '中文', publisher: '国家大剧院', publishTime: '2015-03', carrier: 'CD',
     productBarcode: '017685110221', catalogNo: 'CD-1102',
     holdingTree: [
@@ -493,8 +506,9 @@ export const HOLDING_DEDUP_CATALOG = [
       createHoldingDedupItem({
         barcode: 'AV2024003002',
         callNo: 'J647.1/12',
+        ownerLibrary: '华威桥馆',
         homeLocation: '',
-        currentLibrary: '',
+        currentLibrary: '首都图书馆',
         currentLocation: '',
         circulationType: '003-音像外借',
         checkInTime: '2015-04-02 16:25:00'
@@ -620,25 +634,29 @@ export function getOrderLineLanguageCategory(row, orders) {
 }
 
 export function findOrderDuplicateResults(row, allLines, orders) {
-  const subscriber = appConfig.currentSubscriber;
-  if (!subscriber) return [];
+  const subscribers = new Set(getCurrentLibrarianAssociatedSubscribers());
+  if (!subscribers.size) return [];
   return allLines.filter(other =>
     other.orderLineNo !== row.orderLineNo
-    && orders.find(o => o.orderId === other.orderId)?.subscriber === subscriber
+    && subscribers.has(orders.find(o => o.orderId === other.orderId)?.subscriber)
     && matchesDedupFields(row, other, row.lastDedupFieldKeys || ['resourceId', 'title'])
   );
 }
 
-export function findHoldingDuplicateResults(row, fieldKeys) {
-  return HOLDING_DEDUP_CATALOG.filter(catalogRow => matchesDedupFields(row, catalogRow, fieldKeys));
+export function findHoldingDuplicateResults(row, fieldKeys, scope = {}) {
+  const branchCodes = normalizeCodeList(scope.branchCodes, scope.branchCode);
+  const collectionCodes = normalizeCodeList(scope.collectionCodes, scope.collectionCode);
+  return HOLDING_DEDUP_CATALOG
+    .filter(catalogRow => matchesDedupFields(row, catalogRow, fieldKeys))
+    .map(catalogRow => applyHoldingScopeToCatalogHit(catalogRow, branchCodes, collectionCodes));
 }
 
 export function findOrderDuplicatesForCheck(row, allLines, orders, fieldKeys) {
-  const subscriber = appConfig.currentSubscriber;
-  if (!subscriber) return [];
+  const subscribers = new Set(getCurrentLibrarianAssociatedSubscribers());
+  if (!subscribers.size) return [];
   return allLines.filter(other =>
     other.orderLineNo !== row.orderLineNo
-    && orders.find(o => o.orderId === other.orderId)?.subscriber === subscriber
+    && subscribers.has(orders.find(o => o.orderId === other.orderId)?.subscriber)
     && matchesDedupFields(row, other, fieldKeys)
   );
 }
@@ -667,14 +685,17 @@ export function performOrderLineDedup(lines, orders, orderLineNos, config) {
       target.orderDuplicate = target.orderDedupResults.length > 0;
     }
     if (checkHolding) {
-      target.holdingDedupResults = findHoldingDuplicateResults(target, fieldKeys);
+      target.holdingDedupResults = findHoldingDuplicateResults(target, fieldKeys, {
+        branchCodes: scopeBranchCodes,
+        collectionCodes: scopeCollectionCodes
+      });
       target.holdingDuplicate = target.holdingDedupResults.length > 0;
       autoAssociateFirstHoldingBib(target);
     }
     target.lastDedupFieldKeys = fieldKeys;
-    // 查重范围存档；未选分馆/馆藏地视为不限。Mock 暂不按范围裁剪结果
-    target.lastDedupBranchCodes = scopeBranchCodes;
-    target.lastDedupCollectionCodes = scopeCollectionCodes;
+    // 馆藏查重范围存档（仅馆藏查重使用）；有序分馆供单件列表优先排序
+    target.lastDedupBranchCodes = checkHolding ? scopeBranchCodes : (target.lastDedupBranchCodes || []);
+    target.lastDedupCollectionCodes = checkHolding ? scopeCollectionCodes : (target.lastDedupCollectionCodes || []);
   });
 }
 
@@ -690,6 +711,56 @@ function normalizeCodeList(list, legacySingle) {
   if (fromList.length) return [...new Set(fromList)];
   const single = String(legacySingle || '').trim();
   return single ? [single] : [];
+}
+
+/**
+ * 馆藏查重：按所属分馆/馆藏地范围裁剪单件（皆空=不限）
+ * @param {Object} catalogRow
+ * @param {string[]} branchCodes
+ * @param {string[]} collectionCodes
+ * @returns {Object}
+ */
+function applyHoldingScopeToCatalogHit(catalogRow, branchCodes, collectionCodes) {
+  const items = Array.isArray(catalogRow.physicalItems) ? catalogRow.physicalItems : [];
+  if (!branchCodes.length && !collectionCodes.length) {
+    return {
+      ...catalogRow,
+      physicalItems: items.map(item => ({ ...item }))
+    };
+  }
+  const allowedBranchNames = new Set(
+    initialBranchRows
+      .filter(row => branchCodes.includes(String(row.code || '').trim()))
+      .map(row => String(row.name || '').trim())
+      .filter(Boolean)
+  );
+  const allowedCollectionKeys = new Set();
+  initialCollectionRows.forEach(row => {
+    if (!collectionCodes.includes(String(row.code || '').trim())) return;
+    const code = String(row.code || '').trim();
+    const name = String(row.name || '').trim();
+    if (code) allowedCollectionKeys.add(code);
+    if (name) allowedCollectionKeys.add(name);
+  });
+  collectionCodes.forEach(code => allowedCollectionKeys.add(code));
+
+  const scopedItems = items.filter(item => {
+    const owner = String(item.ownerLibrary || '').trim();
+    const home = String(item.homeLocation || '').trim();
+    if (branchCodes.length) {
+      if (!owner || !allowedBranchNames.has(owner)) return false;
+    }
+    if (collectionCodes.length) {
+      if (!home || !allowedCollectionKeys.has(home)) return false;
+    }
+    return true;
+  }).map(item => ({ ...item }));
+
+  return {
+    ...catalogRow,
+    physicalItems: scopedItems,
+    unassignedCopyCount: scopedItems.filter(item => !String(item.homeLocation || '').trim()).length
+  };
 }
 
 /**
@@ -723,7 +794,7 @@ export function performOrderLineDedupAsync(lines, orders, orderLineNos, config) 
 }
 
 /**
- * 统计馆藏树复本总数（含未关联馆藏）
+ * 统计馆藏树复本总数（含未关联馆藏地）
  * @param {Object[]} nodes - 馆藏树节点
  * @returns {number}
  */
@@ -736,7 +807,7 @@ export function countHoldingTreeCopies(nodes) {
 }
 
 /**
- * 统计书目全部馆藏复本数（优先单件明细条数，否则已分配馆藏地 + 未关联馆藏）
+ * 统计书目全部馆藏复本数（优先单件明细条数，否则已分配馆藏地 + 未关联馆藏地）
  * @param {Object} item - 馆藏查重书目
  * @returns {number}
  */
@@ -762,6 +833,7 @@ export const HOLDING_DEDUP_ITEM_COLUMNS = [
   { key: 'binding', label: '装帧' },
   { key: 'shelfIndexClass', label: '排架标引分类', minWidth: 'min-w-[120px]' },
   { key: 'shelfIndex', label: '排架标引', minWidth: 'min-w-[120px]' },
+  { key: 'itemPrice', label: '单件价格' },
   { key: 'checkInTime', label: '登到时间', minWidth: 'whitespace-nowrap' }
 ];
 
@@ -790,15 +862,34 @@ export function getHoldingDedupPhysicalItems(item) {
 }
 
 /**
- * 按四级叶子筛选单件（馆藏地名称或未关联馆藏）
+ * 按四级叶子筛选单件（馆藏地名称或未关联馆藏地）
  * @param {Object[]} items - 单件列表
- * @param {{ unassigned?: boolean, name?: string }|null} leafFilter - 叶子筛选；null 表示全部
+ * @param {{ unassigned?: boolean, unassignedRoot?: boolean, ownerLibrary?: string, includeOwners?: string[], name?: string }|null} leafFilter
  * @returns {Object[]}
  */
 export function filterHoldingDedupItemsByLeaf(items, leafFilter) {
   if (!leafFilter) return items || [];
   if (leafFilter.unassigned) {
-    return (items || []).filter(row => !String(row.homeLocation || '').trim());
+    const list = items || [];
+    if (leafFilter.unassignedRoot) {
+      const includeOwners = new Set(
+        (leafFilter.includeOwners || []).map(name => String(name || '').trim()).filter(Boolean)
+      );
+      return list.filter(row => {
+        if (String(row.homeLocation || '').trim()) return false;
+        const owner = String(row.ownerLibrary || '').trim();
+        if (!owner) return true;
+        return includeOwners.has(owner);
+      });
+    }
+    const owner = String(leafFilter.ownerLibrary || '').trim();
+    if (!owner) {
+      return list.filter(row => !String(row.homeLocation || '').trim());
+    }
+    return list.filter(row => (
+      !String(row.homeLocation || '').trim()
+      && String(row.ownerLibrary || '').trim() === owner
+    ));
   }
   const name = String(leafFilter.name || '').trim();
   if (!name) return items || [];
@@ -806,22 +897,291 @@ export function filterHoldingDedupItemsByLeaf(items, leafFilter) {
 }
 
 /**
- * 构建含「未关联馆藏」节点的展示用馆藏树
- * @param {Object[]} [holdingTree=[]] - 已分配馆藏地的树
- * @param {number} [unassignedCopyCount=0] - 未分配馆藏地的单件数
+ * 深拷贝馆藏树节点（避免展示层改动污染示例源数据）
+ * @param {Object[]} nodes
  * @returns {Object[]}
  */
-export function buildDisplayHoldingTree(holdingTree = [], unassignedCopyCount = 0) {
-  const count = Number(unassignedCopyCount) || 0;
-  const nodes = [...(holdingTree || [])];
-  if (count > 0) {
-    nodes.push({
-      name: '未关联馆藏',
-      unassigned: true,
-      copyCount: count
-    });
+function cloneHoldingTreeNodes(nodes = []) {
+  return (nodes || []).map(node => ({
+    ...node,
+    ...(node.children ? { children: cloneHoldingTreeNodes(node.children) } : {})
+  }));
+}
+
+/**
+ * 节点是否可作为馆藏地叶子的父级（空子级，或已有叶子子节点）
+ * @param {Object} node
+ * @returns {boolean}
+ */
+function isCollectionParentNode(node) {
+  if (!node) return false;
+  const kids = node.children || [];
+  if (!kids.length) return true;
+  return kids.some(child => !child.children?.length);
+}
+
+/**
+ * 收集名称匹配的节点及其深度
+ * @param {Object[]} nodes
+ * @param {string} name
+ * @param {number} [depth=1]
+ * @param {{ node: Object, depth: number }[]} [acc=[]]
+ * @returns {{ node: Object, depth: number }[]}
+ */
+function collectNamedTreeNodes(nodes, name, depth = 1, acc = []) {
+  const target = String(name || '').trim();
+  (nodes || []).forEach(node => {
+    if (String(node.name || '').trim() === target) {
+      acc.push({ node, depth });
+    }
+    if (node.children?.length) {
+      collectNamedTreeNodes(node.children, target, depth + 1, acc);
+    }
+  });
+  return acc;
+}
+
+/**
+ * 按所属馆名称匹配可挂四级馆藏地的父节点：优先深度 3，否则取最深的馆藏地父节点
+ * @param {Object[]} nodes
+ * @param {string} ownerName
+ * @returns {Object|null}
+ */
+export function findOwnerCollectionParent(nodes, ownerName) {
+  const matches = collectNamedTreeNodes(nodes, ownerName);
+  if (!matches.length) return null;
+  const atDepth3 = matches.find(entry => entry.depth === 3 && isCollectionParentNode(entry.node));
+  if (atDepth3) return atDepth3.node;
+  const parents = matches
+    .filter(entry => isCollectionParentNode(entry.node))
+    .sort((a, b) => b.depth - a.depth);
+  return parents[0]?.node || null;
+}
+
+/**
+ * 构建含「未关联馆藏地」节点的展示用馆藏树
+ * - 所属馆与所属馆藏地皆空（及所属馆无法匹配树节点）：一级根「未关联馆藏地」
+ * - 所属馆有值、所属馆藏地为空：挂在匹配所属馆节点下的四级叶子「未关联馆藏地」
+ * - 一级机构仍将「首都图书馆」置顶；根级未关联固定排在末尾
+ * @param {Object[]} [holdingTree=[]] - 已分配馆藏地的树
+ * @param {Object[]|number} [physicalItemsOrCount=[]] - 单件明细；兼容旧调用传未关联件数（仅计入根级）
+ * @returns {Object[]}
+ */
+export function buildDisplayHoldingTree(holdingTree = [], physicalItemsOrCount = []) {
+  const nodes = cloneHoldingTreeNodes(holdingTree);
+  const items = Array.isArray(physicalItemsOrCount)
+    ? physicalItemsOrCount
+    : [];
+
+  // 兼容旧签名：第二参为未关联件数时，全部记入一级根节点
+  if (!Array.isArray(physicalItemsOrCount)) {
+    const count = Number(physicalItemsOrCount) || 0;
+    const pinned = pinCapitalLibraryFirst(nodes);
+    if (count <= 0) return pinned;
+    return [
+      ...pinned,
+      {
+        name: '未关联馆藏地',
+        unassigned: true,
+        unassignedRoot: true,
+        includeOwners: [],
+        copyCount: count
+      }
+    ];
   }
-  return nodes;
+
+  const rootItems = [];
+  const unmatchedOwners = new Set();
+  /** @type {Map<string, Object[]>} */
+  const ownerGroups = new Map();
+
+  items.forEach(item => {
+    if (String(item?.homeLocation || '').trim()) return;
+    const owner = String(item?.ownerLibrary || '').trim();
+    if (!owner) {
+      rootItems.push(item);
+      return;
+    }
+    if (!ownerGroups.has(owner)) ownerGroups.set(owner, []);
+    ownerGroups.get(owner).push(item);
+  });
+
+  ownerGroups.forEach((ownerItems, owner) => {
+    const parent = findOwnerCollectionParent(nodes, owner);
+    if (!parent) {
+      rootItems.push(...ownerItems);
+      unmatchedOwners.add(owner);
+      return;
+    }
+    parent.children = [
+      ...(parent.children || []),
+      {
+        name: '未关联馆藏地',
+        unassigned: true,
+        ownerLibrary: owner,
+        copyCount: ownerItems.length
+      }
+    ];
+  });
+
+  const pinned = pinCapitalLibraryFirst(nodes);
+  if (!rootItems.length) return pinned;
+
+  return [
+    ...pinned,
+    {
+      name: '未关联馆藏地',
+      unassigned: true,
+      unassignedRoot: true,
+      includeOwners: [...unmatchedOwners],
+      copyCount: rootItems.length
+    }
+  ];
+}
+
+/**
+ * 馆藏树一级：有「首都图书馆」时置顶，其余保持原相对序；二/三/四级不改。
+ * @param {Object[]} [nodes=[]]
+ * @returns {Object[]}
+ */
+export function pinCapitalLibraryFirst(nodes = []) {
+  if (!nodes?.length) return nodes || [];
+  const idx = nodes.findIndex(node => String(node.name || '').trim() === '首都图书馆');
+  if (idx <= 0) return nodes;
+  const next = [...nodes];
+  const [capital] = next.splice(idx, 1);
+  next.unshift(capital);
+  return next;
+}
+
+/**
+ * 分馆优先序 → 编码/名称均可查的排序权重
+ * @param {string[]} branchCodes
+ * @param {Object[]} [branchRows=[]]
+ * @returns {Map<string, number>}
+ */
+export function buildBranchPriorityRankMap(branchCodes = [], branchRows = []) {
+  const codeToName = new Map(
+    (branchRows || []).map(row => [String(row.code || '').trim(), String(row.name || '').trim()])
+  );
+  const rank = new Map();
+  (branchCodes || []).forEach((code, index) => {
+    const normalized = String(code || '').trim();
+    if (!normalized) return;
+    if (!rank.has(normalized)) rank.set(normalized, index);
+    const name = codeToName.get(normalized);
+    if (name && !rank.has(name)) rank.set(name, index);
+  });
+  return rank;
+}
+
+/**
+ * 馆藏树按优先所属馆排序（所属馆在三级）
+ * - 四级：同父下按优先序排；未命中排后、稳定
+ * - 二级 / 一级：取子孙三级中最优（最小）优先序作为排序键，同级比较；不跨父节点搬迁子树
+ * - 四级叶子（馆藏地）保持原相对顺序
+ * @param {Object[]} nodes
+ * @param {string[]} branchCodes
+ * @param {Object[]} [branchRows=[]]
+ * @returns {Object[]}
+ */
+export function sortHoldingTreeByBranchPriority(nodes, branchCodes, branchRows = []) {
+  if (!nodes?.length || !branchCodes?.length) return nodes || [];
+  const rank = buildBranchPriorityRankMap(branchCodes, branchRows);
+  const fallback = branchCodes.length;
+  return sortHoldingTreeLevelByOwnerPriority(nodes, rank, fallback, 1);
+}
+
+/**
+ * @param {Object[]} nodes
+ * @param {Map<string, number>} rank
+ * @param {number} fallback
+ * @param {number} depth - 1 一级 / 2 二级 / 3 三级 / ≥4 叶子层
+ * @returns {Object[]}
+ */
+function sortHoldingTreeLevelByOwnerPriority(nodes, rank, fallback, depth) {
+  if (!nodes?.length) return nodes || [];
+
+  const decorated = nodes.map((node, index) => {
+    const children = node.children?.length
+      ? sortHoldingTreeLevelByOwnerPriority(node.children, rank, fallback, depth + 1)
+      : node.children;
+    const nextNode = children === node.children ? node : { ...node, children };
+    return {
+      node: nextNode,
+      index,
+      sortKey: depth >= 4
+        ? fallback
+        : depth === 3
+          ? getOwnerNodeRank(nextNode.name, rank, fallback)
+          : getBestDescendantOwnerRank(nextNode, rank, fallback)
+    };
+  });
+
+  // 四级叶子层不重排；一～三级同级按 sortKey 排
+  if (depth >= 4) return decorated.map(entry => entry.node);
+
+  return decorated
+    .sort((a, b) => {
+      if (a.sortKey !== b.sortKey) return a.sortKey - b.sortKey;
+      return a.index - b.index;
+    })
+    .map(entry => entry.node);
+}
+
+/**
+ * @param {string} name
+ * @param {Map<string, number>} rank
+ * @param {number} fallback
+ * @returns {number}
+ */
+function getOwnerNodeRank(name, rank, fallback) {
+  const key = String(name || '').trim();
+  return key && rank.has(key) ? rank.get(key) : fallback;
+}
+
+/**
+ * 祖先节点排序键 = 子孙三级所属馆中的最优优先序
+ * @param {Object} node
+ * @param {Map<string, number>} rank
+ * @param {number} fallback
+ * @param {number} [depth=1]
+ * @returns {number}
+ */
+function getBestDescendantOwnerRank(node, rank, fallback, depth = 1) {
+  if (!node) return fallback;
+  if (depth === 3) return getOwnerNodeRank(node.name, rank, fallback);
+  if (depth > 3 || !node.children?.length) return fallback;
+  let best = fallback;
+  node.children.forEach(child => {
+    const childRank = getBestDescendantOwnerRank(child, rank, fallback, depth + 1);
+    if (childRank < best) best = childRank;
+  });
+  return best;
+}
+
+/**
+ * 单件列表按所属馆优先序排序（未命中排后，稳定）
+ * @param {Object[]} items
+ * @param {string[]} branchCodes
+ * @param {Object[]} [branchRows=[]]
+ * @returns {Object[]}
+ */
+export function sortPhysicalItemsByBranchPriority(items, branchCodes, branchRows = []) {
+  if (!items?.length || !branchCodes?.length) return items || [];
+  const rank = buildBranchPriorityRankMap(branchCodes, branchRows);
+  const fallback = branchCodes.length;
+  return [...items]
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const owner = String(a.item.ownerLibrary || '').trim();
+      const other = String(b.item.ownerLibrary || '').trim();
+      const ra = rank.has(owner) ? rank.get(owner) : fallback;
+      const rb = rank.has(other) ? rank.get(other) : fallback;
+      if (ra !== rb) return ra - rb;
+      return a.index - b.index;
+    })
+    .map(entry => entry.item);
 }
 
 /**
@@ -847,6 +1207,7 @@ export function formatDedupFieldLabels(fieldKeys) {
 
 /** 初始化部分订单行的查重示例数据 */
 export function applyDedupSampleData(lines) {
+  const sampleScope = mergeSubscriberDedupScope(subscriberRows, ['ceshi']);
   const holdingModernHistory = HOLDING_DEDUP_CATALOG.find(item => item.standardNo === '9787040456789');
   const holdingLibraryScience = HOLDING_DEDUP_CATALOG.find(item => item.standardNo === '9787501345678');
   const holdingGeology = HOLDING_DEDUP_CATALOG.find(item => item.standardNo === '9787565855375');
@@ -918,10 +1279,19 @@ export function applyDedupSampleData(lines) {
     }
   ];
 
-  samples.forEach(({ orderLineNo, sample, linkOrder }) => {
+  samples.forEach(({ orderLineNo, sample }) => {
     const target = lines.find(item => item.orderLineNo === orderLineNo);
     if (!target) return;
-    Object.assign(target, { ...sample });
+    Object.assign(target, {
+      ...sample,
+      lastDedupBranchCodes: [...sampleScope.branchCodes],
+      lastDedupCollectionCodes: [...sampleScope.collectionCodes]
+    });
+    // 示例模拟「查重前书目记录号为空」：馆藏命中后自动关联第一条，书目页签操作显示「取消关联」
+    if (sample.holdingDedupResults?.length) {
+      target.bibRecordNo = '';
+      autoAssociateFirstHoldingBib(target);
+    }
   });
 
   const line1 = lines.find(item => item.orderLineNo === 'PG001B202406030001-1');

@@ -255,8 +255,14 @@ const changeSupplierSourceLine = ref(null);
 const changeSupplierSuccessLines = computed(() => {
   const summary = lastChangeSupplierSummary.value;
   if (summary?.orderId) {
+    const verb = summary.joined ? '已加入订单' : '已生成新订单';
+    if (summary.species > 1) {
+      return [
+        `${verb} ${summary.orderId}，订单行种数 ${summary.species}，套数 ${summary.sets}，册数 ${summary.volumes}，是否立即查看？`
+      ];
+    }
     return [
-      `已生成新订单 ${summary.orderId}，订单行种数 ${summary.species}，套数 ${summary.sets}，册数 ${summary.volumes}，是否立即查看？`
+      `${verb} ${summary.orderId}，原行对应套数已撤订，是否立即查看？`
     ];
   }
   const orderId = lastChangeSupplierOrderId.value || '—';
@@ -394,7 +400,7 @@ function confirmChangeSupplier(form) {
   changeSupplierOpen.value = false;
   changeSupplierSourceLine.value = null;
   lastChangeSupplierOrderId.value = result.newOrderId || '';
-  lastChangeSupplierSummary.value = null;
+  lastChangeSupplierSummary.value = result.summary || null;
   changeSupplierSuccessOpen.value = true;
 }
 

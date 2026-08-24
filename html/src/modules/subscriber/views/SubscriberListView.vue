@@ -87,6 +87,7 @@
       :names="librarianNames"
       @close="librarianOpen = false"
     />
+    <PrdSpecDrawer page-id="subscriber-manage" />
   </div>
 </template>
 
@@ -94,6 +95,7 @@
 import { computed, ref } from 'vue';
 import SearchPanel from '@/components/common/SearchPanel.vue';
 import DataTable from '@/components/common/DataTable.vue';
+import PrdSpecDrawer from '@/components/common/PrdSpecDrawer.vue';
 import SubscriberFormModal from '@/modules/subscriber/components/SubscriberFormModal.vue';
 import SubscriberDetailModal from '@/modules/subscriber/components/SubscriberDetailModal.vue';
 import SubscriberStatusModal from '@/modules/subscriber/components/SubscriberStatusModal.vue';

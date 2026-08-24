@@ -342,18 +342,31 @@ export function validateMappedShipRow(shipRow, options) {
   /** @type {string[]} */
   const reasons = [];
 
+  let storedReceiveSets = receiveSets;
+  let qtyOverPending = false;
+  let qtyOverPendingReason = '';
+  /** @type {Record<string, string>} */
+  let outFieldValues = fieldValues;
+
   if (receiveSets <= 0) {
     types.push('套数非法');
     reasons.push('套数 ≤ 0');
   } else if (receiveSets > systemPending) {
-    types.push('套数非法');
-    reasons.push('套数大于待收');
+    if (mode === 'precheck') {
+      qtyOverPending = true;
+      qtyOverPendingReason = `套数大于待收（发货单 ${receiveSets}/待收 ${systemPending}）`;
+      storedReceiveSets = systemPending;
+      outFieldValues = { ...fieldValues, receiveQty: String(systemPending) };
+    } else {
+      types.push('套数非法');
+      reasons.push('套数大于待收');
+    }
   }
 
   if (mode === 'precheck') {
     const compareKeys = mappedKeys.filter(key => key && key !== MATCH_KEY_FIELD);
     compareKeys.forEach(key => {
-      // 收货套数仅由 0＜套数≤待收 判定
+      // 收货套数不走「不一致」：≤0 为套数非法；预验收＞待收按待收存储并导出异常
       if (key === 'receiveQty') return;
       // 若传入须一致列表，则仅校验列表内字段；未传则保持旧行为（全部比对，兼容批验收）
       if (mustMatchSet && !mustMatchSet.has(key)) return;
@@ -369,6 +382,7 @@ export function validateMappedShipRow(shipRow, options) {
   const joined = joinValidationOutcomes(types, reasons);
   return {
     ...base,
+    fieldValues: outFieldValues,
     orderLine: { ...line },
     systemListPrice,
     systemNetPrice,
@@ -377,8 +391,10 @@ export function validateMappedShipRow(shipRow, options) {
     resultTypes: types,
     result: joined.result,
     failReason: joined.failReason,
-    // 收货写入用发货单值
-    receiveSets,
+    qtyOverPending,
+    qtyOverPendingReason,
+    // 预验收超收按待收套数存储；其它模式仍用发货单值
+    receiveSets: storedReceiveSets,
     copiesInSet,
     listPrice: listPrice || price,
     price: price || listPrice,
@@ -447,20 +463,46 @@ export function exportMappedValidationResult(validatedRows, fileColumns, fileNam
 }
 
 /**
- * 仅导出失败行：原发货单列 + 失败原因（不含校验结果列）
+ * 失败数据导出：校验失败行，以及预验收「套数大于待收」虽通过仍需导出的行
+ * @param {object} row
+ * @returns {boolean}
+ */
+export function rowHasFailExport(row) {
+  if (!row) return false;
+  if (row.qtyOverPending) return true;
+  return Boolean(row.result && row.result !== '通过');
+}
+
+/**
+ * @param {object} row
+ * @returns {string}
+ */
+export function getFailExportReason(row) {
+  const parts = [];
+  if (row?.qtyOverPending) {
+    parts.push(row.qtyOverPendingReason || '套数大于待收');
+  }
+  if (row?.result && row.result !== '通过' && row.failReason) {
+    parts.push(row.failReason);
+  }
+  return parts.join('；');
+}
+
+/**
+ * 原发货单列（原顺序）+ 失败原因（不含校验结果列）
  * @param {object[]} validatedRows
  * @param {string[]} fileColumns
  * @param {string} [fileName]
  */
 export function exportFailedMappedRows(validatedRows, fileColumns, fileName) {
-  const failed = (validatedRows || []).filter(r => r.result && r.result !== '通过');
+  const failed = (validatedRows || []).filter(rowHasFailExport);
   const cols = fileColumns?.length
     ? fileColumns
     : (failed[0]?.fileColumns || Object.keys(failed[0]?.sourceRow || {}));
   const headers = [...cols, '失败原因'];
   const dataRows = failed.map(r => {
     const source = r.sourceRow || {};
-    return [...cols.map(c => source[c] ?? ''), r.failReason ?? ''];
+    return [...cols.map(c => source[c] ?? ''), getFailExportReason(r)];
   });
 
   const xmlRows = [headers, ...dataRows]

@@ -18,12 +18,6 @@ export const DELIVERY_IMPORT_CREATE_STEPS = [
 
 export const PREVIEW_MATCHING_DURATION_MS = 8000;
 
-export const EXCHANGE_REASON_OPTIONS = [
-  '缺页', '错页', '装订错误', '纸张破损', '装订不牢', '书脊开裂', '被污染或损坏'
-];
-
-export const RETURN_REASON_OPTIONS = [...EXCHANGE_REASON_OPTIONS];
-
 const ALLOWED_EXTENSIONS = ['.xls', '.xlsx'];
 
 /**
@@ -534,14 +528,14 @@ function toHalfWidth(str) {
 }
 
 /**
- * 规范化字段值用于精确匹配（spec §5.2：去首尾空格、全半角统一、ISBN 去横线、大小写统一）
+ * 规范化字段值用于精确匹配（去首尾空格、全半角统一、大小写统一；ISBN/ISRC 再去掉空格与「-」）
  * @param {string|number} value
  * @param {string} fieldKey
  * @returns {string}
  */
 export function normalizeFieldValue(value, fieldKey) {
   let v = toHalfWidth(String(value ?? '')).trim();
-  if (fieldKey === 'isbn') {
+  if (fieldKey === 'isbn' || fieldKey === 'isrc') {
     v = v.replace(/-/g, '').replace(/\s/g, '').toLowerCase();
   } else {
     v = v.toLowerCase();

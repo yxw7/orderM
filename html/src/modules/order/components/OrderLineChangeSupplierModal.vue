@@ -3,28 +3,90 @@
     v-if="open"
     title="更换供应商"
     width-class="w-full max-w-lg max-h-[90vh]"
-    confirm-text="生成新订单"
+    :confirm-text="confirmText"
     @close="emit('close')"
     @confirm="submit"
   >
-    <p class="text-sm text-gray-600 leading-6 mb-1">
+    <p class="text-sm text-gray-600 leading-6 mb-3">
       发订套数：{{ flowSummary.issued }} 已收货套数：{{ flowSummary.received }} 已换货套数：{{ flowSummary.exchanged }} 已退货套数：{{ flowSummary.returned }}
     </p>
+    <div class="flex items-center justify-center gap-6 mb-4">
+      <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+        <input v-model="form.targetMode" type="radio" :value="CHANGE_SUPPLIER_TARGET_NEW" class="text-sky-600">
+        新建订单
+      </label>
+      <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+        <input v-model="form.targetMode" type="radio" :value="CHANGE_SUPPLIER_TARGET_JOIN" class="text-sky-600">
+        加入订单
+      </label>
+    </div>
+    <div class="flex items-start gap-3">
+      <label class="text-sm text-gray-600 w-24 text-right shrink-0 pt-2">
+        <span class="text-red-500">*</span> 供应商
+      </label>
+      <div class="flex-1 min-w-0">
+        <select
+          v-model="form.supplier"
+          class="w-full border rounded px-3 py-2 text-sm"
+          :class="fieldErrors.supplier ? 'border-red-400' : 'border-gray-300'"
+          @change="onSupplierBudgetChange"
+        >
+          <option value="">请选择</option>
+          <option v-for="opt in supplierOptions" :key="opt" :value="opt">{{ opt }}</option>
+        </select>
+        <p v-if="fieldErrors.supplier" class="text-red-500 text-xs mt-1">{{ fieldErrors.supplier }}</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <label class="text-sm text-gray-600 w-24 text-right shrink-0 pt-2">
+        <span v-if="!budgetOptional" class="text-red-500">*</span> 预算名称
+      </label>
+      <div class="flex-1 min-w-0">
+        <select
+          v-model="form.budget"
+          class="w-full border rounded px-3 py-2 text-sm"
+          :class="fieldErrors.budget ? 'border-red-400' : 'border-gray-300'"
+          :disabled="budgetOptional"
+          @change="onSupplierBudgetChange"
+        >
+          <option value="">请选择</option>
+          <option v-for="opt in budgetOptions" :key="opt" :value="opt">{{ opt }}</option>
+        </select>
+        <p v-if="fieldErrors.budget" class="text-red-500 text-xs mt-1">{{ fieldErrors.budget }}</p>
+      </div>
+    </div>
     <div class="flex items-start gap-3">
       <label class="text-sm text-gray-600 w-24 text-right shrink-0 pt-2">
         <span class="text-red-500">*</span> 订单名称
       </label>
       <div class="flex-1 min-w-0">
-        <input
-          v-model="form.orderName"
-          type="text"
-          maxlength="50"
-          class="w-full border rounded px-3 py-2 text-sm"
-          :class="fieldErrors.orderName ? 'border-red-400' : 'border-gray-300'"
-          placeholder="请输入订单名称"
-          @input="clearFieldError('orderName')"
-        >
-        <p v-if="fieldErrors.orderName" class="text-red-500 text-xs mt-1">{{ fieldErrors.orderName }}</p>
+        <template v-if="isNewTarget">
+          <input
+            v-model="form.orderName"
+            type="text"
+            maxlength="50"
+            class="w-full border rounded px-3 py-2 text-sm"
+            :class="fieldErrors.orderName ? 'border-red-400' : 'border-gray-300'"
+            placeholder="请输入订单名称"
+            @input="clearFieldError('orderName')"
+          >
+          <p v-if="fieldErrors.orderName" class="text-red-500 text-xs mt-1">{{ fieldErrors.orderName }}</p>
+        </template>
+        <template v-else>
+          <SearchSelect
+            v-model="form.targetOrderId"
+            value-mode
+            :options="joinCandidates"
+            placeholder="请选择或输入检索待发订订单"
+            :error="fieldErrors.orderName"
+            :get-label="formatJoinOrderLabel"
+            :get-value="order => order.orderId"
+            @change="clearFieldError('orderName')"
+          />
+          <p v-if="!joinCandidates.length" class="text-amber-600 text-xs mt-1">
+            暂无符合条件的待发订订单，请调整供应商或预算
+          </p>
+        </template>
       </div>
     </div>
     <div class="flex items-start gap-3">
@@ -46,60 +108,16 @@
     </div>
     <div class="flex items-start gap-3">
       <label class="text-sm text-gray-600 w-24 text-right shrink-0 pt-2">
-        <span class="text-red-500">*</span> 供应商
-      </label>
-      <div class="flex-1 min-w-0">
-        <select
-          v-model="form.supplier"
-          class="w-full border rounded px-3 py-2 text-sm"
-          :class="fieldErrors.supplier ? 'border-red-400' : 'border-gray-300'"
-          @change="clearFieldError('supplier')"
-        >
-          <option value="">请选择</option>
-          <option v-for="opt in supplierOptions" :key="opt" :value="opt">{{ opt }}</option>
-        </select>
-        <p v-if="fieldErrors.supplier" class="text-red-500 text-xs mt-1">{{ fieldErrors.supplier }}</p>
-      </div>
-    </div>
-    <div class="flex items-start gap-3">
-      <label class="text-sm text-gray-600 w-24 text-right shrink-0 pt-2">
-        <span v-if="!budgetOptional" class="text-red-500">*</span> 预算名称
-      </label>
-      <div class="flex-1 min-w-0">
-        <select
-          v-model="form.budget"
-          class="w-full border rounded px-3 py-2 text-sm"
-          :class="fieldErrors.budget ? 'border-red-400' : 'border-gray-300'"
-          :disabled="budgetOptional"
-          @change="clearFieldError('budget')"
-        >
-          <option value="">请选择</option>
-          <option v-for="opt in budgetOptions" :key="opt" :value="opt">{{ opt }}</option>
-        </select>
-        <p v-if="fieldErrors.budget" class="text-red-500 text-xs mt-1">{{ fieldErrors.budget }}</p>
-      </div>
-    </div>
-    <div class="flex items-start gap-3">
-      <label class="text-sm text-gray-600 w-24 text-right shrink-0 pt-2">
         <span class="text-red-500">*</span> 原因
       </label>
       <div class="flex-1 min-w-0">
-        <select
+        <ReasonSelect
           v-model="form.reason"
-          class="w-full border rounded px-3 py-2 text-sm"
-          :class="fieldErrors.reason ? 'border-red-400' : 'border-gray-300'"
-          :disabled="!cancelReasons.length"
+          reason-type="cancel"
+          :error="!!fieldErrors.reason"
           @change="clearFieldError('reason')"
-        >
-          <option value="">请选择</option>
-          <option v-for="item in cancelReasons" :key="item.id" :value="item.content">
-            {{ item.content }}
-          </option>
-        </select>
+        />
         <p v-if="fieldErrors.reason" class="text-red-500 text-xs mt-1">{{ fieldErrors.reason }}</p>
-        <p v-else-if="!cancelReasons.length" class="text-amber-600 text-xs mt-1">
-          暂无可用撤订原因，请先在「设置 - 退换撤订原因参数」中配置。
-        </p>
       </div>
     </div>
     <div class="flex items-start gap-3">
@@ -107,7 +125,7 @@
       <textarea
         v-model="form.remark"
         rows="4"
-        placeholder="请输入备注"
+        placeholder="填写后将追加至源订单行备注后"
         class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm resize-y"
       />
     </div>
@@ -117,15 +135,22 @@
 <script setup>
 import { computed, reactive, watch } from 'vue';
 import FormModal from '@/modules/order/components/FormModal.vue';
+import ReasonSelect from '@/components/common/ReasonSelect.vue';
+import SearchSelect from '@/modules/barcode-supplier/components/SearchSelect.vue';
 import { NEW_ORDER_BUDGET_OPTIONS, isBudgetOptionalForMethod } from '@/modules/order/constants';
 import { getSupplierOptionsByMethod } from '@/modules/order/data/supplier-sources';
 import { parseFlowStats } from '@/modules/order/data/order-line-detail';
 import {
+  CHANGE_SUPPLIER_TARGET_JOIN,
+  CHANGE_SUPPLIER_TARGET_NEW,
+  formatChangeSupplierJoinOrderLabel,
+  getChangeSupplierJoinOrderCandidates,
+  getChangeSupplierScopeFromLine,
   getMigratableSets,
   suggestChangeSupplierOrderName,
   validateChangeSupplierForm
 } from '@/modules/order/data/order-line-change-supplier';
-import { useReasonParamsStore } from '@/stores/reason-params';
+import { getCurrentViewableSubscribers } from '@/modules/subscriber/data/current-librarian';
 import { useOrderStore } from '@/modules/order/stores/order';
 
 const props = defineProps({
@@ -136,11 +161,12 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'confirm']);
 
-const reasonParamsStore = useReasonParamsStore();
 const orderStore = useOrderStore();
 
 const form = reactive({
+  targetMode: CHANGE_SUPPLIER_TARGET_NEW,
   orderName: '',
+  targetOrderId: '',
   sets: '',
   supplier: '',
   budget: '',
@@ -157,6 +183,8 @@ const fieldErrors = reactive({
 });
 
 const method = computed(() => props.sourceOrder?.method || '现采');
+const isNewTarget = computed(() => form.targetMode === CHANGE_SUPPLIER_TARGET_NEW);
+const confirmText = computed(() => (isNewTarget.value ? '生成新订单' : '加入订单'));
 const supplierOptions = computed(() => {
   const options = getSupplierOptionsByMethod(method.value);
   const current = String(
@@ -179,6 +207,18 @@ const budgetOptions = computed(() => {
   return options;
 });
 const maxSets = computed(() => getMigratableSets(props.sourceLine));
+const scope = computed(() => getChangeSupplierScopeFromLine(props.sourceLine, props.sourceOrder));
+const joinCandidates = computed(() => {
+  if (isNewTarget.value) return [];
+  return getChangeSupplierJoinOrderCandidates({
+    orders: orderStore.orders,
+    viewableSubscribers: getCurrentViewableSubscribers(),
+    scope: scope.value,
+    supplier: form.supplier,
+    budget: form.budget,
+    budgetOptional: budgetOptional.value
+  });
+});
 const flowSummary = computed(() => {
   const flow = parseFlowStats(props.sourceLine?.flowStats);
   return {
@@ -188,16 +228,21 @@ const flowSummary = computed(() => {
     returned: flow.returned || 0
   };
 });
-const cancelReasons = computed(() => reasonParamsStore.getActiveByType('cancel'));
+
+function formatJoinOrderLabel(order) {
+  return formatChangeSupplierJoinOrderLabel(order);
+}
 
 watch(
   () => props.open,
   open => {
     if (!open) return;
+    form.targetMode = CHANGE_SUPPLIER_TARGET_NEW;
     form.orderName = suggestChangeSupplierOrderName(
       props.sourceOrder?.orderName,
       orderStore.orders
     );
+    form.targetOrderId = '';
     form.sets = String(maxSets.value || '');
     form.supplier = String(
       props.sourceOrder?.supplier || props.sourceLine?.supplier || ''
@@ -206,10 +251,25 @@ watch(
       ? ''
       : String(props.sourceOrder?.budget || props.sourceLine?.budget || '').trim();
     form.reason = '';
-    form.remark = String(
-      props.sourceLine?.remark || props.sourceLine?.remarkText || ''
-    );
+    form.remark = '';
     clearAllFieldErrors();
+  }
+);
+
+watch(
+  () => form.targetMode,
+  mode => {
+    if (mode === CHANGE_SUPPLIER_TARGET_NEW) {
+      form.targetOrderId = '';
+      form.orderName = suggestChangeSupplierOrderName(
+        props.sourceOrder?.orderName,
+        orderStore.orders
+      );
+    } else {
+      form.orderName = '';
+      form.targetOrderId = '';
+    }
+    fieldErrors.orderName = '';
   }
 );
 
@@ -219,6 +279,15 @@ watch(budgetOptional, optional => {
     fieldErrors.budget = '';
   }
 });
+
+function onSupplierBudgetChange() {
+  clearFieldError('supplier');
+  clearFieldError('budget');
+  if (!isNewTarget.value) {
+    form.targetOrderId = '';
+    fieldErrors.orderName = '';
+  }
+}
 
 function clearFieldError(field) {
   if (field && fieldErrors[field]) fieldErrors[field] = '';
@@ -233,7 +302,9 @@ function clearAllFieldErrors() {
 }
 
 function submit() {
-  const check = validateChangeSupplierForm(form, method.value, maxSets.value);
+  const check = validateChangeSupplierForm(form, method.value, maxSets.value, {
+    joinCandidates: joinCandidates.value
+  });
   fieldErrors.orderName = check.errors.orderName || '';
   fieldErrors.sets = check.errors.sets || '';
   fieldErrors.supplier = check.errors.supplier || '';
@@ -241,7 +312,9 @@ function submit() {
   fieldErrors.reason = check.errors.reason || '';
   if (!check.ok) return;
   emit('confirm', {
+    targetMode: form.targetMode,
     orderName: form.orderName.trim(),
+    targetOrderId: form.targetOrderId,
     sets: form.sets.trim(),
     supplier: form.supplier,
     budget: form.budget,

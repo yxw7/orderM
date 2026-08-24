@@ -19,6 +19,20 @@ export function parseSpeciesCounts(row) {
   return { ordered: parts[0] || 0, received: parts[1] || 0, exchange: parts[2] || 0, returned: parts[3] || 0 };
 }
 
+/** 解析金额字符串；无效返回 null（汇总时按 0 贡献） */
+export function parseMoneyAmount(value) {
+  if (value == null || value === '') return null;
+  const n = Number(String(value).replace(/[^\d.-]/g, ''));
+  return Number.isFinite(n) ? n : null;
+}
+
+/** 解析套内册数/件数等数量；空或非数字返回 null */
+export function parseOptionalNumber(value) {
+  if (value == null || String(value).trim() === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function formatSpeciesCounts(counts) {
   return `${counts.ordered} / ${counts.received} / ${counts.exchange} / ${counts.returned}`;
 }

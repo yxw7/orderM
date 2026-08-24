@@ -21,18 +21,7 @@
         >&times;</button>
       </div>
       <div class="px-6 py-5">
-        <select
-          v-model="reason"
-          class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-sky-500"
-        >
-          <option value="">请选择</option>
-          <option v-for="item in cancelReasons" :key="item.id" :value="item.content">
-            {{ item.content }}
-          </option>
-        </select>
-        <p v-if="!cancelReasons.length" class="text-sm text-amber-600 mt-2">
-          暂无可用撤订原因，请先在「设置 - 退换撤订原因参数」中配置。
-        </p>
+        <ReasonSelect v-model="reason" reason-type="cancel" placeholder="请选择" />
       </div>
       <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
         <button
@@ -45,7 +34,7 @@
         <button
           type="button"
           class="px-5 py-1.5 text-sm bg-sky-600 text-white rounded hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="!cancelReasons.length"
+          :disabled="!reason"
           @click="submit"
         >
           确定
@@ -56,8 +45,8 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
-import { useReasonParamsStore } from '@/stores/reason-params';
+import { ref, watch } from 'vue';
+import ReasonSelect from '@/components/common/ReasonSelect.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false }
@@ -65,11 +54,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'confirm']);
 
-const reasonParamsStore = useReasonParamsStore();
 const reason = ref('');
-
-/** @type {import('vue').ComputedRef<Object[]>} */
-const cancelReasons = computed(() => reasonParamsStore.getActiveByType('cancel'));
 
 watch(() => props.open, open => {
   if (open) reason.value = '';

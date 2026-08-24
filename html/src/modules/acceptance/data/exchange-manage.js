@@ -65,8 +65,94 @@ export const exchangeRows = [
     status: 'cancelled',
     arrivedSets: null,
     arrivedBatch: null
+  },
+  {
+    id: 3,
+    resourceType: '纸质书',
+    site: '华威桥馆',
+    resourceId: '9787565855375',
+    isbn: '9787565855375',
+    isrc: '',
+    title: '地质勘查工程与生态修复',
+    author: '张昕, 冯红彬, 张海燕主编',
+    publisher: '地质出版社',
+    orderLineNo: 'st00120250921005-3',
+    listPrice: '58.0',
+    currency: 'CNY',
+    netPrice: '58.0',
+    copiesInSet: 3,
+    exchangeSets: 2,
+    reason: '残缺损',
+    remark: '封面污损',
+    exchangeTime: '2026-08-01 09:00:00',
+    exchangeBatch: 'ysEX20260801001',
+    supplier: '湖北三新',
+    shipNo: 'SH20260801001',
+    status: 'pending',
+    arrivedSets: null,
+    arrivedBatch: null
+  },
+  {
+    id: 4,
+    resourceType: '纸质书',
+    site: '华威桥馆',
+    resourceId: '9787565855375',
+    isbn: '9787565855375',
+    isrc: '',
+    title: '地质勘查工程与生态修复',
+    author: '张昕, 冯红彬, 张海燕主编',
+    publisher: '地质出版社',
+    orderLineNo: 'st00120250921005-3',
+    listPrice: '58.0',
+    currency: 'CNY',
+    netPrice: '58.0',
+    copiesInSet: 3,
+    exchangeSets: 1,
+    reason: '换货',
+    remark: '',
+    exchangeTime: '2026-08-10 10:30:00',
+    exchangeBatch: 'ysEX20260810002',
+    supplier: '湖北三新',
+    shipNo: 'SH20260810002',
+    status: 'pending',
+    arrivedSets: null,
+    arrivedBatch: null
   }
 ];
+
+/**
+ * 按换货时间早→晚冲销未到货换货记录
+ * @param {string} orderLineNo
+ * @param {number} offset
+ * @param {string} arrivedBatch 到货批次（当前验收单号）
+ * @returns {{ applied: number, shortfall: number }}
+ */
+export function applyExchangeOffsetToRecords(orderLineNo, offset, arrivedBatch) {
+  let remain = Number(offset) || 0;
+  if (!orderLineNo || remain <= 0) return { applied: 0, shortfall: 0 };
+
+  const candidates = exchangeRows
+    .filter(r => r.orderLineNo === orderLineNo && r.status === 'pending')
+    .sort((a, b) => String(a.exchangeTime || '').localeCompare(String(b.exchangeTime || '')));
+
+  let applied = 0;
+  for (const row of candidates) {
+    if (remain <= 0) break;
+    const exchangeSets = Number(row.exchangeSets) || 0;
+    const arrived = Number(row.arrivedSets) || 0;
+    const can = Math.max(0, exchangeSets - arrived);
+    if (can <= 0) continue;
+    const take = Math.min(remain, can);
+    row.arrivedSets = arrived + take;
+    row.arrivedBatch = arrivedBatch || row.arrivedBatch || '';
+    if ((Number(row.arrivedSets) || 0) >= exchangeSets) {
+      row.status = 'arrived';
+    }
+    remain -= take;
+    applied += take;
+  }
+  return { applied, shortfall: remain };
+}
 
 export const EXCHANGE_COLUMNS = [
   { key: 'id', label: '序号' },

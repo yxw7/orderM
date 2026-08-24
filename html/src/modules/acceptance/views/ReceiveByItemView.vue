@@ -151,7 +151,8 @@ import {
   getReceiveOrderRows,
   needsBarcodeAllocation,
   applyReceiveFlowToPendingRow,
-  resolveReceiveSetSummary
+  resolveReceiveSetSummary,
+  splitReceiveAgainstExchange
 } from '@/modules/acceptance/data/receive-by-item';
 import { createAcceptanceRows } from '@/modules/acceptance/data/acceptance-list';
 import {
@@ -159,6 +160,7 @@ import {
   applyAcceptanceSpeciesFlow,
   sumAcceptanceSpeciesSetStats
 } from '@/modules/acceptance/data/acceptance-detail';
+import { applyExchangeOffsetToRecords } from '@/modules/acceptance/data/exchange-manage';
 import { clearPreAcceptDraft } from '@/modules/acceptance/data/pre-accept-drafts';
 
 defineOptions({ name: 'ReceiveByItemView' });
@@ -348,18 +350,20 @@ function buildFlowMeta(row, form = {}) {
     title: form.title ?? row.title,
     author: form.author ?? row.author,
     price: form.price ?? row.price,
+    actualPrice: form.actualPrice ?? row.actualPrice,
     currency: form.currency ?? row.currency,
     orderedSets: summary.ordered,
     carrier: row.carrier,
     barcode: row.barcode,
     catalogNo: row.catalogNo,
     copies: form.volumesPerSet ?? form.copies ?? row.copies,
-    piecesInSet: row.copies,
+    volumesInSet: form.volumesPerSet ?? form.copies ?? row.copies,
+    piecesInSet: form.copies ?? row.copies,
     reason: form.exchangeReason || form.returnReason || ''
   };
 }
 
-function commitFlow(flow, sets, form = {}) {
+function commitFlow(flow, sets, form = {}, opts = {}) {
   const row = selectedRow.value;
   const cur = current.value;
   const qty = Number(sets) || 0;
@@ -372,14 +376,72 @@ function commitFlow(flow, sets, form = {}) {
     window.alert(`超过待收货套数（当前待收 ${pending}）`);
     return false;
   }
+  const deductExchange = Number(opts.deductExchange) || 0;
   applyAcceptanceSpeciesFlow({
     resourceType: cur.type,
     orderLine: row.orderLine,
     flow,
     sets: qty,
-    meta: buildFlowMeta(row, form)
+    meta: {
+      ...buildFlowMeta(row, form),
+      ...(deductExchange > 0 ? { deductExchange } : {})
+    }
   });
-  applyReceiveFlowToPendingRow(row, flow, qty);
+  applyReceiveFlowToPendingRow(row, flow, qty, deductExchange > 0 ? { deductExchange } : {});
+  return true;
+}
+
+/**
+ * 收货：按是否优先换货拆分普通量 / 冲销量后写库
+ * @param {object} form
+ * @returns {boolean}
+ */
+function commitReceiveSplit(form) {
+  const row = selectedRow.value;
+  const cur = current.value;
+  if (!row || !cur) return false;
+  const qty = Number(form.receiveSets) || 0;
+  if (qty <= 0) {
+    window.alert('操作失败：套数无效');
+    return false;
+  }
+  const summary = resolveReceiveSetSummary(row);
+  if (qty > summary.pending) {
+    window.alert(`超过待收货套数（当前待收 ${summary.pending}）`);
+    return false;
+  }
+
+  const { normal, offset } = splitReceiveAgainstExchange(
+    qty,
+    summary.pending,
+    summary.exchange,
+    Boolean(form.againstExchange)
+  );
+
+  const writeNormal = () => {
+    if (normal <= 0) return true;
+    return commitFlow('receive', normal, form);
+  };
+  const writeOffset = () => {
+    if (offset <= 0) return true;
+    const { applied, shortfall } = applyExchangeOffsetToRecords(
+      row.orderLine,
+      offset,
+      cur.id || ''
+    );
+    if (shortfall > 0) {
+      window.alert(`换货记录可冲销量不足（已冲 ${applied}，缺口 ${shortfall}），已按实际可冲量更新`);
+    }
+    return commitFlow('receive', offset, form, { deductExchange: applied });
+  };
+
+  if (form.againstExchange) {
+    if (!writeOffset()) return false;
+    if (!writeNormal()) return false;
+  } else {
+    if (!writeNormal()) return false;
+    if (!writeOffset()) return false;
+  }
   return true;
 }
 
@@ -394,7 +456,7 @@ function onDispositionConfirm(payload) {
   const ret = payload?.return || null;
 
   if (receive) {
-    if (!commitFlow('receive', receive.receiveSets, receive)) return;
+    if (!commitReceiveSplit(receive)) return;
     if (current.value?.id && row?.orderLine) {
       clearPreAcceptDraft(current.value.id, row.orderLine);
     }

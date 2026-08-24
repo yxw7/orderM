@@ -132,6 +132,13 @@
                 <span class="absolute bottom-2 right-2 text-xs text-gray-400">{{ avForm.remark.length }}</span>
               </div>
             </div>
+            <label
+              v-if="showAgainstExchange"
+              class="flex items-center gap-2 pl-[4.5rem] text-sm text-gray-700 cursor-pointer select-none"
+            >
+              <input v-model="againstExchange" type="checkbox" class="rounded border-gray-300">
+              <span>优先对换货记录收货</span>
+            </label>
           </template>
           <template v-else>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -193,6 +200,13 @@
                 <span class="absolute bottom-2 right-2 text-xs text-gray-400">{{ paperForm.remark.length }}</span>
               </div>
             </div>
+            <label
+              v-if="showAgainstExchange"
+              class="flex items-center gap-2 pl-[4.5rem] text-sm text-gray-700 cursor-pointer select-none"
+            >
+              <input v-model="againstExchange" type="checkbox" class="rounded border-gray-300">
+              <span>优先对换货记录收货</span>
+            </label>
           </template>
         </section>
 
@@ -201,15 +215,18 @@
           <h3 class="text-sm font-medium text-gray-800 border-b border-gray-200 pb-1.5">换货</h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="flex items-center gap-2">
-              <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 换货数量</label>
+              <label class="text-gray-600 w-20 text-right shrink-0">换货数量</label>
               <input v-model="exchangeForm.exchangeQty" type="text" placeholder="请输入" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
             </div>
             <div class="flex items-center gap-2">
-              <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 换货原因</label>
-              <select v-model="exchangeForm.exchangeReason" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
-                <option value="">请选择</option>
-                <option v-for="opt in EXCHANGE_REASON_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
-              </select>
+              <label class="text-gray-600 w-20 text-right shrink-0">换货原因</label>
+              <ReasonSelect
+                v-model="exchangeForm.exchangeReason"
+                reason-type="exchange"
+                class="flex-1"
+                trigger-class="px-2 py-1.5"
+                placeholder="请选择"
+              />
             </div>
           </div>
         </section>
@@ -219,15 +236,18 @@
           <h3 class="text-sm font-medium text-gray-800 border-b border-gray-200 pb-1.5">退货</h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="flex items-center gap-2">
-              <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 退货数量</label>
+              <label class="text-gray-600 w-20 text-right shrink-0">退货数量</label>
               <input v-model="returnForm.returnQty" type="text" placeholder="请输入" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
             </div>
             <div class="flex items-center gap-2">
-              <label class="text-gray-600 w-20 text-right shrink-0"><span class="text-red-500">*</span> 退货原因</label>
-              <select v-model="returnForm.returnReason" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm">
-                <option value="">请选择</option>
-                <option v-for="opt in RETURN_REASON_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
-              </select>
+              <label class="text-gray-600 w-20 text-right shrink-0">退货原因</label>
+              <ReasonSelect
+                v-model="returnForm.returnReason"
+                reason-type="return"
+                class="flex-1"
+                trigger-class="px-2 py-1.5"
+                placeholder="请选择"
+              />
             </div>
           </div>
         </section>
@@ -262,9 +282,8 @@
 import { computed, nextTick, reactive, ref, watch } from 'vue';
 import BarcodeAllocatedResultModal from '@/modules/acceptance/components/BarcodeAllocatedResultModal.vue';
 import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
+import ReasonSelect from '@/components/common/ReasonSelect.vue';
 import {
-  EXCHANGE_REASON_OPTIONS,
-  RETURN_REASON_OPTIONS,
   RECEIVE_CARRIER_OPTIONS,
   calcBarcodeAllocation,
   isChineseAcceptanceLang,
@@ -304,6 +323,9 @@ const summary = computed(() => (
     ? resolveReceiveSetSummary(props.row)
     : { ordered: '—', received: '—', exchange: '—', returned: '—', pending: '—' }
 ));
+
+const showAgainstExchange = computed(() => (Number(summary.value.exchange) || 0) > 0);
+const againstExchange = ref(false);
 
 const orderLineRemark = computed(() => {
   const text = props.row?.remarkText;
@@ -467,6 +489,7 @@ function resetAllFromRow(row) {
   if (!row) return;
   barcodeResultOpen.value = false;
   pendingConfirmPayload.value = null;
+  againstExchange.value = false;
   fillPaperFromRow(row);
   fillAvFromRow(row);
   fillExchangeFromRow(row);
@@ -544,14 +567,14 @@ function buildValidatedPayload() {
   const returnQty = positiveQty(returnForm.returnQty);
 
   if (!receiveQty && !exchangeQty && !returnQty) {
-    window.alert('请至少填写一种处置套数');
+    window.alert('请至少填写一种验收套数');
     return null;
   }
 
   const pending = Number(summary.value.pending) || 0;
   const total = receiveQty + exchangeQty + returnQty;
   if (total > pending) {
-    window.alert(`处置套数合计不能大于待收套数（当前待收 ${pending}）`);
+    window.alert(`验收套数合计不能大于待收套数（当前待收 ${pending}）`);
     return null;
   }
 
@@ -577,8 +600,16 @@ function buildValidatedPayload() {
   let receive = null;
   if (receiveQty) {
     receive = isAv.value
-      ? { ...avForm, receiveSets: String(receiveQty) }
-      : { ...paperForm, receiveSets: String(receiveQty) };
+      ? {
+          ...avForm,
+          receiveSets: String(receiveQty),
+          againstExchange: showAgainstExchange.value ? againstExchange.value : false
+        }
+      : {
+          ...paperForm,
+          receiveSets: String(receiveQty),
+          againstExchange: showAgainstExchange.value ? againstExchange.value : false
+        };
   }
 
   return {

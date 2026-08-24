@@ -68,7 +68,7 @@ function hasChildren(node) {
 }
 
 /**
- * 是否为叶子（四级馆藏地 / 未关联馆藏）
+ * 是否为叶子（馆藏地 / 未关联馆藏地，含一级根未关联）
  * @param {Object} node
  * @returns {boolean}
  */

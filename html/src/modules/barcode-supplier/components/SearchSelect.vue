@@ -1,7 +1,7 @@
 <template>
   <div ref="rootRef" class="relative">
     <input
-      :value="displayValue"
+      :value="inputText"
       type="text"
       autocomplete="off"
       :placeholder="placeholder"
@@ -37,54 +37,87 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({
+  /** 选中值：valueMode 为 false 时为展示文案，为 true 时为 getValue(option) */
   modelValue: { type: String, default: '' },
   options: { type: Array, default: () => [] },
   placeholder: { type: String, default: '请选择' },
   readonly: { type: Boolean, default: false },
   error: { type: String, default: '' },
+  /** true 时 modelValue 绑定选项值（如 orderId），展示文案取 getLabel */
+  valueMode: { type: Boolean, default: false },
   getLabel: { type: Function, default: item => item },
   getValue: { type: Function, default: item => item }
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'change']);
 
 const rootRef = ref(null);
 const dropdownOpen = ref(false);
 const keyword = ref('');
 
-const displayValue = computed({
-  get: () => props.modelValue,
-  set: val => emit('update:modelValue', val)
+const selectedLabel = computed(() => {
+  if (!props.valueMode || !props.modelValue) return '';
+  const match = (props.options || []).find(opt => props.getValue(opt) === props.modelValue);
+  return match ? props.getLabel(match) : '';
+});
+
+const inputText = computed(() => {
+  if (dropdownOpen.value) return keyword.value;
+  if (props.valueMode) return selectedLabel.value;
+  return props.modelValue || '';
 });
 
 const filteredOptions = computed(() => {
   const kw = keyword.value.trim().toLowerCase();
   if (!kw) return props.options;
-  return props.options.filter(option => props.getLabel(option).toLowerCase().includes(kw));
+  return props.options.filter(option => {
+    const label = props.getLabel(option).toLowerCase();
+    const value = String(props.getValue(option) || '').toLowerCase();
+    return label.includes(kw) || value.includes(kw);
+  });
 });
 
-watch(() => props.modelValue, val => {
-  keyword.value = val || '';
-});
+watch(
+  () => [props.modelValue, props.options],
+  () => {
+    if (props.valueMode) {
+      keyword.value = selectedLabel.value;
+    } else {
+      keyword.value = props.modelValue || '';
+    }
+  },
+  { immediate: true }
+);
 
 function openDropdown() {
   if (props.readonly) return;
-  keyword.value = props.modelValue || '';
+  keyword.value = props.valueMode ? (selectedLabel.value || '') : (props.modelValue || '');
   dropdownOpen.value = true;
 }
 
 function onInput(e) {
   const val = e.target.value;
   keyword.value = val;
-  emit('update:modelValue', val);
+  if (props.valueMode) {
+    emit('update:modelValue', '');
+  } else {
+    emit('update:modelValue', val);
+  }
   dropdownOpen.value = true;
 }
 
 function selectOption(option) {
-  const label = props.getLabel(option);
-  emit('update:modelValue', label);
-  keyword.value = label;
+  if (props.valueMode) {
+    const value = props.getValue(option);
+    emit('update:modelValue', value);
+    keyword.value = props.getLabel(option);
+  } else {
+    const label = props.getLabel(option);
+    emit('update:modelValue', label);
+    keyword.value = label;
+  }
   dropdownOpen.value = false;
+  emit('change');
 }
 
 function onDocClick(e) {

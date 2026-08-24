@@ -25,11 +25,11 @@ export const PRE_ACCEPT_STEPS = [
   { step: 4, title: '数据入库' }
 ];
 
-/** 不可勾选「是否校验」的标准字段 */
+/** 默认勾选且不可取消「是否校验」的标准字段（行号用于匹配；套数按待收范围校验） */
 export const PRE_ACCEPT_MUST_MATCH_EXCLUDED = new Set(['orderLine', 'receiveQty']);
 
 /**
- * 默认勾选「是否校验」：实洋、套内册数/件数、定价（纸质）/码洋（视听）
+ * 默认可取消勾选「是否校验」：实洋、套内册数/件数、定价（纸质）/码洋（视听）
  * @type {string[]}
  */
 export const PRE_ACCEPT_DEFAULT_MUST_MATCH_FIELDS = ['netPrice', 'volCount', 'price', 'listPrice'];
@@ -42,6 +42,15 @@ export const PRE_ACCEPT_HEADER_PREVIEW_LIMIT = 20;
  */
 export function canPreAcceptMustMatch(fieldKey) {
   return Boolean(fieldKey) && !PRE_ACCEPT_MUST_MATCH_EXCLUDED.has(fieldKey);
+}
+
+/**
+ * 映射到订单行号/收货套数时「是否校验」强制勾选
+ * @param {string} fieldKey
+ * @returns {boolean}
+ */
+export function isPreAcceptMustMatchLockedOn(fieldKey) {
+  return PRE_ACCEPT_MUST_MATCH_EXCLUDED.has(fieldKey);
 }
 
 /**
@@ -79,6 +88,10 @@ export function buildMustMatchByCol(columnMapping, mustMatchFields) {
   /** @type {Record<string, boolean>} */
   const byCol = {};
   Object.entries(columnMapping || {}).forEach(([col, std]) => {
+    if (isPreAcceptMustMatchLockedOn(std)) {
+      byCol[col] = true;
+      return;
+    }
     byCol[col] = Boolean(std && set.has(std));
   });
   return byCol;
@@ -665,17 +678,21 @@ export function validatePreAcceptRows(shipRows, ctx, columnMapping, mustMatchFie
   );
   const passCount = rows.filter(r => r.result === '通过').length;
   const failCount = rows.length - passCount;
+  const overCount = rows.filter(r => r.result === '通过' && r.qtyOverPending).length;
+  const exportFailCount = rows.filter(r => r.result !== '通过' || r.qtyOverPending).length;
   return {
     rows,
     passCount,
     failCount,
+    overCount,
+    exportFailCount,
     allPassed: failCount === 0 && rows.length > 0,
     viewableSubscribers
   };
 }
 
 /**
- * 下载失败数据：仅失败行，原列 + 失败原因
+ * 下载解析结果：失败行 + 套数大于待收（仍通过）的行；原列 + 失败原因
  * @param {object[]} validatedRows
  * @param {string} [fileName]
  * @param {string[]} [fileColumns]
@@ -684,7 +701,7 @@ export function exportPreAcceptValidationResult(validatedRows, fileName, fileCol
   exportFailedMappedRows(
     validatedRows,
     fileColumns || validatedRows[0]?.fileColumns || [...PRE_ACCEPT_MOCK_FILE_COLUMNS],
-    fileName || `预验收失败数据_${Date.now()}.xls`
+    fileName || `预验收解析结果_${Date.now()}.xls`
   );
 }
 

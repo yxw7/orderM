@@ -84,7 +84,7 @@
                 <p class="text-sm text-orange-500 mt-2">支持类型：xls、xlsx</p>
                 <p v-if="uploadError" class="text-red-500 text-xs mt-1">{{ uploadError }}</p>
                 <p class="text-xs text-gray-400 mt-3">
-                  演示提示：文件名含「表头」时默认表头在第 4 行；含「部分」模拟部分收套数；含「差异」模拟字段差异（仅勾选是否校验时失败）；含「超收」模拟套数非法；含「不匹配」或「头不一致」模拟验收单头不一致；含「入库失败」模拟第 4 步入库失败。
+                  演示提示：文件名含「表头」时默认表头在第 4 行；含「部分」模拟部分收套数；含「差异」模拟字段差异（仅勾选是否校验时失败）；含「超收」模拟套数大于待收（仍通过，按待收入库，失败数据含异常）；含「不匹配」或「头不一致」模拟验收单头不一致；含「入库失败」模拟第 4 步入库失败。
                 </p>
               </div>
             </div>
@@ -145,7 +145,7 @@
             </p>
 
             <p class="text-sm text-gray-600 mb-2 shrink-0">
-              将文件列映射到系统标准字段（标<span class="text-red-500">*</span>为必填；勾选「是否校验」的字段与订单行不等则失败）
+              将文件列映射到系统字段（标<span class="text-red-500">*</span>为必填）
             </p>
             <p
               v-if="!fileColumns.length && !headerApplyError"
@@ -159,8 +159,18 @@
                 <thead class="bg-gray-50 border-b sticky top-0">
                   <tr>
                     <th class="px-3 py-2 text-left text-gray-600">文件列名</th>
-                    <th class="px-3 py-2 text-left text-gray-600">系统标准字段</th>
-                    <th class="px-3 py-2 text-center text-gray-600 w-24">是否校验</th>
+                    <th class="px-3 py-2 text-left text-gray-600">系统字段</th>
+                    <th class="px-3 py-2 text-center text-gray-600 w-28">
+                      <span class="inline-flex items-center justify-center gap-1">
+                        是否校验
+                        <HoverTooltip :text="mustMatchRuleTip" :z-index="200">
+                          <span
+                            class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-gray-400 text-gray-500 text-[10px] leading-none font-medium cursor-help"
+                            aria-label="系统校验规则"
+                          >i</span>
+                        </HoverTooltip>
+                      </span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -216,19 +226,24 @@
             <div v-else class="text-sm text-gray-700 text-center space-y-3">
               <p>
                 共校验到 {{ validated.rows.length }} 条数据，其中
-                <span class="text-emerald-600">{{ validated.passCount }}</span> 条成功，
+                <span class="text-emerald-600">{{ validated.passCount }}</span> 条成功<span
+                  v-if="validated.overCount > 0"
+                >（含 {{ validated.overCount }} 条超收）</span>，
                 <span :class="validated.failCount ? 'text-red-600' : 'text-gray-700'">{{ validated.failCount }}</span> 条失败。
               </p>
               <p class="text-sm text-orange-500">
                 点击「下一步」按钮，只导入成功行，不导入失败行。
               </p>
-              <div v-if="validated.failCount > 0" class="pt-1">
+              <p class="text-sm text-gray-500">
+                「下载解析结果」会一并导出超收行。
+              </p>
+              <div v-if="validated.exportFailCount > 0" class="pt-1">
                 <button
                   type="button"
                   class="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50"
                   @click="exportResult"
                 >
-                  下载失败数据
+                  下载解析结果
                 </button>
               </div>
             </div>
@@ -326,6 +341,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue';
+import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import {
   listMappingTemplates,
   getMappingTemplateEntry,
@@ -339,6 +355,7 @@ import {
   PRE_ACCEPT_TEMPLATE_CTX,
   PRE_ACCEPT_DEFAULT_MUST_MATCH_FIELDS,
   canPreAcceptMustMatch,
+  isPreAcceptMustMatchLockedOn,
   isPreAcceptDefaultMustMatch,
   collectPreAcceptMustMatchFields,
   buildMustMatchByCol,
@@ -362,6 +379,17 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
+const mustMatchRuleTip = [
+  '1.字段校验：勾选后，映射字段与订单行数据不一致则校验失败；未勾选允许数据不同。',
+  '2.强制校验：订单行号、收货套数默认开启且不可取消。',
+  '-行号用于订单匹配；',
+  '-收货套数≤0 标记【套数非法】；套数超出待收数量不失败，按订单行待收数量存储并归入异常数据导出。',
+  '3.ISBN、ISRC 比对：系统自动去除发货单字段内空格、「-」后匹配。',
+  '4.数据错误：订单行号为空，或定价 / 码洋、实洋、收货套数、套内册数（件数）无法解析。',
+  '5.未匹配：关联订户下无可收货的对应订单行。',
+  '6.验收单不匹配：订单行的资源类型、语种、采选方式、供应商与验收单信息不一致。'
+].join('\n');
+
 const currentStep = ref(1);
 const uploadedFile = ref(null);
 const uploadError = ref('');
@@ -384,6 +412,8 @@ const validated = ref({
   rows: [],
   passCount: 0,
   failCount: 0,
+  overCount: 0,
+  exportFailCount: 0,
   allPassed: false,
   viewableSubscribers: []
 });
@@ -450,6 +480,8 @@ function resetState() {
     rows: [],
     passCount: 0,
     failCount: 0,
+    overCount: 0,
+    exportFailCount: 0,
     allPassed: false,
     viewableSubscribers: []
   };
@@ -534,7 +566,9 @@ function canToggleMustMatch(col) {
 function onMappingChange(fileCol, stdFieldKey) {
   columnMapping.value = { ...columnMapping.value, [fileCol]: stdFieldKey };
   const next = { ...mustMatchByCol.value };
-  if (!canPreAcceptMustMatch(stdFieldKey)) {
+  if (isPreAcceptMustMatchLockedOn(stdFieldKey)) {
+    next[fileCol] = true;
+  } else if (!canPreAcceptMustMatch(stdFieldKey)) {
     next[fileCol] = false;
   } else {
     next[fileCol] = isPreAcceptDefaultMustMatch(stdFieldKey);
@@ -662,8 +696,21 @@ function templateMeta() {
 }
 
 function saveOrUpdateTemplate() {
+  const rowNo = Math.floor(Number(headerRowInput.value) || 0);
+  if (rowNo < 1) {
+    window.alert('请填写表头行号');
+    return;
+  }
   if (!fileColumns.value.length || appliedHeaderRow.value < 1) {
     window.alert('请先读取表头后再保存模板');
+    return;
+  }
+  if (rowNo !== appliedHeaderRow.value) {
+    window.alert('表头行号已变更，请先点击「读取表头」');
+    return;
+  }
+  if (mappingError.value) {
+    window.alert(mappingError.value);
     return;
   }
   if (selectedTemplateName.value) {
@@ -718,7 +765,7 @@ function runValidate() {
 function exportResult() {
   exportPreAcceptValidationResult(
     validated.value.rows,
-    `预验收失败数据_${Date.now()}.xls`,
+    `预验收解析结果_${Date.now()}.xls`,
     fileColumns.value
   );
 }
@@ -765,6 +812,8 @@ async function goNext() {
       rows: [],
       passCount: 0,
       failCount: 0,
+      overCount: 0,
+      exportFailCount: 0,
       allPassed: false,
       viewableSubscribers: []
     };

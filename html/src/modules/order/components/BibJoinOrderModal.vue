@@ -15,10 +15,10 @@
           <!-- 上：检索 + 待发订订单列表 -->
           <div class="flex flex-wrap items-end gap-3">
             <div class="flex items-center gap-2">
-              <label class="text-sm text-gray-600 w-16 text-right shrink-0">订单号</label>
+              <label class="text-sm text-gray-600 w-16 text-right shrink-0">订单名称</label>
               <input
-                v-model="search.orderId"
-                placeholder="精确匹配"
+                v-model="search.orderName"
+                placeholder="模糊查询"
                 class="bib-join-order-search-control border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
               >
             </div>
@@ -239,8 +239,8 @@ function resolveActiveCurrencyCode(code) {
   return getDefaultCurrencyCode();
 }
 
-const search = reactive({ orderId: '', method: '全部', supplier: '全部' });
-const activeSearch = reactive({ orderId: '', method: '全部', supplier: '全部' });
+const search = reactive({ orderName: '', method: '全部', supplier: '全部' });
+const activeSearch = reactive({ orderName: '', method: '全部', supplier: '全部' });
 const selectedIds = ref(new Set());
 const siteRows = ref([]);
 const form = reactive({ currency: getDefaultCurrencyCode(), price: '', copiesInSet: '1', remark: '' });
@@ -254,8 +254,8 @@ const supplierOptions = computed(() => {
 /** 按创建时间倒序排列待发订订单 */
 const displayOrders = computed(() => {
   const filtered = props.orders.filter(order => {
-    const idKey = activeSearch.orderId.trim().toLowerCase();
-    if (idKey && order.orderId.toLowerCase() !== idKey) return false;
+    const nameKey = activeSearch.orderName.trim().toLowerCase();
+    if (nameKey && !String(order.orderName || '').toLowerCase().includes(nameKey)) return false;
     if (activeSearch.method !== '全部' && order.method !== activeSearch.method) return false;
     if (activeSearch.supplier !== '全部' && order.supplier !== activeSearch.supplier) return false;
     return true;
@@ -294,7 +294,7 @@ watch(() => props.open, val => {
  */
 function restoreFromCache() {
   const cached = loadJoinOrderFormCache();
-  const defaultSearch = { orderId: '', method: '全部', supplier: '全部' };
+  const defaultSearch = { orderName: '', method: '全部', supplier: '全部' };
 
   if (!cached) {
     Object.assign(search, defaultSearch);
@@ -308,8 +308,8 @@ function restoreFromCache() {
     return;
   }
 
-  Object.assign(search, cached.search || defaultSearch);
-  Object.assign(activeSearch, cached.activeSearch || cached.search || defaultSearch);
+  Object.assign(search, pickJoinOrderSearch(cached.search, defaultSearch));
+  Object.assign(activeSearch, pickJoinOrderSearch(cached.activeSearch || cached.search, defaultSearch));
   if (!BIB_JOIN_ORDER_METHOD_FILTER_OPTIONS.includes(search.method)) {
     search.method = '全部';
   }
@@ -395,19 +395,32 @@ function toggleOrder(orderId) {
   rebuildSiteRows(setsByOrderId);
 }
 
+/**
+ * 归一化检索条件：忽略旧缓存中的订单号字段
+ * @param {Record<string, unknown>} [source]
+ * @param {{ orderName: string, method: string, supplier: string }} fallback
+ */
+function pickJoinOrderSearch(source, fallback) {
+  return {
+    orderName: source?.orderName != null ? String(source.orderName) : fallback.orderName,
+    method: source?.method != null ? String(source.method) : fallback.method,
+    supplier: source?.supplier != null ? String(source.supplier) : fallback.supplier
+  };
+}
+
 /** 应用检索条件 */
 function applySearch() {
-  activeSearch.orderId = search.orderId;
+  activeSearch.orderName = search.orderName;
   activeSearch.method = search.method;
   activeSearch.supplier = search.supplier;
 }
 
 /** 重置检索条件 */
 function resetSearch() {
-  search.orderId = '';
+  search.orderName = '';
   search.method = '全部';
   search.supplier = '全部';
-  activeSearch.orderId = '';
+  activeSearch.orderName = '';
   activeSearch.method = '全部';
   activeSearch.supplier = '全部';
 }

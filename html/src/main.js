@@ -8,6 +8,7 @@ import { registerBibQueryPrdData } from '@/prd/bib-query-prd-data';
 import { registerAcceptanceDetailPrdData } from '@/prd/acceptance-detail-prd-data';
 import { registerAcceptanceManagePrdData } from '@/prd/acceptance-manage-prd-data';
 import { registerReceiveByItemPrdData } from '@/prd/receive-by-item-prd-data';
+import { registerSubscriberManagePrdData } from '@/prd/subscriber-manage-prd-data';
 import './styles/main.css';
 
 registerOrderManagePrdData();
@@ -16,6 +17,7 @@ registerBibQueryPrdData();
 registerAcceptanceDetailPrdData();
 registerAcceptanceManagePrdData();
 registerReceiveByItemPrdData();
+registerSubscriberManagePrdData();
 
 const app = createApp(App);
 app.use(createPinia());

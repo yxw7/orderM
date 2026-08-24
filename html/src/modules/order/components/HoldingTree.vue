@@ -56,7 +56,7 @@ function toggleNode(pathKey) {
 }
 
 /**
- * 选中四级叶子（馆藏地 / 未关联馆藏）
+ * 选中叶子（四级馆藏地 / 所属馆下未关联 / 一级根未关联）
  * @param {{ node: Object, pathKey: string }} payload
  */
 function selectLeaf(payload) {

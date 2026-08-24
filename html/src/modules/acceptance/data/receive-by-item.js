@@ -12,7 +12,7 @@ export const CURRENCY_RATES = {
 export const RECEIVE_CARRIER_OPTIONS = ['', 'CD', 'LP', 'DVD', '蓝光', '磁带'];
 
 export const paperBookOrderRows = [
-  { no: 1, location: '首都华威桥馆', orderLine: 'st00120250921005-3', title: '地质勘查工程与生态修复', isbn: '9787565855375', author: '张昕, 冯红彬, 张海燕主编', publisher: '地质出版社', edition: '影印本', price: '58.00', currency: 'CNY', copies: 3, counts: '2/0/0/0/0', orderedSets: 2, receivedSets: 0, pendingSets: 2, actualPrice: '58.00', barcodeStart: '001T269300008', remark: true, remarkText: '发订备注示例', orderer: 'lijia', orderTime: '2025-09-21 08:50', method: '现采', supplier: '湖北三新' },
+  { no: 1, location: '首都华威桥馆', orderLine: 'st00120250921005-3', title: '地质勘查工程与生态修复', isbn: '9787565855375', author: '张昕, 冯红彬, 张海燕主编', publisher: '地质出版社', edition: '影印本', price: '58.00', currency: 'CNY', copies: 3, counts: '10/0/3/0/0', orderedSets: 10, receivedSets: 0, exchangedSets: 3, pendingSets: 10, actualPrice: '58.00', barcodeStart: '001T269300008', remark: true, remarkText: '发订备注示例（含已换货，可测优先对换货记录收货）', orderer: 'lijia', orderTime: '2025-09-21 08:50', method: '现采', supplier: '湖北三新' },
   { no: 2, location: '首都大兴机场分馆', orderLine: 'st00120250923003-4', title: 'Python从入门到实践', isbn: '9787559826398', author: '[美] 埃里克·马瑟斯', publisher: '人民邮电出版社', edition: '第2版', price: '89.0', currency: 'CNY', copies: 1, counts: '2/0/0/0/0', orderedSets: 2, receivedSets: 0, pendingSets: 2, actualPrice: '89.0', barcodeStart: '001T269300010', remark: false, orderer: 'lijia', orderTime: '2025-09-23 10:15', method: '现采', supplier: '湖北三新' },
   { no: 3, location: '北京城市图书馆', orderLine: 'st00120250815002-4', title: '拆掉思维里的墙', isbn: '9787559826398', author: '古典', publisher: '北京联合出版公司', edition: '精装', price: '45.0', currency: 'CNY', copies: 1, counts: '1/0/0/0/0', orderedSets: 1, receivedSets: 0, pendingSets: 1, actualPrice: '45.0', barcodeStart: '001T269300020', remark: false, orderer: 'wangxx', orderTime: '2025-08-15 14:20', method: '现采', supplier: '北京市图书进出口有限公司' },
   { no: 4, location: '北京城市图书馆', orderLine: 'st00120251104001-2', title: '蛇结', isbn: '9787559826398', author: '[法] 弗朗索瓦·莫里亚克', publisher: '江苏凤凰文艺出版社', edition: '平装', price: '42.0', currency: 'CNY', copies: 1, counts: '1/0/0/0/0', orderedSets: 1, receivedSets: 0, pendingSets: 1, actualPrice: '42.0', barcodeStart: '001T269300030', remark: true, remarkText: '注意版本', orderer: 'zhaofu', orderTime: '2025-11-04 09:30', method: '现采', supplier: '湖北三新' },
@@ -120,18 +120,44 @@ export function resolveReceiveSetSummary(row) {
 }
 
 /**
+ * 收货对换货冲销拆分（见 2026-08-24-receive-against-exchange-design）
+ * @param {number} receiveQty
+ * @param {number} pending
+ * @param {number} exchanged
+ * @param {boolean} againstExchange 勾选「优先对换货记录收货」
+ * @returns {{ normal: number, offset: number }}
+ */
+export function splitReceiveAgainstExchange(receiveQty, pending, exchanged, againstExchange) {
+  const R = Number(receiveQty) || 0;
+  const P = Number(pending) || 0;
+  const E = Number(exchanged) || 0;
+  if (R <= 0) return { normal: 0, offset: 0 };
+  if (againstExchange) {
+    const offset = Math.min(R, E);
+    return { normal: R - offset, offset };
+  }
+  const normalCap = Math.max(0, P - E);
+  const normal = Math.min(R, normalCap);
+  return { normal, offset: R - normal };
+}
+
+/**
  * 更新逐条收货待收货行上的收/换/退套数（与按种明细写回分离）
  * @param {object} row
  * @param {'receive'|'exchange'|'return'} flow
  * @param {number} sets
+ * @param {{ deductExchange?: number }} [opts] 收货同时冲销已换货套数
  */
-export function applyReceiveFlowToPendingRow(row, flow, sets) {
+export function applyReceiveFlowToPendingRow(row, flow, sets, opts = {}) {
   if (!row) return;
   const qty = Number(sets) || 0;
   if (qty <= 0) return;
   const s = resolveReceiveSetSummary(row);
-  if (flow === 'receive') s.received += qty;
-  else if (flow === 'exchange') s.exchange += qty;
+  if (flow === 'receive') {
+    s.received += qty;
+    const deduct = Number(opts.deductExchange) || 0;
+    if (deduct > 0) s.exchange = Math.max(0, s.exchange - deduct);
+  } else if (flow === 'exchange') s.exchange += qty;
   else if (flow === 'return') s.returned += qty;
   else return;
   s.pending = Math.max(s.ordered - s.received - s.returned, 0);
@@ -329,6 +355,3 @@ export function needsBarcodeAllocation(acceptance) {
   if (acceptance.barcode === '是') return true;
   return false;
 }
-
-export const EXCHANGE_REASON_OPTIONS = ['换货', '残缺损'];
-export const RETURN_REASON_OPTIONS = ['退货', '损坏退货'];

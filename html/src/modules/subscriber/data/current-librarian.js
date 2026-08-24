@@ -1,5 +1,6 @@
 import { appConfig } from '@/config/app-config';
 import { librarianRows } from '@/modules/subscriber/stores/association';
+import { mergeSubscriberDedupScope, subscriberRows } from '@/modules/subscriber/data/subscriber-manage';
 
 /** 当前登录馆员未关联订户时的提示文案 */
 export const NO_ASSOCIATED_SUBSCRIBER_MESSAGE = '您没有关联订户，无法查看数据';
@@ -71,4 +72,16 @@ export function getCurrentViewableSubscribers() {
   if (!associated.length) return [];
   if (!configured.length) return associated;
   return associated.filter(name => configured.includes(name));
+}
+
+/**
+ * 当前馆员关联订户的查重范围合并结果（分馆有序 + 馆藏地并集）
+ * @param {Object[]} [subscriberList] - 订户主数据；缺省使用 subscriberRows
+ * @returns {{ branchCodes: string[], collectionCodes: string[] }}
+ */
+export function resolveLibrarianDedupScope(subscriberList) {
+  return mergeSubscriberDedupScope(
+    subscriberList || subscriberRows,
+    getCurrentLibrarianAssociatedSubscribers()
+  );
 }

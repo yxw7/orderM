@@ -227,19 +227,23 @@
                               <input v-model.number="child.exchange" type="number" min="0" class="w-14 border border-gray-300 rounded px-1 py-0.5">
                             </td>
                             <td class="px-2 py-1.5">
-                              <select v-model="child.exchangeReason" class="border border-gray-300 rounded px-1 py-0.5 min-w-[100px]">
-                                <option value="">请选择</option>
-                                <option v-for="r in EXCHANGE_REASON_OPTIONS" :key="r" :value="r">{{ r }}</option>
-                              </select>
+                              <ReasonSelect
+                                v-model="child.exchangeReason"
+                                reason-type="exchange"
+                                trigger-class="px-1 py-0.5 min-w-[100px]"
+                                placeholder="请选择"
+                              />
                             </td>
                             <td class="px-2 py-1.5">
                               <input v-model.number="child.ret" type="number" min="0" class="w-14 border border-gray-300 rounded px-1 py-0.5">
                             </td>
                             <td class="px-2 py-1.5">
-                              <select v-model="child.returnReason" class="border border-gray-300 rounded px-1 py-0.5 min-w-[100px]">
-                                <option value="">请选择</option>
-                                <option v-for="r in RETURN_REASON_OPTIONS" :key="r" :value="r">{{ r }}</option>
-                              </select>
+                              <ReasonSelect
+                                v-model="child.returnReason"
+                                reason-type="return"
+                                trigger-class="px-1 py-0.5 min-w-[100px]"
+                                placeholder="请选择"
+                              />
                             </td>
                           </tr>
                           <tr v-if="!row.children.length">
@@ -346,14 +350,13 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import HoverTooltip from '@/modules/acceptance/components/HoverTooltip.vue';
 import DeliveryImportPickOrderLineModal from '@/modules/acceptance/components/DeliveryImportPickOrderLineModal.vue';
+import ReasonSelect from '@/components/common/ReasonSelect.vue';
 import { useAcceptanceStore } from '@/modules/acceptance/stores/acceptance';
 import { useBreadcrumbBack } from '@/composables/use-breadcrumb-back';
 import { markAcceptanceInProgressAfterImport } from '@/modules/acceptance/data/acceptance-list';
 import {
   DELIVERY_IMPORT_STEPS,
   PREVIEW_MATCHING_DURATION_MS,
-  EXCHANGE_REASON_OPTIONS,
-  RETURN_REASON_OPTIONS,
   MOCK_FILE_COLUMNS,
   MOCK_PARSED_ROWS,
   isAllowedDeliveryFileName,

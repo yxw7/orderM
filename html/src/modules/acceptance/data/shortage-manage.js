@@ -13,7 +13,6 @@ export const SHORTAGE_STATUS_TEXT_TO_KEY = {
 export const SHORTAGE_SUPPLIER_OPTIONS = ['全部', '湖南长沙', '湖北三新', '教图'];
 export const SHORTAGE_CHANGE_SUPPLIER_OPTIONS = ['湖南长沙', '湖北三新', '教图', '北京市图书进出口有限公司'];
 export const SHORTAGE_BUDGET_OPTIONS = ['集团2020年度预算', '集团2021年度预算'];
-export const CANCEL_REASON_OPTIONS = ['撤订', '退订'];
 
 export const shortageRows = [
   {

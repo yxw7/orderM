@@ -373,7 +373,6 @@ import {
   buildDisplayHoldingTree,
   countBibHoldingCopies,
   filterHoldingDedupItemsByLeaf,
-  filterHoldingDedupMarcFields,
   formatDedupFieldLabels,
   getHoldingBibCardFields,
   getHoldingBibFieldDisplayValue,
@@ -487,24 +486,23 @@ const activeHoldingBib = computed(() => {
   return holdingResults.value.find(item => item.bibRecordNo === no) || holdingResults.value[0] || null;
 });
 
-const activeMarcFields = computed(() => {
-  if (!activeHoldingBib.value?.marcFields?.length) return [];
-  return filterHoldingDedupMarcFields(activeHoldingBib.value.marcFields, lineLanguageCategory.value);
-});
+/** MARC 不做语种过滤：接口/书目返回哪些字段就展示哪些 */
+const activeMarcFields = computed(() => activeHoldingBib.value?.marcFields || []);
 
 const activeHoldingTree = computed(() => {
   if (!activeHoldingBib.value) return [];
+  // 本版：不做分馆/机构优先序排序；buildDisplayHoldingTree 内置顶首都图书馆，并按规则挂未关联馆藏地
   return buildDisplayHoldingTree(
     activeHoldingBib.value.holdingTree,
-    activeHoldingBib.value.unassignedCopyCount
+    getHoldingDedupPhysicalItems(activeHoldingBib.value)
   );
 });
 
 const allPhysicalItems = computed(() => getHoldingDedupPhysicalItems(activeHoldingBib.value));
 
-const filteredPhysicalItems = computed(() =>
+const filteredPhysicalItems = computed(() => (
   filterHoldingDedupItemsByLeaf(allPhysicalItems.value, selectedLeafFilter.value)
-);
+));
 
 const itemColumns = HOLDING_DEDUP_ITEM_COLUMNS;
 
@@ -656,7 +654,18 @@ onBeforeUnmount(() => {
 function onSelectLeaf(payload) {
   selectedLeafKey.value = payload.pathKey;
   if (payload.node?.unassigned) {
-    selectedLeafFilter.value = { unassigned: true };
+    if (payload.node.unassignedRoot) {
+      selectedLeafFilter.value = {
+        unassigned: true,
+        unassignedRoot: true,
+        includeOwners: [...(payload.node.includeOwners || [])]
+      };
+    } else {
+      selectedLeafFilter.value = {
+        unassigned: true,
+        ownerLibrary: payload.node.ownerLibrary || ''
+      };
+    }
   } else {
     selectedLeafFilter.value = { name: payload.node?.name || '' };
   }
