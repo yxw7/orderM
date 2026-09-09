@@ -75,9 +75,9 @@ export function getCurrentViewableSubscribers() {
 }
 
 /**
- * 当前馆员关联订户的查重范围合并结果（分馆有序 + 馆藏地并集）
+ * 当前馆员关联订户的查重范围合并结果（机构组织 → 分馆编码有序；馆藏地本版为空）
  * @param {Object[]} [subscriberList] - 订户主数据；缺省使用 subscriberRows
- * @returns {{ branchCodes: string[], collectionCodes: string[] }}
+ * @returns {{ branchCodes: string[], collectionCodes: string[], institutionIds: string[], campusIds: string[] }}
  */
 export function resolveLibrarianDedupScope(subscriberList) {
   return mergeSubscriberDedupScope(

@@ -37,6 +37,7 @@
       <template #cell-name="{ row }">
         <button type="button" class="text-sky-600 hover:underline" @click="openDetail(row)">{{ row.name }}</button>
       </template>
+      <template #cell-institutionName="{ row }">{{ row.institutionName || '—' }}</template>
       <template #cell-types="{ row }">{{ formatMultiValueText(row.types, '、') }}</template>
       <template #cell-budgets="{ row }">
         <span class="leading-relaxed break-all">{{ formatMultiValueText(row.budgets, ';') }}</span>

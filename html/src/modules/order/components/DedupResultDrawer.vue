@@ -61,9 +61,10 @@
                     <thead class="bg-gray-50 border-b sticky top-0 z-10">
                       <tr>
                         <th class="px-2 py-2 w-10 shrink-0" aria-label="选择" />
-                        <th class="px-3 py-2 text-left text-gray-600 whitespace-nowrap">单件数量</th>
+                        <th class="px-3 py-2 text-left text-gray-600 whitespace-nowrap">书目记录号</th>
+                        <th class="px-3 py-2 text-left text-gray-600 whitespace-nowrap">单件数量（本馆/全市）</th>
                         <th
-                          v-for="field in holdingBibCardFields"
+                          v-for="field in holdingBibOtherFields"
                           :key="field.key"
                           class="px-3 py-2 text-left text-gray-600 whitespace-nowrap"
                         >
@@ -87,16 +88,22 @@
                             @change="selectBib(item)"
                           >
                         </td>
+                        <td
+                          class="px-3 py-2 align-middle max-w-[200px] truncate whitespace-nowrap"
+                          :title="getHoldingBibFieldDisplayValue(item, 'bibRecordNo')"
+                        >
+                          {{ getHoldingBibFieldDisplayValue(item, 'bibRecordNo') }}
+                        </td>
                         <td class="px-3 py-2 align-middle whitespace-nowrap">
                           <span
-                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-                            :class="getBibCopyCount(item) > 0 ? 'bg-sky-50 text-sky-600' : 'bg-gray-100 text-gray-500'"
+                            class="inline-flex items-center text-sm font-medium"
+                            :class="getBibLocalCount(item) > 0 ? 'text-sky-600' : 'text-gray-500'"
                           >
-                            {{ getBibCopyCount(item) }}本
+                            {{ formatBibItemCount(item) }}
                           </span>
                         </td>
                         <td
-                          v-for="field in holdingBibCardFields"
+                          v-for="field in holdingBibOtherFields"
                           :key="field.key"
                           class="px-3 py-2 align-middle max-w-[200px] truncate whitespace-nowrap"
                           :title="getHoldingBibFieldDisplayValue(item, field.key)"
@@ -281,7 +288,7 @@
                             class="px-3 py-2 align-middle whitespace-nowrap"
                             :class="col.minWidth"
                           >
-                            {{ row[col.key] || '—' }}
+                            {{ formatItemCell(row, col.key) }}
                           </td>
                         </tr>
                       </tbody>
@@ -380,8 +387,11 @@ import {
   hasHoldingDistribution,
   HOLDING_DEDUP_ITEM_COLUMNS,
   getOrderLineLanguageCategory,
-  getOrderLineResourceType
+  getOrderLineResourceType,
+  sortHoldingTreeByOrgPriority,
+  sortPhysicalItemsByOrgPriority
 } from '@/modules/order/data/dedup';
+import { resolveLibrarianDedupScope } from '@/modules/subscriber/data/current-librarian';
 import { buildOrderLineBibFields } from '@/modules/order/data/order-line-detail';
 import { summarizeRelatedOrderFlow } from '@/modules/order/data/bib';
 import { useOrderStore } from '@/modules/order/stores/order';
@@ -480,6 +490,12 @@ const holdingBibCardFields = computed(() =>
   getHoldingBibCardFields(lineResourceType.value, lineLanguageCategory.value)
 );
 
+const holdingBibOtherFields = computed(() => (
+  holdingBibCardFields.value.filter(field => field.key !== 'bibRecordNo')
+));
+
+const orgPriority = computed(() => resolveLibrarianDedupScope());
+
 const activeHoldingBib = computed(() => {
   const no = selectedBibRecordNo.value;
   if (!no) return holdingResults.value[0] || null;
@@ -491,18 +507,19 @@ const activeMarcFields = computed(() => activeHoldingBib.value?.marcFields || []
 
 const activeHoldingTree = computed(() => {
   if (!activeHoldingBib.value) return [];
-  // 本版：不做分馆/机构优先序排序；buildDisplayHoldingTree 内置顶首都图书馆，并按规则挂未关联馆藏地
-  return buildDisplayHoldingTree(
+  const tree = buildDisplayHoldingTree(
     activeHoldingBib.value.holdingTree,
     getHoldingDedupPhysicalItems(activeHoldingBib.value)
   );
+  return sortHoldingTreeByOrgPriority(tree, orgPriority.value);
 });
 
 const allPhysicalItems = computed(() => getHoldingDedupPhysicalItems(activeHoldingBib.value));
 
-const filteredPhysicalItems = computed(() => (
-  filterHoldingDedupItemsByLeaf(allPhysicalItems.value, selectedLeafFilter.value)
-));
+const filteredPhysicalItems = computed(() => {
+  const filtered = filterHoldingDedupItemsByLeaf(allPhysicalItems.value, selectedLeafFilter.value);
+  return sortPhysicalItemsByOrgPriority(filtered, orgPriority.value);
+});
 
 const itemColumns = HOLDING_DEDUP_ITEM_COLUMNS;
 
@@ -673,6 +690,26 @@ function onSelectLeaf(payload) {
 
 function getBibCopyCount(item) {
   return countBibHoldingCopies(item);
+}
+
+function getBibLocalCount(item) {
+  if (item?.localItemCount != null) return Number(item.localItemCount) || 0;
+  return getBibCopyCount(item);
+}
+
+function getBibCityCount(item) {
+  if (item?.cityItemCount != null) return Number(item.cityItemCount) || 0;
+  return getBibCopyCount(item);
+}
+
+function formatBibItemCount(item) {
+  return `${getBibLocalCount(item)}/${getBibCityCount(item)}`;
+}
+
+function formatItemCell(row, key) {
+  const value = row?.[key];
+  if (value == null || value === '') return '—';
+  return value;
 }
 
 function isBibAssociated(item) {

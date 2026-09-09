@@ -202,7 +202,12 @@ export const useOrderStore = defineStore('order', {
     },
 
     openDedupDrawer(line, duplicateType) {
-      if (line[duplicateType === 'holding' ? 'holdingDuplicate' : 'orderDuplicate'] !== true) return;
+      if (duplicateType === 'holding') {
+        if (line?.holdingDuplicate == null) return;
+        if (!(Number(line.holdingCityItemCount) > 0)) return;
+      } else if (line?.orderDuplicate !== true) {
+        return;
+      }
       this.dedupDrawerLine = line;
       this.dedupDrawerType = duplicateType;
       this.dedupDrawerOpen = true;

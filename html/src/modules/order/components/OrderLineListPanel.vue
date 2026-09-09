@@ -135,12 +135,18 @@
     </template>
     <template #cell-holdingDuplicate="{ row }">
       <span @click.stop>
-        <DedupBadge :value="row.holdingDuplicate" @view="store.openDedupDrawer(row, 'holding')" />
+        <DedupBadge
+          variant="holding"
+          :value="row.holdingDuplicate"
+          :local-count="row.holdingLocalItemCount || 0"
+          :city-count="row.holdingCityItemCount || 0"
+          @view="store.openDedupDrawer(row, 'holding')"
+        />
       </span>
     </template>
     <template #cell-orderDuplicate="{ row }">
       <span @click.stop>
-        <DedupBadge :value="row.orderDuplicate" @view="store.openDedupDrawer(row, 'order')" />
+        <DedupBadge variant="order" :value="row.orderDuplicate" @view="store.openDedupDrawer(row, 'order')" />
       </span>
     </template>
     <template #cell-remark="{ row }">

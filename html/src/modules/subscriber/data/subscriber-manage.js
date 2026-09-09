@@ -1,4 +1,12 @@
 import { getBranchLabel } from '@/modules/subscriber/data/locations';
+import {
+  getCampusIdForBranch,
+  getCampusName,
+  getInstitutionIdForBranch,
+  getInstitutionName,
+  resolveOrgBranchCodes
+} from '@/modules/subscriber/data/org-hierarchy';
+import { getCollectionById, initialBranchRows, initialCollectionRows } from '@/modules/location/data/location-manage';
 
 export const RESOURCE_TYPE_OPTIONS = ['纸质书', '视听资料'];
 
@@ -21,10 +29,16 @@ export const SUBSCRIBER_STATUS_MAP = {
   disabled: { text: '已停用', cls: 'text-red-500' }
 };
 
+export const PERMISSION_TABS = [
+  { key: 'biz', label: '业务范围' },
+  { key: 'dedupDisplay', label: '查重显示' },
+  { key: 'org', label: '所属组织' }
+];
+
 export const SUBSCRIBER_COLUMNS = [
   { key: 'id', label: '序号' },
   { key: 'name', label: '订户名称' },
-  { key: 'siteName', label: '单件所属馆' },
+  { key: 'institutionName', label: '所属机构' },
   { key: 'types', label: '资源类型' },
   { key: 'budgets', label: '预算名称', minWidth: 'min-w-[180px]' },
   { key: 'status', label: '订户状态' },
@@ -35,13 +49,14 @@ export const SUBSCRIBER_COLUMNS = [
 
 export const subscriberSearchFields = [
   { key: 'name', label: '订户名称' },
+  { key: 'institutionName', label: '所属机构' },
   { key: 'resourceType', label: '资源类型', type: 'select', options: [{ value: '', label: '全部' }, '纸质书', '视听资料'] },
   { key: 'budget', label: '预算名称' },
   { key: 'status', label: '订户状态', type: 'select', extra: true, options: [{ value: '', label: '全部' }, { value: 'active', label: '使用中' }, { value: 'disabled', label: '已停用' }] },
   { key: 'createDate', label: '创建日期', type: 'dateRange', startKey: 'startDate', endKey: 'endDate', extra: true }
 ];
 
-/** branchId 对应馆址管理-分馆列表 */
+/** branchId 对应馆址管理-分馆列表；机构/馆区由分馆推导或显式指定 */
 const subscriberRowsRaw = [
   { name: '少儿外文', branchId: 'branch-2', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026首都图书馆图书购置费中文普通图书(三)', '2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书', '2026城市图书馆图书购置费工具书', '2026城市图书馆图书购置费经济管理'], barcodeTypes: ['外文少儿图书'], status: 'active', created: '2026-05-22', remark: '', hasLibrarian: true },
   { name: '少儿中文', branchId: 'branch-2', types: ['纸质书'], budgets: ['2026首都图书馆图书购置费中文普通图书(二)', '2026首都图书馆图书购置费中文普通图书(三)', '2026首都图书馆图书购置费中文普通图书(一)', '2026城市图书馆图书购置费中文普通图书', '2026城市图书馆图书购置费工具书', '2026城市图书馆图书购置费经济管理'], barcodeTypes: ['中文少儿普通图书'], status: 'active', created: '2026-05-22', remark: '', hasLibrarian: true },
@@ -69,19 +84,36 @@ const subscriberRowsRaw = [
       '2024年首都图书馆图书购置费中文普通图书(三)',
       '2024年首都图书馆视听资料购置费'
     ],
-    barcodeTypes: ['中文成人普通'], status: 'active', created: '2026-06-17', remark: '', hasLibrarian: true,
-    dedupBranchCodes: ['ST001', 'ST002', 'ST003'],
-    dedupCollectionCodes: []
+    barcodeTypes: ['中文成人普通'], status: 'active', created: '2026-06-17', remark: '', hasLibrarian: true
   }
 ];
 
-export const subscriberRows = subscriberRowsRaw.map((row, index) => ({
-  ...row,
-  dedupBranchCodes: row.dedupBranchCodes || [],
-  dedupCollectionCodes: row.dedupCollectionCodes || [],
-  id: index + 1,
-  siteName: getBranchLabel(row.branchId)
-}));
+function normalizeSubscriberRow(row, index) {
+  const branchId = row.branchId || '';
+  const campusId = row.campusId || getCampusIdForBranch(branchId) || '';
+  const institutionId = row.institutionId || getInstitutionIdForBranch(branchId) || '';
+  const collectionId = row.collectionId || '';
+  const collection = collectionId ? getCollectionById(initialCollectionRows, collectionId) : null;
+  return {
+    ...row,
+    id: index + 1,
+    branchId,
+    campusId,
+    institutionId,
+    collectionId,
+    institutionName: getInstitutionName(institutionId),
+    campusName: getCampusName(campusId),
+    branchName: getBranchLabel(branchId),
+    collectionName: collection
+      ? (collection.code ? `${collection.code} | ${collection.name}` : collection.name)
+      : '',
+    displayBranchCodes: [...(row.displayBranchCodes || [])],
+    displayCollectionCodes: [...(row.displayCollectionCodes || [])],
+    siteName: getInstitutionName(institutionId)
+  };
+}
+
+export const subscriberRows = subscriberRowsRaw.map((row, index) => normalizeSubscriberRow(row, index));
 
 export const activeSubscriberOptions = subscriberRows
   .filter(row => row.status === 'active')
@@ -134,6 +166,7 @@ export function formatMultiValueText(values, separator = ';') {
 export function filterSubscriberRows(rows, search = {}) {
   return rows.filter(row => {
     if (search.name && !row.name.includes(search.name.trim())) return false;
+    if (search.institutionName && !(row.institutionName || '').includes(search.institutionName.trim())) return false;
     if (search.resourceType && !(row.types || []).includes(search.resourceType)) return false;
     if (search.budget && !(row.budgets || []).some(item => item.includes(search.budget.trim()))) return false;
     if (search.status && row.status !== search.status) return false;
@@ -163,44 +196,69 @@ export function getTodayString() {
 }
 
 export function enrichSubscriberRow(row) {
+  const branchId = row.branchId || '';
+  const campusId = row.campusId || getCampusIdForBranch(branchId) || '';
+  const institutionId = row.institutionId || '';
+  const collectionId = row.collectionId || '';
+  const collection = collectionId ? getCollectionById(initialCollectionRows, collectionId) : null;
   return {
     ...row,
-    dedupBranchCodes: [...(row.dedupBranchCodes || [])],
-    dedupCollectionCodes: [...(row.dedupCollectionCodes || [])],
-    siteName: getBranchLabel(row.branchId)
+    branchId,
+    campusId,
+    institutionId,
+    collectionId,
+    institutionName: getInstitutionName(institutionId),
+    campusName: getCampusName(campusId),
+    branchName: getBranchLabel(branchId),
+    collectionName: collection
+      ? (collection.code ? `${collection.code} | ${collection.name}` : collection.name)
+      : '',
+    displayBranchCodes: [...(row.displayBranchCodes || [])],
+    displayCollectionCodes: [...(row.displayCollectionCodes || [])],
+    siteName: getInstitutionName(institutionId)
   };
 }
 
 /**
- * 按馆员关联订户顺序合并查重范围
- * @param {Object[]} [subscriberList=subscriberRows] - 订户列表
- * @param {string[]} [subscriberNames] - 关联订户名称（有序）；缺省时由调用方传入
- * @returns {{ branchCodes: string[], collectionCodes: string[] }}
+ * 按馆员关联订户顺序合并查重范围（机构组织 → 分馆编码）
+ * @param {Object[]} [subscriberList=subscriberRows]
+ * @param {string[]} [subscriberNames]
+ * @returns {{ branchCodes: string[], collectionCodes: string[], institutionIds: string[], campusIds: string[] }}
  */
 export function mergeSubscriberDedupScope(subscriberList = subscriberRows, subscriberNames = []) {
   const nameOrder = (subscriberNames || []).map(name => String(name || '').trim()).filter(Boolean);
   const byName = new Map((subscriberList || []).map(row => [row.name, row]));
   const branchCodes = [];
   const seenBranch = new Set();
-  const collectionSet = new Set();
+  const institutionIds = [];
+  const seenInstitution = new Set();
+  const campusIds = [];
+  const seenCampus = new Set();
 
   nameOrder.forEach(name => {
     const row = byName.get(name);
     if (!row) return;
-    (row.dedupBranchCodes || []).forEach(code => {
-      const normalized = String(code || '').trim();
-      if (!normalized || seenBranch.has(normalized)) return;
-      seenBranch.add(normalized);
-      branchCodes.push(normalized);
-    });
-    (row.dedupCollectionCodes || []).forEach(code => {
-      const normalized = String(code || '').trim();
-      if (normalized) collectionSet.add(normalized);
+    const institutionId = String(row.institutionId || '').trim();
+    if (institutionId && !seenInstitution.has(institutionId)) {
+      seenInstitution.add(institutionId);
+      institutionIds.push(institutionId);
+    }
+    const campusId = String(row.campusId || '').trim();
+    if (campusId && !seenCampus.has(campusId)) {
+      seenCampus.add(campusId);
+      campusIds.push(campusId);
+    }
+    resolveOrgBranchCodes(row, initialBranchRows).forEach(code => {
+      if (!code || seenBranch.has(code)) return;
+      seenBranch.add(code);
+      branchCodes.push(code);
     });
   });
 
   return {
     branchCodes,
-    collectionCodes: [...collectionSet]
+    collectionCodes: [],
+    institutionIds,
+    campusIds
   };
 }

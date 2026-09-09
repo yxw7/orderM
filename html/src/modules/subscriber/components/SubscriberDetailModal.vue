@@ -29,22 +29,15 @@
           <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">备注</span><span class="text-gray-900 flex-1">{{ row.remark || '—' }}</span></div>
         </template>
 
-        <template v-else-if="activeTab === 'biz'">
-          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">单件所属馆</span><span class="text-gray-900 flex-1">{{ row.siteName || '—' }}</span></div>
-          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">资源类型</span><span class="text-gray-900 flex-1">{{ formatMultiValueText(row.types, '、') || '—' }}</span></div>
-          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">预算名称</span><span class="text-gray-900 flex-1 break-all">{{ formatMultiValueText(row.budgets, ';') || '—' }}</span></div>
-          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">条码号类型</span><span class="text-gray-900 flex-1">{{ formatMultiValueText(row.barcodeTypes, '、') || '—' }}</span></div>
-        </template>
-
         <template v-else>
-          <div class="flex items-start gap-3">
-            <span class="text-gray-600 w-28 text-right shrink-0">所属分馆</span>
-            <span class="text-gray-900 flex-1 break-all">{{ formatDedupBranchText(row) }}</span>
-          </div>
-          <div class="flex items-start gap-3">
-            <span class="text-gray-600 w-28 text-right shrink-0">所属馆藏地</span>
-            <span class="text-gray-900 flex-1 break-all">{{ formatMultiValueText(row.dedupCollectionCodes, '、') || '不限' }}</span>
-          </div>
+          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">资源类型</span><span class="text-gray-900 flex-1">{{ formatMultiValueText(row.types, '、') || '—' }}</span></div>
+          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">预算管理</span><span class="text-gray-900 flex-1 break-all">{{ formatMultiValueText(row.budgets, ';') || '—' }}</span></div>
+          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">条码号类型</span><span class="text-gray-900 flex-1">{{ formatMultiValueText(row.barcodeTypes, '、') || '—' }}</span></div>
+          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">查重·分馆</span><span class="text-gray-900 flex-1 break-all">{{ formatMultiValueText(row.displayBranchCodes, '、') || '—' }}</span></div>
+          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">查重·馆藏地</span><span class="text-gray-900 flex-1 break-all">{{ formatMultiValueText(row.displayCollectionCodes, '、') || '—' }}</span></div>
+          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">所属机构</span><span class="text-gray-900 flex-1">{{ row.institutionName || '—' }}</span></div>
+          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">所属馆</span><span class="text-gray-900 flex-1">{{ row.branchName || '—' }}</span></div>
+          <div class="flex items-start gap-3"><span class="text-gray-600 w-28 text-right shrink-0">所属馆藏地</span><span class="text-gray-900 flex-1">{{ row.collectionName || '—' }}</span></div>
         </template>
       </div>
 
@@ -71,8 +64,7 @@ defineEmits(['close']);
 
 const tabs = [
   { key: 'basic', label: '基本信息' },
-  { key: 'biz', label: '业务范围' },
-  { key: 'dedup', label: '查重范围' }
+  { key: 'permission', label: '权限范围' }
 ];
 
 const activeTab = ref('basic');
@@ -80,10 +72,4 @@ const activeTab = ref('basic');
 watch(() => props.open, open => {
   if (open) activeTab.value = 'basic';
 });
-
-function formatDedupBranchText(row) {
-  const codes = row?.dedupBranchCodes || [];
-  if (!codes.length) return '不限';
-  return codes.join('、');
-}
 </script>

@@ -1,5 +1,16 @@
-import { initialBranchRows, initialCollectionRows } from '@/modules/location/data/location-manage';
-import { getCurrentLibrarianAssociatedSubscribers } from '@/modules/subscriber/data/current-librarian';
+import { initialBranchRows } from '@/modules/location/data/location-manage';
+import {
+  getCurrentLibrarianAssociatedSubscribers,
+  resolveLibrarianDedupScope
+} from '@/modules/subscriber/data/current-librarian';
+import {
+  CAMPUS_OPTIONS,
+  INSTITUTION_OPTIONS,
+  getCampusById,
+  getCampusIdForBranch,
+  getInstitutionById,
+  getInstitutionIdForBranch
+} from '@/modules/subscriber/data/org-hierarchy';
 import { mergeSubscriberDedupScope, subscriberRows } from '@/modules/subscriber/data/subscriber-manage';
 
 export const DEDUP_FIELD_LABELS = {
@@ -94,8 +105,7 @@ export const HOLDING_BIB_CARD_FIELDS = {
   纸质书: {
     中文: [
       { label: '书目记录号', key: 'bibRecordNo' },
-      { label: '正题名', key: 'title' },
-      { label: '副题名', key: 'subTitle' },
+      { label: '题名', key: 'title' },
       { label: '分卷号', key: 'volumeNo' },
       { label: '分卷名', key: 'volumeName' },
       { label: 'ISBN', key: 'isbn' },
@@ -107,7 +117,6 @@ export const HOLDING_BIB_CARD_FIELDS = {
     外文: [
       { label: '书目记录号', key: 'bibRecordNo' },
       { label: '题名', key: 'title' },
-      { label: '副题名', key: 'subTitle' },
       { label: '分卷号', key: 'volumeNo' },
       { label: '分卷名', key: 'volumeName' },
       { label: 'ISBN', key: 'isbn' },
@@ -121,7 +130,6 @@ export const HOLDING_BIB_CARD_FIELDS = {
     中文: [
       { label: '书目记录号', key: 'bibRecordNo' },
       { label: '题名', key: 'title' },
-      { label: '副题名', key: 'subTitle' },
       { label: '分卷号', key: 'volumeNo' },
       { label: '分卷名', key: 'volumeName' },
       { label: '载体', key: 'carrier' },
@@ -134,7 +142,6 @@ export const HOLDING_BIB_CARD_FIELDS = {
       { label: '书目记录号', key: 'bibRecordNo' },
       { label: 'ISRC', key: 'isrc' },
       { label: '题名', key: 'title' },
-      { label: '副题名', key: 'subTitle' },
       { label: '分卷号', key: 'volumeNo' },
       { label: '分卷名', key: 'volumeName' },
       { label: '载体', key: 'carrier' },
@@ -221,6 +228,7 @@ function createHoldingDedupItem(patch = {}) {
     shelfIndexClass: '',
     shelfIndex: '',
     itemPrice: '58.00',
+    loanCount: null,
     checkInTime: '2024-06-15 10:20:00',
     ...patch
   };
@@ -271,7 +279,8 @@ export const HOLDING_DEDUP_CATALOG = [
         holdingStatus: '在架',
         shelfIndexClass: '中图法',
         shelfIndex: 'K25',
-        binding: '平装'
+        binding: '平装',
+        loanCount: 12
       }),
       createHoldingDedupItem({
         barcode: 'ST2024002002',
@@ -283,7 +292,8 @@ export const HOLDING_DEDUP_CATALOG = [
         holdingStatus: '已外借',
         shelfIndexClass: '中图法',
         shelfIndex: 'K25',
-        binding: '精装'
+        binding: '精装',
+        loanCount: 5
       }),
       createHoldingDedupItem({
         barcode: 'ST2024002003',
@@ -528,9 +538,48 @@ export const HOLDING_DEDUP_CATALOG = [
   {
     bibRecordNo: 'BIB2024002004', standardNo: '9787040478912', isbn: '978-7-04-0478912', title: '信息资源管理',
     author: '马费成著', textLanguage: '中文', publisher: '高等教育出版社', publishTime: '2023',
-    holdingTree: [],
+    holdingTree: [
+      {
+        name: '平谷区图书馆',
+        children: [
+          {
+            name: '平谷区图书馆',
+            children: [
+              { name: '生态书库', copyCount: 2 }
+            ]
+          }
+        ]
+      }
+    ],
     unassignedCopyCount: 0,
-    physicalItems: [],
+    physicalItems: [
+      createHoldingDedupItem({
+        barcode: 'PG2024002004',
+        callNo: 'G203/1',
+        ownerLibrary: '平谷区图书馆',
+        homeLocation: '生态书库',
+        currentLibrary: '平谷区图书馆',
+        currentLocation: '生态书库',
+        holdingStatus: '在架',
+        loanCount: 3,
+        shelfIndexClass: '中图法',
+        shelfIndex: 'G203',
+        binding: '平装'
+      }),
+      createHoldingDedupItem({
+        barcode: 'PG2024002005',
+        callNo: 'G203/1',
+        ownerLibrary: '平谷区图书馆',
+        homeLocation: '生态书库',
+        currentLibrary: '平谷区图书馆',
+        currentLocation: '生态书库',
+        holdingStatus: '已外借',
+        loanCount: 11,
+        shelfIndexClass: '中图法',
+        shelfIndex: 'G203',
+        binding: '平装'
+      })
+    ],
     marcFields: [
       { field: '010', indicator: '', content: '▼a978-7-04-0478912' },
       { field: '200', indicator: '1 ', content: '▼a信息资源管理▼f马费成著' },
@@ -539,7 +588,7 @@ export const HOLDING_DEDUP_CATALOG = [
       { field: '300', indicator: '  ', content: '▼a有参考文献和索引' },
       { field: '690', indicator: '  ', content: '▼aG203' },
       { field: '701', indicator: '0 ', content: '▼a马费成▼4著' },
-      { field: '905', indicator: '  ', content: '▼a首图.华威桥馆' }
+      { field: '905', indicator: '  ', content: '▼a平谷区图书馆' }
     ]
   }
 ];
@@ -675,6 +724,7 @@ export function performOrderLineDedup(lines, orders, orderLineNos, config) {
   const checkHolding = duplicateType === 'all' || duplicateType === 'holding';
   const scopeBranchCodes = normalizeCodeList(branchCodes, branchCode);
   const scopeCollectionCodes = normalizeCodeList(collectionCodes, collectionCode);
+  const localInstitutionIds = resolveLibrarianDedupScope().institutionIds || [];
 
   orderLineNos.forEach(orderLineNo => {
     const target = lines.find(item => item.orderLineNo === orderLineNo);
@@ -685,15 +735,19 @@ export function performOrderLineDedup(lines, orders, orderLineNos, config) {
       target.orderDuplicate = target.orderDedupResults.length > 0;
     }
     if (checkHolding) {
-      target.holdingDedupResults = findHoldingDuplicateResults(target, fieldKeys, {
+      const rawResults = findHoldingDuplicateResults(target, fieldKeys, {
         branchCodes: scopeBranchCodes,
         collectionCodes: scopeCollectionCodes
       });
-      target.holdingDuplicate = target.holdingDedupResults.length > 0;
+      target.holdingDedupResults = enrichHoldingDedupResultsWithCounts(rawResults, localInstitutionIds);
+      const totals = summarizeHoldingDedupCounts(target.holdingDedupResults);
+      target.holdingLocalItemCount = totals.localItemCount;
+      target.holdingCityItemCount = totals.cityItemCount;
+      target.holdingDuplicate = totals.localItemCount > 0;
       autoAssociateFirstHoldingBib(target);
     }
     target.lastDedupFieldKeys = fieldKeys;
-    // 馆藏查重范围存档（仅馆藏查重使用）；有序分馆供单件列表优先排序
+    // 馆藏查重范围存档（仅馆藏查重使用）；组织优先合集供单件页签排序
     target.lastDedupBranchCodes = checkHolding ? scopeBranchCodes : (target.lastDedupBranchCodes || []);
     target.lastDedupCollectionCodes = checkHolding ? scopeCollectionCodes : (target.lastDedupCollectionCodes || []);
   });
@@ -714,52 +768,21 @@ function normalizeCodeList(list, legacySingle) {
 }
 
 /**
- * 馆藏查重：按所属分馆/馆藏地范围裁剪单件（皆空=不限）
+ * 馆藏查重命中书目：展示侧保留全市单件；检索范围仅影响是否命中（本原型字段命中即返回全市单件）
  * @param {Object} catalogRow
  * @param {string[]} branchCodes
  * @param {string[]} collectionCodes
  * @returns {Object}
  */
 function applyHoldingScopeToCatalogHit(catalogRow, branchCodes, collectionCodes) {
+  void branchCodes;
+  void collectionCodes;
   const items = Array.isArray(catalogRow.physicalItems) ? catalogRow.physicalItems : [];
-  if (!branchCodes.length && !collectionCodes.length) {
-    return {
-      ...catalogRow,
-      physicalItems: items.map(item => ({ ...item }))
-    };
-  }
-  const allowedBranchNames = new Set(
-    initialBranchRows
-      .filter(row => branchCodes.includes(String(row.code || '').trim()))
-      .map(row => String(row.name || '').trim())
-      .filter(Boolean)
-  );
-  const allowedCollectionKeys = new Set();
-  initialCollectionRows.forEach(row => {
-    if (!collectionCodes.includes(String(row.code || '').trim())) return;
-    const code = String(row.code || '').trim();
-    const name = String(row.name || '').trim();
-    if (code) allowedCollectionKeys.add(code);
-    if (name) allowedCollectionKeys.add(name);
-  });
-  collectionCodes.forEach(code => allowedCollectionKeys.add(code));
-
-  const scopedItems = items.filter(item => {
-    const owner = String(item.ownerLibrary || '').trim();
-    const home = String(item.homeLocation || '').trim();
-    if (branchCodes.length) {
-      if (!owner || !allowedBranchNames.has(owner)) return false;
-    }
-    if (collectionCodes.length) {
-      if (!home || !allowedCollectionKeys.has(home)) return false;
-    }
-    return true;
-  }).map(item => ({ ...item }));
-
+  const cityItems = items.map(item => ({ ...item }));
   return {
     ...catalogRow,
-    physicalItems: scopedItems,
-    unassignedCopyCount: scopedItems.filter(item => !String(item.homeLocation || '').trim()).length
+    physicalItems: cityItems,
+    unassignedCopyCount: cityItems.filter(item => !String(item.homeLocation || '').trim()).length
   };
 }
 
@@ -823,18 +846,16 @@ export function countBibHoldingCopies(item) {
 export const HOLDING_DEDUP_ITEM_COLUMNS = [
   { key: 'holdingStatus', label: '馆藏状态' },
   { key: 'barcode', label: '条码号' },
-  { key: 'callNo', label: '索书号' },
   { key: 'ownerLibrary', label: '所属馆', minWidth: 'min-w-[140px]' },
   { key: 'homeLocation', label: '所属馆藏地', minWidth: 'min-w-[160px]' },
-  { key: 'currentLibrary', label: '所在馆', minWidth: 'min-w-[140px]' },
-  { key: 'currentLocation', label: '所在馆藏地', minWidth: 'min-w-[160px]' },
-  { key: 'circulationType', label: '借阅类型' },
+  { key: 'loanCount', label: '借阅次数' },
   { key: 'volumeDesc', label: '卷册描述' },
-  { key: 'binding', label: '装帧' },
-  { key: 'shelfIndexClass', label: '排架标引分类', minWidth: 'min-w-[120px]' },
-  { key: 'shelfIndex', label: '排架标引', minWidth: 'min-w-[120px]' },
   { key: 'itemPrice', label: '单件价格' },
-  { key: 'checkInTime', label: '登到时间', minWidth: 'whitespace-nowrap' }
+  { key: 'circulationType', label: '借阅类型' },
+  { key: 'binding', label: '装帧' },
+  { key: 'callNo', label: '索书号' },
+  { key: 'shelfIndexClass', label: '排架标引分类', minWidth: 'min-w-[120px]' },
+  { key: 'shelfIndex', label: '排架标引', minWidth: 'min-w-[120px]' }
 ];
 
 /** 馆藏状态枚举示例（原型展示用） */
@@ -962,7 +983,7 @@ export function findOwnerCollectionParent(nodes, ownerName) {
  * 构建含「未关联馆藏地」节点的展示用馆藏树
  * - 所属馆与所属馆藏地皆空（及所属馆无法匹配树节点）：一级根「未关联馆藏地」
  * - 所属馆有值、所属馆藏地为空：挂在匹配所属馆节点下的四级叶子「未关联馆藏地」
- * - 一级机构仍将「首都图书馆」置顶；根级未关联固定排在末尾
+ * - 一级「首都图书馆」特殊置顶已取消；根级未关联固定排在末尾（调用方可再按组织优先合集排序）
  * @param {Object[]} [holdingTree=[]] - 已分配馆藏地的树
  * @param {Object[]|number} [physicalItemsOrCount=[]] - 单件明细；兼容旧调用传未关联件数（仅计入根级）
  * @returns {Object[]}
@@ -976,10 +997,9 @@ export function buildDisplayHoldingTree(holdingTree = [], physicalItemsOrCount =
   // 兼容旧签名：第二参为未关联件数时，全部记入一级根节点
   if (!Array.isArray(physicalItemsOrCount)) {
     const count = Number(physicalItemsOrCount) || 0;
-    const pinned = pinCapitalLibraryFirst(nodes);
-    if (count <= 0) return pinned;
+    if (count <= 0) return nodes;
     return [
-      ...pinned,
+      ...nodes,
       {
         name: '未关联馆藏地',
         unassigned: true,
@@ -1024,11 +1044,10 @@ export function buildDisplayHoldingTree(holdingTree = [], physicalItemsOrCount =
     ];
   });
 
-  const pinned = pinCapitalLibraryFirst(nodes);
-  if (!rootItems.length) return pinned;
+  if (!rootItems.length) return nodes;
 
   return [
-    ...pinned,
+    ...nodes,
     {
       name: '未关联馆藏地',
       unassigned: true,
@@ -1041,6 +1060,7 @@ export function buildDisplayHoldingTree(holdingTree = [], physicalItemsOrCount =
 
 /**
  * 馆藏树一级：有「首都图书馆」时置顶，其余保持原相对序；二/三/四级不改。
+ * @deprecated 已改为按关联订户组织机构优先合集排序；保留供兼容调用
  * @param {Object[]} [nodes=[]]
  * @returns {Object[]}
  */
@@ -1052,6 +1072,346 @@ export function pinCapitalLibraryFirst(nodes = []) {
   const [capital] = next.splice(idx, 1);
   next.unshift(capital);
   return next;
+}
+
+/** 树节点名称 → 馆区 id（原型别名） */
+const CAMPUS_NODE_ALIASES = {
+  首图华威桥馆: 'campus-1',
+  首都华威桥馆: 'campus-1',
+  华威桥馆区: 'campus-1',
+  首图大兴机场馆: 'campus-2',
+  首都大兴机场分馆: 'campus-2',
+  大兴机场馆区: 'campus-2',
+  北京城市图书馆: 'campus-4',
+  城市图书馆馆区: 'campus-4'
+};
+
+/**
+ * 将键写入排序权重表（首次出现保留）
+ * @param {Map<string, number>} rank
+ * @param {string} key
+ * @param {number} index
+ */
+function setRankKey(rank, key, index) {
+  const normalized = String(key || '').trim();
+  if (!normalized || rank.has(normalized)) return;
+  rank.set(normalized, index);
+}
+
+/**
+ * 构建组织优先合集的层级排序权重（id / code / name 均可命中）
+ * @param {{ institutionIds?: string[], campusIds?: string[], branchCodes?: string[] }} [priority={}]
+ * @returns {{ institution: Map<string, number>, campus: Map<string, number>, branch: Map<string, number> }}
+ */
+export function buildOrgPriorityRankMaps(priority = {}) {
+  const institution = new Map();
+  const campus = new Map();
+  const branch = new Map();
+
+  (priority.institutionIds || []).forEach((id, index) => {
+    setRankKey(institution, id, index);
+    const row = getInstitutionById(id);
+    if (row) {
+      setRankKey(institution, row.code, index);
+      setRankKey(institution, row.name, index);
+    }
+  });
+
+  (priority.campusIds || []).forEach((id, index) => {
+    setRankKey(campus, id, index);
+    const row = getCampusById(id);
+    if (row) {
+      setRankKey(campus, row.code, index);
+      setRankKey(campus, row.name, index);
+    }
+    Object.entries(CAMPUS_NODE_ALIASES).forEach(([alias, campusId]) => {
+      if (campusId === id) setRankKey(campus, alias, index);
+    });
+  });
+
+  (priority.branchCodes || []).forEach((code, index) => {
+    setRankKey(branch, code, index);
+    const row = initialBranchRows.find(item => String(item.code || '').trim() === String(code || '').trim());
+    if (row) setRankKey(branch, row.name, index);
+  });
+
+  return { institution, campus, branch };
+}
+
+/**
+ * 解析所属馆名称对应的机构 / 馆区 / 分馆
+ * @param {string} ownerName
+ * @returns {{ institutionId: string, campusId: string, branchCode: string, branchName: string }}
+ */
+export function resolveOwnerLibraryOrg(ownerName) {
+  const name = String(ownerName || '').trim();
+  if (!name) {
+    return { institutionId: '', campusId: '', branchCode: '', branchName: '' };
+  }
+
+  const branchRow = initialBranchRows.find(row => String(row.name || '').trim() === name);
+  if (branchRow) {
+    const campusId = getCampusIdForBranch(branchRow.id);
+    return {
+      institutionId: getInstitutionIdForBranch(branchRow.id),
+      campusId,
+      branchCode: String(branchRow.code || '').trim(),
+      branchName: name
+    };
+  }
+
+  const institution = INSTITUTION_OPTIONS.find(row => String(row.name || '').trim() === name);
+  if (institution) {
+    return {
+      institutionId: institution.id,
+      campusId: '',
+      branchCode: '',
+      branchName: ''
+    };
+  }
+
+  const campusAliasId = CAMPUS_NODE_ALIASES[name];
+  const campus = CAMPUS_OPTIONS.find(row => (
+    row.id === campusAliasId || String(row.name || '').trim() === name
+  ));
+  if (campus) {
+    return {
+      institutionId: campus.institutionId || '',
+      campusId: campus.id,
+      branchCode: '',
+      branchName: ''
+    };
+  }
+
+  // 树三级常见「华威桥馆」等：回落到华威桥馆区
+  if (name === '华威桥馆') {
+    return {
+      institutionId: 'inst-1',
+      campusId: 'campus-1',
+      branchCode: '',
+      branchName: name
+    };
+  }
+
+  return { institutionId: '', campusId: '', branchCode: '', branchName: name };
+}
+
+/**
+ * 单件是否计入本馆（所属馆机构 ∈ 本馆机构合集）
+ * @param {Object} item
+ * @param {string[]} institutionIds
+ * @returns {boolean}
+ */
+export function isLocalHoldingItem(item, institutionIds = []) {
+  if (!institutionIds?.length) return false;
+  const localSet = new Set(institutionIds);
+  const ownerOrg = resolveOwnerLibraryOrg(item?.ownerLibrary);
+  if (ownerOrg.institutionId && localSet.has(ownerOrg.institutionId)) return true;
+  const currentOrg = resolveOwnerLibraryOrg(item?.currentLibrary);
+  return Boolean(currentOrg.institutionId && localSet.has(currentOrg.institutionId));
+}
+
+/**
+ * 为馆藏查重书目结果写入本馆 / 全市单件数
+ * @param {Object[]} results
+ * @param {string[]} institutionIds
+ * @returns {Object[]}
+ */
+export function enrichHoldingDedupResultsWithCounts(results = [], institutionIds = []) {
+  return (results || []).map(bib => {
+    const items = Array.isArray(bib.physicalItems) ? bib.physicalItems : [];
+    const cityItemCount = items.length;
+    const localItemCount = items.filter(item => isLocalHoldingItem(item, institutionIds)).length;
+    return {
+      ...bib,
+      localItemCount,
+      cityItemCount
+    };
+  });
+}
+
+/**
+ * 汇总订单行馆藏查重本馆 / 全市单件数
+ * @param {Object[]} results
+ * @returns {{ localItemCount: number, cityItemCount: number }}
+ */
+export function summarizeHoldingDedupCounts(results = []) {
+  return (results || []).reduce((acc, bib) => {
+    acc.localItemCount += Number(bib.localItemCount) || 0;
+    acc.cityItemCount += Number(bib.cityItemCount) || 0;
+    return acc;
+  }, { localItemCount: 0, cityItemCount: 0 });
+}
+
+/**
+ * 列表馆藏重复展示文案：有|无（本馆/全市）
+ * @param {boolean|null|undefined} holdingDuplicate
+ * @param {number} [localCount]
+ * @param {number} [cityCount]
+ * @returns {string}
+ */
+export function formatHoldingDuplicateLabel(holdingDuplicate, localCount = 0, cityCount = 0) {
+  if (holdingDuplicate == null) return '';
+  const prefix = holdingDuplicate ? '有' : '无';
+  return `${prefix}（${Number(localCount) || 0}/${Number(cityCount) || 0}）`;
+}
+
+/**
+ * 是否可打开馆藏查重结果面板（全市单件数 ≠ 0）
+ * @param {Object} line
+ * @returns {boolean}
+ */
+export function canOpenHoldingDedupDrawer(line) {
+  if (!line || line.holdingDuplicate == null) return false;
+  return Number(line.holdingCityItemCount) > 0;
+}
+
+/**
+ * @param {Map<string, number>} rank
+ * @param {string} key
+ * @param {number} fallback
+ * @returns {number}
+ */
+function lookupRank(rank, key, fallback) {
+  const normalized = String(key || '').trim();
+  if (!normalized) return fallback;
+  return rank.has(normalized) ? rank.get(normalized) : fallback;
+}
+
+/**
+ * 馆藏树按关联订户组织机构优先合集排序（一～三级；四级不重排；一级未关联根置末）
+ * @param {Object[]} nodes
+ * @param {{ institutionIds?: string[], campusIds?: string[], branchCodes?: string[] }} [priority]
+ * @returns {Object[]}
+ */
+export function sortHoldingTreeByOrgPriority(nodes, priority = {}) {
+  if (!nodes?.length) return nodes || [];
+  const ranks = buildOrgPriorityRankMaps(priority);
+  const hasPriority = ranks.institution.size || ranks.campus.size || ranks.branch.size;
+  if (!hasPriority) return moveUnassignedRootToEnd(nodes);
+
+  const sorted = sortHoldingTreeLevelByOrgPriority(nodes, ranks, 1);
+  return moveUnassignedRootToEnd(sorted);
+}
+
+/**
+ * @param {Object[]} nodes
+ * @returns {Object[]}
+ */
+function moveUnassignedRootToEnd(nodes = []) {
+  if (!nodes?.length) return nodes || [];
+  const roots = [];
+  const rest = [];
+  nodes.forEach(node => {
+    if (node?.unassignedRoot) roots.push(node);
+    else rest.push(node);
+  });
+  return [...rest, ...roots];
+}
+
+/**
+ * @param {Object[]} nodes
+ * @param {{ institution: Map<string, number>, campus: Map<string, number>, branch: Map<string, number> }} ranks
+ * @param {number} depth
+ * @returns {Object[]}
+ */
+function sortHoldingTreeLevelByOrgPriority(nodes, ranks, depth) {
+  if (!nodes?.length) return nodes || [];
+
+  const decorated = nodes.map((node, index) => {
+    const children = node.children?.length
+      ? sortHoldingTreeLevelByOrgPriority(node.children, ranks, depth + 1)
+      : node.children;
+    const nextNode = children === node.children ? node : { ...node, children };
+    return {
+      node: nextNode,
+      index,
+      sortKey: getTreeNodeOrgSortKey(nextNode, ranks, depth)
+    };
+  });
+
+  if (depth >= 4) return decorated.map(entry => entry.node);
+
+  return decorated
+    .sort((a, b) => {
+      if (a.sortKey !== b.sortKey) return a.sortKey - b.sortKey;
+      return a.index - b.index;
+    })
+    .map(entry => entry.node);
+}
+
+/**
+ * @param {Object} node
+ * @param {{ institution: Map<string, number>, campus: Map<string, number>, branch: Map<string, number> }} ranks
+ * @param {number} depth
+ * @returns {number}
+ */
+function getTreeNodeOrgSortKey(node, ranks, depth) {
+  if (node?.unassignedRoot) return Number.MAX_SAFE_INTEGER;
+  const name = String(node?.name || '').trim();
+  const fallbackInst = Math.max(ranks.institution.size, 1) + 1000;
+  const fallbackCampus = Math.max(ranks.campus.size, 1) + 1000;
+  const fallbackBranch = Math.max(ranks.branch.size, 1) + 1000;
+
+  if (depth === 1) {
+    return lookupRank(ranks.institution, name, fallbackInst);
+  }
+  if (depth === 2) {
+    const aliasId = CAMPUS_NODE_ALIASES[name];
+    if (aliasId && ranks.campus.has(aliasId)) return ranks.campus.get(aliasId);
+    return lookupRank(ranks.campus, name, fallbackCampus);
+  }
+  if (depth === 3) {
+    const direct = lookupRank(ranks.branch, name, null);
+    if (direct != null) return direct;
+    const org = resolveOwnerLibraryOrg(name);
+    if (org.branchCode) return lookupRank(ranks.branch, org.branchCode, fallbackBranch);
+    return fallbackBranch;
+  }
+  return fallbackBranch;
+}
+
+/**
+ * 单件列表按组织优先合集排序（分馆 → 馆区 → 机构）
+ * @param {Object[]} items
+ * @param {{ institutionIds?: string[], campusIds?: string[], branchCodes?: string[] }} [priority]
+ * @returns {Object[]}
+ */
+export function sortPhysicalItemsByOrgPriority(items, priority = {}) {
+  if (!items?.length) return items || [];
+  const ranks = buildOrgPriorityRankMaps(priority);
+  const hasPriority = ranks.institution.size || ranks.campus.size || ranks.branch.size;
+  if (!hasPriority) return items;
+
+  const fallbackBranch = Math.max(ranks.branch.size, 1) + 1000;
+  const fallbackCampus = Math.max(ranks.campus.size, 1) + 1000;
+  const fallbackInst = Math.max(ranks.institution.size, 1) + 1000;
+
+  return [...items]
+    .map((item, index) => ({ item, index, key: getPhysicalItemOrgSortKey(item, ranks, fallbackBranch, fallbackCampus, fallbackInst) }))
+    .sort((a, b) => {
+      for (let i = 0; i < a.key.length; i += 1) {
+        if (a.key[i] !== b.key[i]) return a.key[i] - b.key[i];
+      }
+      return a.index - b.index;
+    })
+    .map(entry => entry.item);
+}
+
+/**
+ * @returns {[number, number, number]}
+ */
+function getPhysicalItemOrgSortKey(item, ranks, fallbackBranch, fallbackCampus, fallbackInst) {
+  const org = resolveOwnerLibraryOrg(item?.ownerLibrary);
+  const branchKey = org.branchCode || org.branchName || item?.ownerLibrary;
+  const branchRank = lookupRank(ranks.branch, branchKey, fallbackBranch);
+  const campusRank = org.campusId
+    ? lookupRank(ranks.campus, org.campusId, fallbackCampus)
+    : lookupRank(ranks.campus, item?.ownerLibrary, fallbackCampus);
+  const institutionRank = org.institutionId
+    ? lookupRank(ranks.institution, org.institutionId, fallbackInst)
+    : lookupRank(ranks.institution, item?.ownerLibrary, fallbackInst);
+  return [branchRank, campusRank, institutionRank];
 }
 
 /**
@@ -1208,17 +1568,17 @@ export function formatDedupFieldLabels(fieldKeys) {
 /** 初始化部分订单行的查重示例数据 */
 export function applyDedupSampleData(lines) {
   const sampleScope = mergeSubscriberDedupScope(subscriberRows, ['ceshi']);
+  const localInstitutionIds = sampleScope.institutionIds || [];
   const holdingModernHistory = HOLDING_DEDUP_CATALOG.find(item => item.standardNo === '9787040456789');
   const holdingLibraryScience = HOLDING_DEDUP_CATALOG.find(item => item.standardNo === '9787501345678');
   const holdingGeology = HOLDING_DEDUP_CATALOG.find(item => item.standardNo === '9787565855375');
   const holdingBruckner = HOLDING_DEDUP_CATALOG.find(item => item.bibRecordNo === 'BIB2024003001');
-  const holdingZeroCopy = HOLDING_DEDUP_CATALOG.find(item => item.bibRecordNo === 'BIB2024002004');
+  const holdingCityOnly = HOLDING_DEDUP_CATALOG.find(item => item.bibRecordNo === 'BIB2024002004');
 
   const samples = [
     {
       orderLineNo: 'PG001B202406030001-1',
       sample: {
-        holdingDuplicate: true,
         orderDuplicate: true,
         lastDedupFieldKeys: ['resourceId', 'title'],
         holdingDedupResults: holdingModernHistory ? [holdingModernHistory] : [],
@@ -1229,7 +1589,6 @@ export function applyDedupSampleData(lines) {
     {
       orderLineNo: 'PG001B202406030001-2',
       sample: {
-        holdingDuplicate: true,
         orderDuplicate: false,
         lastDedupFieldKeys: ['resourceId', 'title'],
         holdingDedupResults: holdingLibraryScience ? [holdingLibraryScience] : [],
@@ -1240,6 +1599,8 @@ export function applyDedupSampleData(lines) {
       orderLineNo: 'PG001B202406030001-5',
       sample: {
         holdingDuplicate: false,
+        holdingLocalItemCount: 0,
+        holdingCityItemCount: 0,
         orderDuplicate: true,
         lastDedupFieldKeys: ['resourceId', 'title'],
         holdingDedupResults: [],
@@ -1250,17 +1611,15 @@ export function applyDedupSampleData(lines) {
     {
       orderLineNo: 'PG001B202406030001-3',
       sample: {
-        holdingDuplicate: true,
         orderDuplicate: false,
         lastDedupFieldKeys: ['resourceId', 'title'],
-        holdingDedupResults: holdingZeroCopy ? [holdingZeroCopy] : [],
+        holdingDedupResults: holdingCityOnly ? [holdingCityOnly] : [],
         orderDedupResults: []
       }
     },
     {
       orderLineNo: 'PG001B202406030005-3',
       sample: {
-        holdingDuplicate: true,
         orderDuplicate: false,
         lastDedupFieldKeys: ['resourceId', 'title'],
         holdingDedupResults: holdingGeology ? [holdingGeology] : [],
@@ -1270,7 +1629,6 @@ export function applyDedupSampleData(lines) {
     {
       orderLineNo: 'PG001B202406030006-2',
       sample: {
-        holdingDuplicate: true,
         orderDuplicate: false,
         lastDedupFieldKeys: ['title', 'carrier'],
         holdingDedupResults: holdingBruckner ? [holdingBruckner] : [],
@@ -1282,13 +1640,27 @@ export function applyDedupSampleData(lines) {
   samples.forEach(({ orderLineNo, sample }) => {
     const target = lines.find(item => item.orderLineNo === orderLineNo);
     if (!target) return;
+    const holdingDedupResults = enrichHoldingDedupResultsWithCounts(
+      sample.holdingDedupResults || [],
+      localInstitutionIds
+    );
+    const totals = sample.holdingDedupResults?.length
+      ? summarizeHoldingDedupCounts(holdingDedupResults)
+      : {
+        localItemCount: sample.holdingLocalItemCount ?? 0,
+        cityItemCount: sample.holdingCityItemCount ?? 0
+      };
     Object.assign(target, {
       ...sample,
+      holdingDedupResults,
+      holdingLocalItemCount: totals.localItemCount,
+      holdingCityItemCount: totals.cityItemCount,
+      holdingDuplicate: sample.holdingDuplicate ?? (totals.localItemCount > 0),
       lastDedupBranchCodes: [...sampleScope.branchCodes],
       lastDedupCollectionCodes: [...sampleScope.collectionCodes]
     });
     // 示例模拟「查重前书目记录号为空」：馆藏命中后自动关联第一条，书目页签操作显示「取消关联」
-    if (sample.holdingDedupResults?.length) {
+    if (holdingDedupResults.length) {
       target.bibRecordNo = '';
       autoAssociateFirstHoldingBib(target);
     }

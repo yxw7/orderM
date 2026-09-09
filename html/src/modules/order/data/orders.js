@@ -106,7 +106,7 @@ const rawOrderLines = [
     lineStatus: '已发订', acceptanceStatus: '待验收', settlementStatus: '待申请', isShortage: '否',
     flowStats: '1/0/0/0/0', issueTime: '2026-05-29 10:54:51', hasRemark: false,
     textLanguage: '中文', resourceType: '纸质书', language: '中文',
-    holdingDuplicate: null, orderDuplicate: null
+    holdingDuplicate: null, holdingLocalItemCount: 0, holdingCityItemCount: 0, orderDuplicate: null
   },
   {
     id: 'PG001B202406030001-1', orderId: 'PG001B202406030001', site: '华威桥馆', orderLineNo: 'PG001B202406030001-1',
@@ -117,7 +117,7 @@ const rawOrderLines = [
     flowStats: '3/0/0/0/0', issueTime: '2026-05-29 10:54:51', hasRemark: true,
     remark: '请核对分册后再发订',
     textLanguage: '中文', resourceType: '纸质书', language: '中文',
-    holdingDuplicate: null, orderDuplicate: null
+    holdingDuplicate: null, holdingLocalItemCount: 0, holdingCityItemCount: 0, orderDuplicate: null
   },
   {
     id: 'PG001B202406030001-2', orderId: 'PG001B202406030001', site: '华威桥馆', orderLineNo: 'PG001B202406030001-2',
@@ -129,7 +129,7 @@ const rawOrderLines = [
     lineStatus: '待发订', acceptanceStatus: '', settlementStatus: '待申请', isShortage: '否',
     flowStats: '1/0/0/0/0', issueTime: '2026-05-29 10:54:51', hasRemark: false,
     textLanguage: '中文', resourceType: '纸质书', language: '中文',
-    holdingDuplicate: null, orderDuplicate: null
+    holdingDuplicate: null, holdingLocalItemCount: 0, holdingCityItemCount: 0, orderDuplicate: null
   },
   {
     id: 'PG001B202406030001-3', orderId: 'PG001B202406030001', site: '华威桥馆', orderLineNo: 'PG001B202406030001-3',
@@ -139,7 +139,7 @@ const rawOrderLines = [
     lineStatus: '待发订', acceptanceStatus: '', settlementStatus: '待申请', isShortage: '否',
     flowStats: '2/0/0/0/0', issueTime: '', hasRemark: false,
     textLanguage: '中文', resourceType: '纸质书', language: '中文',
-    holdingDuplicate: null, orderDuplicate: null
+    holdingDuplicate: null, holdingLocalItemCount: 0, holdingCityItemCount: 0, orderDuplicate: null
   },
   {
     id: 'PG001B202406030001-5', orderId: 'PG001B202406030001', site: '华威桥馆', orderLineNo: 'PG001B202406030001-5',
@@ -149,7 +149,7 @@ const rawOrderLines = [
     lineStatus: '待发订', acceptanceStatus: '', settlementStatus: '待申请', isShortage: '否',
     flowStats: '1/0/0/0/0', issueTime: '', hasRemark: false,
     textLanguage: '中文', resourceType: '纸质书', language: '中文',
-    holdingDuplicate: null, orderDuplicate: null
+    holdingDuplicate: null, holdingLocalItemCount: 0, holdingCityItemCount: 0, orderDuplicate: null
   },
   {
     id: 'PG001B202406030002-1', orderId: 'PG001B202406030002', site: '华威桥馆', orderLineNo: 'PG001B202406030002-1',
@@ -160,7 +160,7 @@ const rawOrderLines = [
     flowStats: '2/2/0/0/0', issueTime: '2026-05-28 14:20:33', hasRemark: true,
     remark: '捐赠登记完成',
     textLanguage: '中文', resourceType: '纸质书', language: '中文',
-    holdingDuplicate: false, orderDuplicate: false
+    holdingDuplicate: false, holdingLocalItemCount: 0, holdingCityItemCount: 0, orderDuplicate: false
   },
   {
     id: 'PG001B202406030005-3', orderId: 'PG001B202406030005', site: '华威桥馆', orderLineNo: 'PG001B202406030005-3',
@@ -170,7 +170,7 @@ const rawOrderLines = [
     lineStatus: '待发订', acceptanceStatus: '', settlementStatus: '待申请', isShortage: '否',
     flowStats: '3/0/0/0/0', issueTime: '', hasRemark: false,
     textLanguage: '中文', resourceType: '纸质书', language: '中文',
-    holdingDuplicate: null, orderDuplicate: null
+    holdingDuplicate: null, holdingLocalItemCount: 0, holdingCityItemCount: 0, orderDuplicate: null
   },
   {
     id: 'PG001B202406030006-2', orderId: 'PG001B202406030006', site: '华威桥馆', orderLineNo: 'PG001B202406030006-2',
@@ -181,7 +181,7 @@ const rawOrderLines = [
     flowStats: '1/0/0/0/0', issueTime: '', hasRemark: false,
     textLanguage: '中文', productBarcode: '017685110221', catalogNo: 'CD-1102',
     resourceType: '视听资料', language: '中文',
-    holdingDuplicate: null, orderDuplicate: null
+    holdingDuplicate: null, holdingLocalItemCount: 0, holdingCityItemCount: 0, orderDuplicate: null
   },
   {
     id: 'PG001B202406030003-1', orderId: 'PG001B202406030003', site: '华威桥馆', orderLineNo: 'PG001B202406030003-1',
@@ -203,7 +203,7 @@ const rawOrderLines = [
     flowStats: '5/1/2/0/0', issueTime: '2026-05-28 17:34:43', hasRemark: true,
     remark: '部分到货，缺货待换',
     textLanguage: '中文', resourceType: '纸质书', language: '中文',
-    holdingDuplicate: null, orderDuplicate: null
+    holdingDuplicate: null, holdingLocalItemCount: 0, holdingCityItemCount: 0, orderDuplicate: null
   }
 ];
 
