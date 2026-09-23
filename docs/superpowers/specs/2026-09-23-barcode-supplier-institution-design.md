@@ -51,7 +51,7 @@
 | `barcodeCode` | 单行内多码，英文分号 `;` 分隔（如 `01;02`） |
 | `status` / `remark` / `creator` / `created` | 同现网 |
 
-**唯一键（配置）**：`(institutionId, barcodeType, supplier)`（供应商以名称或代码与现网一致口径标识）。
+**唯一键（配置）**：`(institutionId, barcodeType, supplierCode)`（表单选供应商名称后写入对应 `supplierCode`）。
 
 **代码唯一（跨供应商）**：同一 `institutionId` + `barcodeType` 下，任一 `barcodeCode` 片段不得被其它配置行占用。
 
