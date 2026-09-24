@@ -55,6 +55,51 @@ export function getCurrentLibrarianAssociatedSubscribers() {
 }
 
 /**
+ * 当前馆员关联订户的所属机构 ID 合集（去重保序）
+ * @param {Object[]} [subscriberList]
+ * @returns {string[]}
+ */
+export function resolveLibrarianInstitutionIds(subscriberList) {
+  const names = new Set(getCurrentLibrarianAssociatedSubscribers());
+  if (!names.size) return [];
+  const list = subscriberList || subscriberRows;
+  const ids = [];
+  const seen = new Set();
+  list.forEach(row => {
+    if (!names.has(row.name)) return;
+    const institutionId = String(row.institutionId || '').trim();
+    if (!institutionId || seen.has(institutionId)) return;
+    seen.add(institutionId);
+    ids.push(institutionId);
+  });
+  return ids;
+}
+
+export function getCurrentLibrarianBranchId() {
+  const row = getCurrentLibrarianRow();
+  return String(row?.branchId || '').trim();
+}
+
+export function getCurrentLibrarianInstitutionId() {
+  const row = getCurrentLibrarianRow();
+  return String(row?.institutionId || '').trim();
+}
+
+/**
+ * 设置类模块共用机构范围
+ * 有关联订户 → 订户机构合集；否则读同步落库的 institutionId；皆无 → []
+ * 不调用户信息、不按四级树现场倒推
+ * @param {Object[]} [subscriberList]
+ * @returns {string[]}
+ */
+export function resolveInstitutionScopeIds(subscriberList) {
+  const fromSubs = resolveLibrarianInstitutionIds(subscriberList);
+  if (fromSubs.length) return fromSubs;
+  const institutionId = getCurrentLibrarianInstitutionId();
+  return institutionId ? [institutionId] : [];
+}
+
+/**
  * 当前登录馆员是否有关联订户
  * @returns {boolean}
  */
