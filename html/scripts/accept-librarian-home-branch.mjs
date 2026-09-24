@@ -204,6 +204,42 @@ check('有关联订户时范围等于订户机构合集', () => {
 
 
 
+check('有关联订户但机构合集为空时不读缓存', () => {
+
+  const account = 'S0SUBNOINST01';
+
+  librarianRows.value.push({
+
+    id: 9998,
+
+    account,
+
+    name: '有订户无机构',
+
+    subscribers: '无机构订户',
+
+    date: '2026-09-24',
+
+    branchId: 'branch-1',
+
+    institutionId: 'inst-1',
+
+    branchName: '',
+
+    institutionName: ''
+
+  });
+
+  appConfig.currentLibrarianAccount = account;
+
+  const scope = resolveInstitutionScopeIds([{ name: '无机构订户', institutionId: '' }]);
+
+  assert.deepEqual(scope, []);
+
+});
+
+
+
 check('无订户有落库 institutionId 时读缓存', () => {
 
   appConfig.currentLibrarianAccount = 'S1BRANCH01';

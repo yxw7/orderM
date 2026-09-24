@@ -93,8 +93,9 @@ export function getCurrentLibrarianInstitutionId() {
  * @returns {string[]}
  */
 export function resolveInstitutionScopeIds(subscriberList) {
-  const fromSubs = resolveLibrarianInstitutionIds(subscriberList);
-  if (fromSubs.length) return fromSubs;
+  if (getCurrentLibrarianAssociatedSubscribers().length) {
+    return resolveLibrarianInstitutionIds(subscriberList);
+  }
   const institutionId = getCurrentLibrarianInstitutionId();
   return institutionId ? [institutionId] : [];
 }
