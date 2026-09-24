@@ -4,7 +4,7 @@
 
 **Goal:** 为「条码号供应商代码」增加所属机构：列表按用户机构范围过滤并展示机构列；配置粒度改为机构+类型+供应商一行多码；表单首位选机构并落实唯一性校验。
 
-**Architecture:** 在 `current-librarian.js` 增加与隔离规格一致的 `resolveInstitutionScopeIds()`（订户机构合集优先，否则所在馆倒推）；`barcode-supplier-manage.js` 行级存 `institutionId`、合并多码为一行、重写唯一性与范围过滤；FormModal / View 对齐条码规则页的机构下拉与只读规则。数据层用 `html/scripts/accept-barcode-supplier-institution.mjs` 验收。
+**Architecture:** 在 `current-librarian.js` 增加与隔离规格一致的 `resolveInstitutionScopeIds()`（订户机构合集优先，否则读馆员同步落库的 `institutionId`，**不**运行时 `getInstitutionIdForBranch` 倒推；见 [`2026-09-24-librarian-home-branch-institution-plan.md`](2026-09-24-librarian-home-branch-institution-plan.md) / [`2026-09-24-librarian-home-branch-institution-cache-design.md`](../specs/2026-09-24-librarian-home-branch-institution-cache-design.md) §6.2）；`barcode-supplier-manage.js` 行级存 `institutionId`、合并多码为一行、重写唯一性与范围过滤；FormModal / View 对齐条码规则页的机构下拉与只读规则。数据层用 `html/scripts/accept-barcode-supplier-institution.mjs` 验收。
 
 **Tech Stack:** Vue 3、Vite；纯 JS mock；`node --experimental-loader ./scripts/alias-loader.mjs`
 
@@ -16,8 +16,8 @@
 
 | 文件 | 职责 |
 |------|------|
-| `html/src/modules/subscriber/data/current-librarian.js` | 新增 `resolveInstitutionScopeIds`；轻量 `getCurrentLibrarianBranchId`（读馆员 `branchId`） |
-| `html/src/modules/subscriber/data/librarian-manage.js` | mock 馆员补可选 `branchId`（供 S1 倒推演示 / 脚本） |
+| `html/src/modules/subscriber/data/current-librarian.js` | 新增 `resolveInstitutionScopeIds`、`getCurrentLibrarianInstitutionId`（读馆员落库 `institutionId`）；`getCurrentLibrarianBranchId` 仅展示/排障 |
+| `html/src/modules/subscriber/data/librarian-manage.js` | mock 馆员补 `branchId` / 同步写入的 `institutionId`（供 S1 无订户范围演示 / 脚本） |
 | `html/src/modules/barcode-supplier/data/barcode-supplier-manage.js` | 列/种子/校验/构建/范围过滤；一行多码 |
 | `html/src/modules/barcode-supplier/components/BarcodeSupplierFormModal.vue` | 所属机构首位；编辑只读机构/类型/供应商 |
 | `html/src/modules/barcode-supplier/views/BarcodeSupplierView.vue` | 机构范围过滤；提交写单行；传机构选项 |
@@ -29,6 +29,8 @@
 
 ### Task 1: 机构范围解析 `resolveInstitutionScopeIds`
 
+**说明：** S1 无订户兜底读馆员主数据已落库的 `institutionId`（同步时按四级树写入一次），**禁止**在 `resolveInstitutionScopeIds` 内调用 `getInstitutionIdForBranch` 现场倒推。实现顺序与字段约定见 [`2026-09-24-librarian-home-branch-institution-plan.md`](2026-09-24-librarian-home-branch-institution-plan.md)、[`2026-09-24-librarian-home-branch-institution-cache-design.md`](../specs/2026-09-24-librarian-home-branch-institution-cache-design.md) §6.2–6.4。
+
 **Files:**
 - Modify: `html/src/modules/subscriber/data/current-librarian.js`
 - Modify: `html/src/modules/subscriber/data/librarian-manage.js`
@@ -39,43 +41,46 @@
 在 `librarian-manage.js` 的 `extraLibrarians` 增加演示账号，或给 `librarianRowsRaw` 中一项补字段。推荐在 `extraLibrarians` 旁增加可被 `createInitialLibrarianRows` 合入的行——更简单：在 `createInitialLibrarianRows` 后处理不方便，直接改 `librarianRowsRaw` 增加一行：
 
 ```javascript
-{ account: 'S1BRANCH01', name: 'S1所在馆演示', subscribers: '', date: '2026-09-23', branchId: 'branch-1' },
+{ account: 'S1BRANCH01', name: 'S1无订户机构范围演示', subscribers: '', date: '2026-09-23', branchId: 'branch-1', institutionId: 'institution-1' },
 ```
 
-并给现有 `BIBQUERY01`（若需要）保留原订户；其它行可不强制 `branchId`。
+`institutionId` 表示同步阶段已按四级树落库的值（与 `branch-1` 对应机构一致即可）；范围解析只读该字段，不在本 Task 倒推。
 
-确保 `createInitialLibrarianRows` 透传 `branchId`（已有 `...row`，无需改映射逻辑）。
+并给现有 `BIBQUERY01`（若需要）保留原订户；其它行可不强制 `branchId` / `institutionId`。
+
+确保 `createInitialLibrarianRows` 透传 `branchId`、`institutionId`（已有 `...row`，无需改映射逻辑）。
 
 - [ ] **Step 2: 在 `current-librarian.js` 增加分支与范围 API**
 
 在文件末尾（或 `resolveLibrarianInstitutionIds` 之后）追加：
 
 ```javascript
-import { getInstitutionIdForBranch } from '@/modules/subscriber/data/org-hierarchy';
-// 若文件顶部已有 initialBranchRows import，复用；否则：
-import { initialBranchRows } from '@/modules/location/data/location-manage';
-
 export function getCurrentLibrarianBranchId() {
   const row = getCurrentLibrarianRow();
   return String(row?.branchId || '').trim();
 }
 
+export function getCurrentLibrarianInstitutionId() {
+  const row = getCurrentLibrarianRow();
+  return String(row?.institutionId || '').trim();
+}
+
 /**
  * 设置类模块（馆址/条码规则/条码号供应商）共用机构范围
- * S0 → []；有关联订户 → 订户机构合集；否则有所在馆 → [倒推机构]
+ * 有关联订户 → 订户机构合集；否则读同步落库 institutionId；皆无 → []
+ * 不调用户信息、不按四级树现场倒推（见馆员所属机构缓存规格 §6.2）
  * @returns {string[]}
  */
 export function resolveInstitutionScopeIds(subscriberList) {
-  const fromSubs = resolveLibrarianInstitutionIds(subscriberList);
-  if (fromSubs.length) return fromSubs;
-  const branchId = getCurrentLibrarianBranchId();
-  if (!branchId) return [];
-  const institutionId = getInstitutionIdForBranch(branchId, initialBranchRows);
+  if (getCurrentLibrarianAssociatedSubscribers().length) {
+    return resolveLibrarianInstitutionIds(subscriberList);
+  }
+  const institutionId = getCurrentLibrarianInstitutionId();
   return institutionId ? [institutionId] : [];
 }
 ```
 
-注意：`current-librarian.js` 顶部已 import `initialBranchRows` 与 `org-hierarchy` 的其它符号时，只追加 `getInstitutionIdForBranch`，避免重复 import。
+注意：无订户时的机构来自馆员同步落库字段，**不要**在此引入 `getInstitutionIdForBranch` / `initialBranchRows`。
 
 - [ ] **Step 3: 创建验收脚本骨架并写范围用例**
 
@@ -93,7 +98,6 @@ import {
   resolveInstitutionScopeIds,
   resolveLibrarianInstitutionIds
 } from '../src/modules/subscriber/data/current-librarian.js';
-import { getInstitutionIdForBranch } from '../src/modules/subscriber/data/org-hierarchy.js';
 
 const results = [];
 
@@ -119,22 +123,22 @@ check('有关联订户时 resolveInstitutionScopeIds 等于订户机构合集', 
   assert.deepEqual(scope, expected);
 });
 
-check('无订户有 branchId 时倒推机构', () => {
+check('无订户有落库 institutionId 时范围为该机构', () => {
   appConfig.currentLibrarianAccount = 'S1BRANCH01';
   const scope = resolveInstitutionScopeIds();
-  assert.deepEqual(scope, [getInstitutionIdForBranch('branch-1')]);
+  assert.deepEqual(scope, ['institution-1']);
 });
 
-check('无所在馆无订户时范围为空', () => {
+check('无订户无 institutionId 时范围为空', () => {
   const row = librarianRows.value.find(r => r.account === 'S1BRANCH01');
   const prevSubs = row.subscribers;
-  const prevBranch = row.branchId;
+  const prevInstitution = row.institutionId;
   row.subscribers = '';
-  row.branchId = '';
+  row.institutionId = '';
   appConfig.currentLibrarianAccount = 'S1BRANCH01';
   assert.deepEqual(resolveInstitutionScopeIds(), []);
   row.subscribers = prevSubs;
-  row.branchId = prevBranch;
+  row.institutionId = prevInstitution;
 });
 
 appConfig.currentLibrarianAccount = originalAccount;
