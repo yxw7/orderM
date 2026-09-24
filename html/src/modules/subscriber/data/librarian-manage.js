@@ -1,4 +1,36 @@
 import { getTodayString } from '@/modules/subscriber/data/subscriber-manage';
+import {
+  formatBranchLabel,
+  getBranchById,
+  initialBranchRows
+} from '@/modules/location/data/location-manage';
+import { getInstitutionIdFromLevel4BranchCode } from '@/modules/location/data/location-level4';
+import { getInstitutionName } from '@/modules/subscriber/data/org-hierarchy';
+
+export function syncLibrarianHomeBranch(row, branchId = row?.branchId) {
+  const id = String(branchId || '').trim();
+  if (!id) {
+    return { branchId: '', institutionId: '', branchName: '', institutionName: '' };
+  }
+  const branch = getBranchById(initialBranchRows, id);
+  const code = String(branch?.code || '').trim();
+  const institutionId = code ? getInstitutionIdFromLevel4BranchCode(code) : '';
+  return {
+    branchId: id,
+    institutionId,
+    branchName: formatBranchLabel(branch) || '',
+    institutionName: getInstitutionName(institutionId) || ''
+  };
+}
+
+export function enrichLibrarianOrgDisplay(row) {
+  const branch = getBranchById(initialBranchRows, row?.branchId);
+  return {
+    ...row,
+    branchName: formatBranchLabel(branch) || '',
+    institutionName: getInstitutionName(row?.institutionId) || ''
+  };
+}
 
 export const extraLibrarians = [
   { account: 'DINGYANGYANG', name: '丁洋洋' },
@@ -9,8 +41,8 @@ export const extraLibrarians = [
 
 export const librarianRowsRaw = [
   { account: 'STST1XGW', name: '首图视听夏高娃', subscribers: '视听中心, 数字资源', date: '2020-06-05' },
-  { account: 'STDFZLT', name: '首图地方文献赵兰天', subscribers: '地方文献', date: '2025-01-25' },
-  { account: 'STECZB44', name: '首图采编少儿编目4', subscribers: '少儿中文, 少儿外文', date: '2025-01-22' },
+  { account: 'STDFZLT', name: '首图地方文献赵兰天', subscribers: '地方文献', date: '2025-01-25', branchId: 'branch-1' },
+  { account: 'STECZB44', name: '首图采编少儿编目4', subscribers: '少儿中文, 少儿外文', date: '2025-01-22', branchId: 'branch-2' },
   { account: 'STECZB61', name: '首图少儿出版荆要武', subscribers: '少儿中文', date: '2025-01-21' },
   { account: 'STECZB62', name: '首图少儿中采缪文娜', subscribers: '少儿中文', date: '2025-01-20' },
   { account: 'STECZB63', name: '首图少儿中采张颖', subscribers: '少儿中文, 成人中文', date: '2025-01-18' },
@@ -54,15 +86,18 @@ export const librarianRowsRaw = [
   { account: 'STFLOW02', name: '首图流通部2', subscribers: '流通部', date: '2020-05-11' },
   { account: 'STAV01', name: '首图视听编目1', subscribers: '视听中心', date: '2020-05-10' },
   { account: 'STAV02', name: '首图视听编目2', subscribers: '视听中心', date: '2020-05-09' },
-  { account: 'STCB01', name: '首图采编中心1', subscribers: '采编中心', date: '2020-05-08' },
+  { account: 'STCB01', name: '首图采编中心1', subscribers: '采编中心', date: '2020-05-08', branchId: 'branch-6' },
   { account: 'STCB02', name: '首图采编中心2', subscribers: '采编中心', date: '2020-05-07' },
-  { account: 'BIBQUERY01', name: '书目查询演示馆员', subscribers: 'ceshi', date: '2026-06-17' }
+  { account: 'BIBQUERY01', name: '书目查询演示馆员', subscribers: 'ceshi', date: '2026-06-17' },
+  { account: 'S1BRANCH01', name: 'S1所属馆演示', subscribers: '', date: '2026-09-24', branchId: 'branch-1' }
 ];
 
 export const LIBRARIAN_COLUMNS = [
   { key: 'id', label: '序号' },
   { key: 'account', label: '馆员账号' },
   { key: 'name', label: '馆员姓名' },
+  { key: 'branchName', label: '所属馆', minWidth: 'min-w-[160px]' },
+  { key: 'institutionName', label: '所属机构' },
   { key: 'subscribers', label: '订户名称', minWidth: 'min-w-[200px]' },
   { key: 'date', label: '关联日期' },
   { key: 'actions', label: '操作', sticky: true }
@@ -76,7 +111,15 @@ export const librarianSearchFields = [
 ];
 
 export function createInitialLibrarianRows() {
-  return librarianRowsRaw.map((row, index) => ({ ...row, id: index + 1 }));
+  return librarianRowsRaw.map((row, index) => {
+    const branchId = String(row.branchId || 'branch-6').trim();
+    const synced = syncLibrarianHomeBranch(row, branchId);
+    return {
+      ...row,
+      id: index + 1,
+      ...synced
+    };
+  });
 }
 
 export function buildAllLibrarianPool(rows = createInitialLibrarianRows()) {
@@ -133,7 +176,11 @@ export function syncLibrarianRowsFromAssoc(rows, assoc, nameByAccount) {
         account,
         name: nameByAccount[account] || account,
         subscribers: librarianSubscriberMap[account].join(', '),
-        date: getTodayString()
+        date: getTodayString(),
+        branchId: '',
+        institutionId: '',
+        branchName: '',
+        institutionName: ''
       });
       existingAccounts.add(account);
     }
