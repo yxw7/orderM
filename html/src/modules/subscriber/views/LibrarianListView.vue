@@ -24,6 +24,8 @@
       :page-sizes="[10, 20, 50]"
       unit="条记录"
     >
+      <template #cell-branchName="{ value }">{{ value || '—' }}</template>
+      <template #cell-institutionName="{ value }">{{ value || '—' }}</template>
       <template #cell-actions="{ row }">
         <button type="button" class="text-sky-600 hover:underline" @click="openDisassociate(row)">取消关联</button>
       </template>
