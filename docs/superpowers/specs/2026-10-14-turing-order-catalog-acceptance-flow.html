@@ -253,14 +253,14 @@ sequenceDiagram
   end
   T->>C: 新增和更新馆藏连接
   T->>C: 查询馆藏连接索书号
-  T->>C: 新增订购和单册日志
+  T->>O: 新增订购和单册日志
   T->>T: 准备上机
         </pre>
       </div>
 
       <div class="card">
         <h2>预验收 · 三列泳道</h2>
-        <p class="sub">插入查单册后编号为 P1–P10。</p>
+        <p class="sub">插入查单册后编号为 P1–P10；日志为图灵 → 订单。</p>
         <div class="swim">
           <div class="swim-h s">步骤</div>
           <div class="swim-h t">图灵</div>
@@ -318,9 +318,9 @@ sequenceDiagram
           <div class="swim-cell act"><strong>返回索书号</strong></div>
 
           <div class="swim-step">11</div>
-          <div class="swim-cell act"><span class="tag sync-c">→ 新增订购和单册日志 P10</span></div>
-          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><span class="tag sync-o">→ 新增订购和单册日志 P10</span></div>
           <div class="swim-cell act"><strong>日志落库</strong></div>
+          <div class="swim-cell mute">—</div>
 
           <div class="swim-step">12</div>
           <div class="swim-cell act"><strong>准备上机</strong><br><span class="tag local">本地</span></div>
@@ -360,7 +360,7 @@ sequenceDiagram
   O->>O: 收货写库；自动关单
   O->>C: 再推单册（覆盖占位）
   Op->>T: 登列、本地改单/开票（本地）
-  T->>C: 新增订购和单册日志
+  T->>O: 新增订购和单册日志
   T->>T: 系统处理结束
         </pre>
       </div>
@@ -405,9 +405,9 @@ sequenceDiagram
           <div class="swim-cell mute">—</div>
 
           <div class="swim-step">7</div>
-          <div class="swim-cell act"><span class="tag sync-c">→ 新增订购和单册日志 A6</span></div>
-          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><span class="tag sync-o">→ 新增订购和单册日志 A6</span></div>
           <div class="swim-cell act"><strong>日志落库</strong></div>
+          <div class="swim-cell mute">—</div>
 
           <div class="swim-step">8</div>
           <div class="swim-cell act"><strong>系统处理结束</strong></div>
@@ -435,13 +435,13 @@ sequenceDiagram
             <tr><td>P7</td><td>预验收</td><td>分类号最大种次号</td><td class="dir">图灵 → 编目</td><td>补空号或新增</td></tr>
             <tr><td>P8</td><td>预验收</td><td>新增和更新馆藏连接</td><td class="dir">图灵 → 编目</td><td>新增与更新</td></tr>
             <tr><td>P9</td><td>预验收</td><td>查询馆藏连接索书号</td><td class="dir">图灵 → 编目</td><td>查询</td></tr>
-            <tr><td>P10</td><td>预验收</td><td>新增订购和单册日志</td><td class="dir">图灵 → 编目</td><td>不回写订单</td></tr>
+            <tr><td>P10</td><td>预验收</td><td>新增订购和单册日志</td><td class="dir">图灵 → 订单</td><td>—</td></tr>
             <tr><td>A1</td><td>实际验收</td><td>原编后再查 / 分配</td><td class="dir">图灵 → 编目</td><td>仅原编分支</td></tr>
             <tr><td>A2</td><td>实际验收</td><td>多卷查新订单</td><td class="dir">人工订单 → 图灵 → 订单</td><td>手工拆单后回填</td></tr>
             <tr><td>A3</td><td>实际验收</td><td>条码查重</td><td class="dir">图灵 → 编目</td><td>条码是否已被使用</td></tr>
             <tr><td>A4</td><td>实际验收</td><td>完成收货</td><td class="dir">图灵 → 订单</td><td>关单自动</td></tr>
             <tr><td>A5</td><td>实际验收</td><td>再推单册</td><td class="dir">订单 → 编目</td><td>覆盖虚拟占位</td></tr>
-            <tr><td>A6</td><td>实际验收</td><td>新增订购和单册日志</td><td class="dir">图灵 → 编目</td><td>不回写订单</td></tr>
+            <tr><td>A6</td><td>实际验收</td><td>新增订购和单册日志</td><td class="dir">图灵 → 订单</td><td>—</td></tr>
           </tbody>
         </table>
       </div>
