@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>图灵 · 订单 · 编目 — 预验收 / 实际验收交互流程</title>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#e8f2f4",
+        primaryTextColor: "#1a1a1a",
+        primaryBorderColor: "#0f4c5c",
+        lineColor: "#4a5560",
+        secondaryColor: "#f5efe6",
+        tertiaryColor: "#eef2e6",
+        fontFamily: "Segoe UI, PingFang SC, Microsoft YaHei, sans-serif"
+      },
+      sequence: { mirrorActors: false, messageMargin: 40, actorMargin: 56 }
+    });
+  </script>
+  <style>
+    :root {
+      --bg: #f3f1eb;
+      --ink: #1c1b19;
+      --muted: #5c5a55;
+      --card: #fffcf7;
+      --line: #d9d4c8;
+      --turing: #0f4c5c;
+      --order: #6b4423;
+      --catalog: #3d4f24;
+      --local: #6e6a60;
+      --auto: #3d4a7a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, #d7e6ea 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 0%, #e8e0d0 0%, transparent 50%),
+        var(--bg);
+      line-height: 1.5;
+    }
+    header {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 24px 12px;
+    }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      background: var(--card);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.t { background: var(--turing); }
+    .dot.o { background: var(--order); }
+    .dot.c { background: var(--catalog); }
+    .dot.l { background: var(--local); }
+    .dot.a { background: var(--auto); }
+
+    nav.tabs {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 8px 24px 12px;
+      display: flex;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: linear-gradient(to bottom, var(--bg) 70%, transparent);
+    }
+    nav.tabs button {
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    nav.tabs button.active {
+      background: var(--turing);
+      border-color: var(--turing);
+      color: #fff;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 20px 8px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+    }
+    .card h2 { margin: 0 0 4px; font-size: 1.15rem; }
+    .card .sub { margin: 0 0 14px; color: var(--muted); font-size: 0.88rem; }
+    .mermaid { overflow-x: auto; padding: 8px 0 16px; }
+
+    .swim {
+      display: grid;
+      grid-template-columns: 72px 1.15fr 1fr 1fr;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .swim-h { color: #fff; padding: 10px 12px; font-weight: 650; }
+    .swim-h.s { background: #333; }
+    .swim-h.t { background: var(--turing); }
+    .swim-h.o { background: var(--order); }
+    .swim-h.c { background: var(--catalog); }
+    .swim-step {
+      background: #efece4;
+      padding: 10px;
+      font-weight: 700;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: flex-start;
+    }
+    .swim-cell {
+      padding: 10px 12px;
+      border-top: 1px solid var(--line);
+      border-left: 1px solid #ebe6da;
+      min-height: 54px;
+    }
+    .swim-cell.mute { background: #f7f5ef; color: #aaa; }
+    .swim-cell.act { background: #fff; }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+      margin-right: 4px;
+    }
+    .tag.sync-o { background: #f0e6d8; color: var(--order); }
+    .tag.sync-c { background: #e6edd8; color: var(--catalog); }
+    .tag.local { background: #eceae4; color: var(--local); }
+    .tag.auto { background: #e4e7f5; color: var(--auto); }
+    .tag.manual { background: #eee; color: #444; }
+    .branch {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      padding: 4px 6px;
+      background: #f7f5ef;
+      border-radius: 4px;
+    }
+
+    table.sync {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    table.sync th, table.sync td {
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.sync th { background: #222; color: #fff; }
+    table.sync tr:nth-child(even) td { background: #faf8f3; }
+    .dir { font-family: ui-monospace, Consolas, monospace; font-size: 12px; white-space: nowrap; }
+    footer {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px 40px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>图灵 · 订单 · 编目交互流程图</h1>
+    <p>预验收 / 实际验收双泳道 · 2026-10-14 规格（含查单册 P4、原编不落接口、日志 P10/A6）</p>
+    <div class="legend">
+      <span class="chip"><span class="dot t"></span>图灵</span>
+      <span class="chip"><span class="dot o"></span>订单</span>
+      <span class="chip"><span class="dot c"></span>编目</span>
+      <span class="chip"><span class="dot l"></span>图灵本地 / 原编不落接口</span>
+      <span class="chip"><span class="dot a"></span>订单自动关单</span>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button type="button" class="active" data-tab="pre">① 预验收</button>
+    <button type="button" data-tab="act">② 实际验收</button>
+    <button type="button" data-tab="sync">③ 同步点清单</button>
+  </nav>
+
+  <main>
+    <section id="pre" class="panel active">
+      <div class="card">
+        <h2>预验收 · 时序图</h2>
+        <p class="sub">推占位单册后先按书目记录号查单册；更新编目走接口，原编落库不走接口；末步为订购/单册日志。</p>
+        <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Op as 馆员
+  participant T as 图灵
+  participant O as 订单
+  participant C as 编目
+
+  Op->>T: 导入发货单
+  T->>O: 查订单行
+  O-->>T: 订单行数据
+  Op->>T: 差异对比或人工校核（通过）
+  T->>O: 按批次生成预验收数据
+  O->>O: 预验收 + 虚拟单册 + 虚拟条码
+  O->>C: 推占位单册
+  T->>C: 按书目记录号查单册列表及信息
+  C-->>T: 单册列表与信息
+  T->>C: 查编目 / 书目查重 / 是否已编目
+  C-->>T: 编目与查重结果
+  opt 更新已有编目
+    T->>C: 更新编目（接口）
+  end
+  Note over T: 原编落库不通过接口
+  opt 无馆藏需种次号
+    T->>C: 获取/维护分类号最大种次号
+  end
+  T->>C: 新增和更新馆藏连接
+  T->>C: 查询馆藏连接索书号
+  T->>C: 新增订购和单册日志
+  T->>T: 准备上机
+        </pre>
+      </div>
+
+      <div class="card">
+        <h2>预验收 · 三列泳道</h2>
+        <p class="sub">插入查单册后编号为 P1–P10。</p>
+        <div class="swim">
+          <div class="swim-h s">步骤</div>
+          <div class="swim-h t">图灵</div>
+          <div class="swim-h o">订单</div>
+          <div class="swim-h c">编目</div>
+
+          <div class="swim-step">1</div>
+          <div class="swim-cell act"><strong>导入发货单</strong><br><span class="tag local">本地</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell mute">—</div>
+
+          <div class="swim-step">2</div>
+          <div class="swim-cell act"><span class="tag sync-o">→ 查订单行 P1</span></div>
+          <div class="swim-cell act"><strong>返回订单行数据</strong></div>
+          <div class="swim-cell mute">—</div>
+
+          <div class="swim-step">3</div>
+          <div class="swim-cell act"><strong>差异对比或人工校核</strong><br><span class="tag local">通过后继续</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell mute">—</div>
+
+          <div class="swim-step">4</div>
+          <div class="swim-cell act"><span class="tag sync-o">→ 生成预验收 P2</span></div>
+          <div class="swim-cell act"><strong>预验收 + 虚拟单册/条码</strong><br><span class="tag sync-c">→ 推占位单册 P3</span></div>
+          <div class="swim-cell act"><strong>接收虚拟单册</strong></div>
+
+          <div class="swim-step">5</div>
+          <div class="swim-cell act"><span class="tag sync-c">→ 按书目记录号查单册 P4</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><strong>返回单册列表及单册信息</strong></div>
+
+          <div class="swim-step">6</div>
+          <div class="swim-cell act"><span class="tag sync-c">→ 查编目/书目查重 P5</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><strong>返回编目与查重结果</strong></div>
+
+          <div class="swim-step">7</div>
+          <div class="swim-cell act"><span class="tag sync-c">→ 更新编目 P6</span><br><span class="tag local">原编落库不走接口</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><strong>接口更新已有编目</strong></div>
+
+          <div class="swim-step">8</div>
+          <div class="swim-cell act"><span class="tag sync-c">→ 分类号最大种次号 P7</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><strong>返回/维护种次号</strong></div>
+
+          <div class="swim-step">9</div>
+          <div class="swim-cell act"><span class="tag sync-c">→ 新增和更新馆藏连接 P8</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><strong>新增/更新落库</strong></div>
+
+          <div class="swim-step">10</div>
+          <div class="swim-cell act"><span class="tag sync-c">→ 查询馆藏连接索书号 P9</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><strong>返回索书号</strong></div>
+
+          <div class="swim-step">11</div>
+          <div class="swim-cell act"><span class="tag sync-c">→ 新增订购和单册日志 P10</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><strong>日志落库</strong></div>
+
+          <div class="swim-step">12</div>
+          <div class="swim-cell act"><strong>准备上机</strong><br><span class="tag local">本地</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell mute">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="act" class="panel">
+      <div class="card">
+        <h2>实际验收 · 时序图</h2>
+        <p class="sub">A6 为新增订购和单册日志（不再以转流通为同步点）。</p>
+        <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Op as 馆员
+  participant T as 图灵
+  participant O as 订单
+  participant C as 编目
+
+  Op->>T: 上机加工（本地）
+  opt 原编且编校完成
+    T->>C: 再查书目/索书号；馆藏分配
+    C-->>T: 编目与分配结果
+  end
+  opt 多卷书
+    Op->>O: 手工拆单
+    Op->>T: 回填新订单号
+    T->>O: 查新订单与单据
+    O-->>T: 新订单/单据
+  end
+  Op->>T: 下发条码、打索书号（本地）
+  T->>C: 条码查重（是否已被使用）
+  C-->>T: 占用结果；重复则人工处理
+  T->>O: 完成收货
+  O->>O: 收货写库；自动关单
+  O->>C: 再推单册（覆盖占位）
+  Op->>T: 登列、本地改单/开票（本地）
+  T->>C: 新增订购和单册日志
+  T->>T: 系统处理结束
+        </pre>
+      </div>
+
+      <div class="card">
+        <h2>实际验收 · 三列泳道</h2>
+        <p class="sub">步骤 4：本地打号 + 编目条码查重；步骤 7：订购/单册日志。</p>
+        <div class="swim">
+          <div class="swim-h s">步骤</div>
+          <div class="swim-h t">图灵</div>
+          <div class="swim-h o">订单</div>
+          <div class="swim-h c">编目</div>
+
+          <div class="swim-step">1</div>
+          <div class="swim-cell act"><strong>上机加工</strong><br><span class="tag local">本地</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell mute">—</div>
+
+          <div class="swim-step">2</div>
+          <div class="swim-cell act"><div class="branch">分支：是否原编？</div><span class="tag sync-c">→ 再查书目/索书号 A1</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><strong>返回并落库</strong></div>
+
+          <div class="swim-step">3</div>
+          <div class="swim-cell act"><div class="branch">分支：是否多卷？</div><span class="tag sync-o">→ 查新订单 A2</span></div>
+          <div class="swim-cell act"><strong>馆员手工拆单</strong><br><span class="tag manual">人工回填图灵</span></div>
+          <div class="swim-cell mute">—</div>
+
+          <div class="swim-step">4</div>
+          <div class="swim-cell act"><strong>下发条码、打索书号</strong><br><span class="tag local">本地</span><br><span class="tag sync-c">→ 条码查重 A3</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><strong>返回是否已被使用</strong></div>
+
+          <div class="swim-step">5</div>
+          <div class="swim-cell act"><span class="tag sync-o">→ 完成收货 A4</span></div>
+          <div class="swim-cell act"><strong>收货写库</strong><br><span class="tag auto">自动关单</span><br><span class="tag sync-c">→ 再推单册 A5</span></div>
+          <div class="swim-cell act"><strong>接收单册更新</strong></div>
+
+          <div class="swim-step">6</div>
+          <div class="swim-cell act"><strong>登列 / 本地改单 / 开票</strong><br><span class="tag local">本地</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell mute">—</div>
+
+          <div class="swim-step">7</div>
+          <div class="swim-cell act"><span class="tag sync-c">→ 新增订购和单册日志 A6</span></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell act"><strong>日志落库</strong></div>
+
+          <div class="swim-step">8</div>
+          <div class="swim-cell act"><strong>系统处理结束</strong></div>
+          <div class="swim-cell mute">—</div>
+          <div class="swim-cell mute">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sync" class="panel">
+      <div class="card">
+        <h2>同步点清单 P1–P10 / A1–A6</h2>
+        <p class="sub">P4 为新增「查单册」；其后编号顺延。原编落库不在接口同步点内。</p>
+        <table class="sync">
+          <thead>
+            <tr><th>#</th><th>阶段</th><th>同步点</th><th>方向</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P1</td><td>预验收</td><td>查订单行</td><td class="dir">图灵 → 订单</td><td>供差异对比</td></tr>
+            <tr><td>P2</td><td>预验收</td><td>按批次生成预验收</td><td class="dir">图灵 → 订单</td><td>含虚拟单册 + 虚拟条码</td></tr>
+            <tr><td>P3</td><td>预验收</td><td>推占位单册</td><td class="dir">订单 → 编目</td><td>待实际验收更新</td></tr>
+            <tr><td>P4</td><td>预验收</td><td>按书目记录号查单册列表及信息</td><td class="dir">图灵 → 编目</td><td><strong>新增</strong>；在书目查重前</td></tr>
+            <tr><td>P5</td><td>预验收</td><td>查编目 / 书目查重</td><td class="dir">图灵 → 编目</td><td>是否已编目</td></tr>
+            <tr><td>P6</td><td>预验收</td><td>更新编目</td><td class="dir">图灵 → 编目</td><td>仅更新走接口；<strong>原编落库不通过接口</strong></td></tr>
+            <tr><td>P7</td><td>预验收</td><td>分类号最大种次号</td><td class="dir">图灵 → 编目</td><td>补空号或新增</td></tr>
+            <tr><td>P8</td><td>预验收</td><td>新增和更新馆藏连接</td><td class="dir">图灵 → 编目</td><td>新增与更新</td></tr>
+            <tr><td>P9</td><td>预验收</td><td>查询馆藏连接索书号</td><td class="dir">图灵 → 编目</td><td>查询</td></tr>
+            <tr><td>P10</td><td>预验收</td><td>新增订购和单册日志</td><td class="dir">图灵 → 编目</td><td>不回写订单</td></tr>
+            <tr><td>A1</td><td>实际验收</td><td>原编后再查 / 分配</td><td class="dir">图灵 → 编目</td><td>仅原编分支</td></tr>
+            <tr><td>A2</td><td>实际验收</td><td>多卷查新订单</td><td class="dir">人工订单 → 图灵 → 订单</td><td>手工拆单后回填</td></tr>
+            <tr><td>A3</td><td>实际验收</td><td>条码查重</td><td class="dir">图灵 → 编目</td><td>条码是否已被使用</td></tr>
+            <tr><td>A4</td><td>实际验收</td><td>完成收货</td><td class="dir">图灵 → 订单</td><td>关单自动</td></tr>
+            <tr><td>A5</td><td>实际验收</td><td>再推单册</td><td class="dir">订单 → 编目</td><td>覆盖虚拟占位</td></tr>
+            <tr><td>A6</td><td>实际验收</td><td>新增订购和单册日志</td><td class="dir">图灵 → 编目</td><td>不回写订单</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    规格：docs/superpowers/specs/2026-10-14-turing-order-catalog-acceptance-flow-design.md
+  </footer>
+
+  <script>
+    const buttons = document.querySelectorAll("nav.tabs button");
+    const panels = document.querySelectorAll(".panel");
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        buttons.forEach((b) => b.classList.remove("active"));
+        panels.forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
+      });
+    });
+  </script>
+</body>
+</html>
