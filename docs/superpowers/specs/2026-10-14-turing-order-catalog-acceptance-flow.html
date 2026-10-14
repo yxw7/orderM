@@ -204,7 +204,7 @@
 <body>
   <header>
     <h1>图灵 · 订单 · 编目交互流程图</h1>
-    <p>预验收 / 实际验收双泳道 · 2026-10-14 规格（含查单册 P4、原编不落接口、日志 P10/A6）</p>
+    <p>预验收 / 实际验收双泳道 · 2026-10-14 规格（P1–P9 / A1–A5）</p>
     <div class="legend">
       <span class="chip"><span class="dot t"></span>图灵</span>
       <span class="chip"><span class="dot o"></span>订单</span>
@@ -224,7 +224,7 @@
     <section id="pre" class="panel active">
       <div class="card">
         <h2>预验收 · 时序图</h2>
-        <p class="sub">推占位单册后先按书目记录号查单册；更新编目走接口，原编落库不走接口；末步为订购/单册日志。</p>
+        <p class="sub">推占位单册后先按书目记录号查单册；更新编目走接口，原编落库不走接口。</p>
         <pre class="mermaid">
 sequenceDiagram
   autonumber
@@ -253,14 +253,13 @@ sequenceDiagram
   end
   T->>C: 新增和更新馆藏连接
   T->>C: 查询馆藏连接索书号
-  T->>O: 新增订购和单册日志
   T->>T: 准备上机
         </pre>
       </div>
 
       <div class="card">
         <h2>预验收 · 三列泳道</h2>
-        <p class="sub">插入查单册后编号为 P1–P10；日志为图灵 → 订单。</p>
+        <p class="sub">同步点编号 P1–P9。</p>
         <div class="swim">
           <div class="swim-h s">步骤</div>
           <div class="swim-h t">图灵</div>
@@ -318,11 +317,6 @@ sequenceDiagram
           <div class="swim-cell act"><strong>返回索书号</strong></div>
 
           <div class="swim-step">11</div>
-          <div class="swim-cell act"><span class="tag sync-o">→ 新增订购和单册日志 P10</span></div>
-          <div class="swim-cell act"><strong>日志落库</strong></div>
-          <div class="swim-cell mute">—</div>
-
-          <div class="swim-step">12</div>
           <div class="swim-cell act"><strong>准备上机</strong><br><span class="tag local">本地</span></div>
           <div class="swim-cell mute">—</div>
           <div class="swim-cell mute">—</div>
@@ -333,7 +327,7 @@ sequenceDiagram
     <section id="act" class="panel">
       <div class="card">
         <h2>实际验收 · 时序图</h2>
-        <p class="sub">A6 为新增订购和单册日志（不再以转流通为同步点）。</p>
+        <p class="sub">A4 为修改单册条码信息（实际验收）；同步点至 A5。</p>
         <pre class="mermaid">
 sequenceDiagram
   autonumber
@@ -356,18 +350,17 @@ sequenceDiagram
   Op->>T: 下发条码、打索书号（本地）
   T->>C: 条码查重（是否已被使用）
   C-->>T: 占用结果；重复则人工处理
-  T->>O: 完成收货
-  O->>O: 收货写库；自动关单
+  T->>O: 修改单册条码信息（实际验收）
+  O->>O: 写库；自动关单
   O->>C: 再推单册（覆盖占位）
   Op->>T: 登列、本地改单/开票（本地）
-  T->>O: 新增订购和单册日志
   T->>T: 系统处理结束
         </pre>
       </div>
 
       <div class="card">
         <h2>实际验收 · 三列泳道</h2>
-        <p class="sub">步骤 4：本地打号 + 编目条码查重；步骤 7：订购/单册日志。</p>
+        <p class="sub">步骤 4：本地打号 + 编目条码查重；步骤 5：修改单册条码信息（实际验收）。</p>
         <div class="swim">
           <div class="swim-h s">步骤</div>
           <div class="swim-h t">图灵</div>
@@ -395,8 +388,8 @@ sequenceDiagram
           <div class="swim-cell act"><strong>返回是否已被使用</strong></div>
 
           <div class="swim-step">5</div>
-          <div class="swim-cell act"><span class="tag sync-o">→ 完成收货 A4</span></div>
-          <div class="swim-cell act"><strong>收货写库</strong><br><span class="tag auto">自动关单</span><br><span class="tag sync-c">→ 再推单册 A5</span></div>
+          <div class="swim-cell act"><span class="tag sync-o">→ 修改单册条码信息（实际验收） A4</span></div>
+          <div class="swim-cell act"><strong>写库</strong><br><span class="tag auto">自动关单</span><br><span class="tag sync-c">→ 再推单册 A5</span></div>
           <div class="swim-cell act"><strong>接收单册更新</strong></div>
 
           <div class="swim-step">6</div>
@@ -405,11 +398,6 @@ sequenceDiagram
           <div class="swim-cell mute">—</div>
 
           <div class="swim-step">7</div>
-          <div class="swim-cell act"><span class="tag sync-o">→ 新增订购和单册日志 A6</span></div>
-          <div class="swim-cell act"><strong>日志落库</strong></div>
-          <div class="swim-cell mute">—</div>
-
-          <div class="swim-step">8</div>
           <div class="swim-cell act"><strong>系统处理结束</strong></div>
           <div class="swim-cell mute">—</div>
           <div class="swim-cell mute">—</div>
@@ -419,8 +407,8 @@ sequenceDiagram
 
     <section id="sync" class="panel">
       <div class="card">
-        <h2>同步点清单 P1–P10 / A1–A6</h2>
-        <p class="sub">P4 为新增「查单册」；其后编号顺延。原编落库不在接口同步点内。</p>
+        <h2>同步点清单 P1–P9 / A1–A5</h2>
+        <p class="sub">原编落库、订购/单册日志不在接口同步点内。</p>
         <table class="sync">
           <thead>
             <tr><th>#</th><th>阶段</th><th>同步点</th><th>方向</th><th>说明</th></tr>
@@ -429,19 +417,17 @@ sequenceDiagram
             <tr><td>P1</td><td>预验收</td><td>查订单行</td><td class="dir">图灵 → 订单</td><td>供差异对比</td></tr>
             <tr><td>P2</td><td>预验收</td><td>按批次生成预验收</td><td class="dir">图灵 → 订单</td><td>含虚拟单册 + 虚拟条码</td></tr>
             <tr><td>P3</td><td>预验收</td><td>推占位单册</td><td class="dir">订单 → 编目</td><td>待实际验收更新</td></tr>
-            <tr><td>P4</td><td>预验收</td><td>按书目记录号查单册列表及信息</td><td class="dir">图灵 → 编目</td><td><strong>新增</strong>；在书目查重前</td></tr>
+            <tr><td>P4</td><td>预验收</td><td>按书目记录号查单册列表及信息</td><td class="dir">图灵 → 编目</td><td>在书目查重前</td></tr>
             <tr><td>P5</td><td>预验收</td><td>查编目 / 书目查重</td><td class="dir">图灵 → 编目</td><td>是否已编目</td></tr>
             <tr><td>P6</td><td>预验收</td><td>更新编目</td><td class="dir">图灵 → 编目</td><td>仅更新走接口；<strong>原编落库不通过接口</strong></td></tr>
             <tr><td>P7</td><td>预验收</td><td>分类号最大种次号</td><td class="dir">图灵 → 编目</td><td>补空号或新增</td></tr>
             <tr><td>P8</td><td>预验收</td><td>新增和更新馆藏连接</td><td class="dir">图灵 → 编目</td><td>新增与更新</td></tr>
             <tr><td>P9</td><td>预验收</td><td>查询馆藏连接索书号</td><td class="dir">图灵 → 编目</td><td>查询</td></tr>
-            <tr><td>P10</td><td>预验收</td><td>新增订购和单册日志</td><td class="dir">图灵 → 订单</td><td>—</td></tr>
             <tr><td>A1</td><td>实际验收</td><td>原编后再查 / 分配</td><td class="dir">图灵 → 编目</td><td>仅原编分支</td></tr>
             <tr><td>A2</td><td>实际验收</td><td>多卷查新订单</td><td class="dir">人工订单 → 图灵 → 订单</td><td>手工拆单后回填</td></tr>
             <tr><td>A3</td><td>实际验收</td><td>条码查重</td><td class="dir">图灵 → 编目</td><td>条码是否已被使用</td></tr>
-            <tr><td>A4</td><td>实际验收</td><td>完成收货</td><td class="dir">图灵 → 订单</td><td>关单自动</td></tr>
+            <tr><td>A4</td><td>实际验收</td><td>修改单册条码信息（实际验收）</td><td class="dir">图灵 → 订单</td><td>关单自动</td></tr>
             <tr><td>A5</td><td>实际验收</td><td>再推单册</td><td class="dir">订单 → 编目</td><td>覆盖虚拟占位</td></tr>
-            <tr><td>A6</td><td>实际验收</td><td>新增订购和单册日志</td><td class="dir">图灵 → 订单</td><td>—</td></tr>
           </tbody>
         </table>
       </div>
