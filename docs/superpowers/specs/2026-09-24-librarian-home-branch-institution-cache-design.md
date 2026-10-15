@@ -1,12 +1,15 @@
 # 馆员列表 · 所属馆与所属机构缓存
 
+> **权限权威变更**：机构数据隔离已由 [`2026-10-15-institution-data-isolation-revision-design.md`](./2026-10-15-institution-data-isolation-revision-design.md) 修订——权限以所在馆运行时解析 `resolveHomeInstitutionId()` 为准；馆员主数据缓存的 `institutionId` **不作**权限权威（可作展示，须与解析结果一致）。
+
 **日期**：2026-09-24  
-**状态**：已评审（2026-09-24）  
+**状态**：已评审（2026-09-24）；部分被 2026-10-15 修订覆盖（见上）  
 **范围**：订户管理 → 馆员列表（`/librarians`）；馆员主数据同步；机构范围解析  
 **关联**：
-- 机构数据隔离（`2026-09-21-institution-data-isolation-design.md`）§8.4.2 馆员列表、S1 所在分馆兜底
+- 机构数据隔离修订（`2026-10-15-institution-data-isolation-revision-design.md`）
+- 机构数据隔离（历史）（`2026-09-21-institution-data-isolation-design.md`）
 - 四级馆藏地（`2026-09-16-location-level4-pick-design.md` / `location-level4.js`）
-- 设置类机构范围（`resolveInstitutionScopeIds`，条码号供应商等）
+- 设置类机构范围（以 2026-10-15 单一所在馆机构为准）
 
 ---
 
