@@ -43,7 +43,7 @@
 
 | 方案 | 说明 | 结论 |
 |------|------|------|
-| 1 | 统一操作日志表：`subjectType` + **主体单号** + **关联单号（可空）** | **采用** |
+| 1 | 统一操作日志：**头表 + 关联明细**；驼峰字段 `subjectNo` / `refNo` / `relNo` | **采用** |
 | 2 | 行时间线投影 + 单据日志双写 | 否决（双写一致性成本高） |
 | 3 | 字段级变更流水再拼操作 | 否决（噪声大、与业务语言不合） |
 
@@ -53,35 +53,76 @@
 
 ## 3. 核心约定
 
-1. **统一记录结构**，所有主体共用同一模型（见 §4）。  
+1. **头表 + 明细**：一次成功操作写 **1 条头**；本次直接关联的对方单据写 **0～N 条明细**（见 §4）。  
 2. **仅业务成功落库后**记日志；校验失败、用户取消不记。  
-3. **批量操作**：每个成功触及的 order / order_line **各写一条**，summary 可带批次信息。  
-4. **主体单号 / 关联单号**：不绑死订单行。主体 = 当前操作单据；**关联单号可空，填与本次操作关系最大的另一单据号**（可以是上下级，也可以是旁路业务单，二者取本次最相关者，只填一个）。例：订单行发订 → 关联订单号；订单行经验收单收货 → 关联验收单号（而非订单号）；验收单新建 → 关联订单号。  
-5. **订单行时间线查询**：`subjectType=order_line` 且 `subjectId=本行号`。单据写回本行时**同时**落一条 `order_line.*`（主体为本行、`relatedId` 为该次操作最相关单据号），故行页签无需按数组反查多行。  
-6. **粒度**：摘要 + 关键字段 `changes[]`（`field` / `label` / `from` / `to`）；不做整行快照。  
-7. **来源**仅两类：`system`（本系统业务落库，含馆员操作与自动状态推进）、`turing`（图灵 P10）。  
+3. **批量操作**：每个成功触及的 order / order_line **各写一条头**（必要时带多条明细），summary 可带批次信息。  
+4. **三号语义**（前端/契约驼峰命名）：  
+   - **`subjectNo`（主体单号）**：本条日志归属的主业务单据，日志核心载体。  
+   - **`relNo`（关联单号）**：本次操作**直接**关联/变更的对方单据，落在**明细表**（可多条）。  
+   - **`refNo`（参考单号）**：间接溯源/上游/外部单号，**不是**本次动作对象；头表可空，至多一个。  
+5. **订单行时间线查询**：`subjectType=order_line` 且 `subjectNo=本行号`。单据写回本行时再落一条行日志（`subjectNo=行号`，明细 `relNo=单据号`，需要时 `refNo=订单号` 作溯源）。  
+6. **粒度**：摘要 + `beforeJson` / `afterJson` 关键字段快照（展示可拼成 from→to）；不强制整单全量。  
+7. **来源**仅两类：`system`（本系统）、`turing`（图灵 P10）。  
 8. **写入失败不回滚已成功业务**；原型可容错，实现期可告警/重试。  
-9. **P10 幂等**：同一 `ref.externalId` 不双写。
+9. **P10 幂等**：同一 `externalId` 不双写。
 
 ---
 
 ## 4. 数据模型
 
+前端 / 接口契约使用**驼峰**；库表可用下划线，下列为契约字段。对应关系示例：`subjectNo` ↔ `main_order_no`，`refNo` ↔ `ref_order_no`，`relNo` ↔ `rel_order_no`。
+
+### 4.1 头表（日志头）
+
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `id` | string | 日志 ID |
-| `occurredAt` | datetime | 操作时间 |
-| `operator` / `operatorId` | string | 操作人（图灵可传其操作者或约定系统账号） |
+| `logId` | string / number | 日志主键 |
+| `subjectNo` | string | **主体单号**：操作归属主单据 |
+| `subjectType` | enum | 主体类型：`order` \| `order_line` \| `acceptance` \| `batch_acceptance` \| `return` \| `exchange` \| `settlement` \| `shortage` |
+| `refNo` | string \| null | **参考单号**：上游溯源单据，非本次操作对象；可空 |
+| `refType` | string \| null | 参考单类型（可空，便于跳转） |
 | `source` | enum | `system` \| `turing` |
-| `subjectType` | enum | `order` \| `order_line` \| `acceptance` \| `batch_acceptance` \| `return` \| `exchange` \| `settlement` \| `shortage` |
-| `subjectId` | string | **主体单号**：当前操作主体的业务单号（订单号、订单行号、验收单号、结算单号等） |
-| `relatedId` | string \| null | **关联单号**：可空；与**本次操作**关系最大的另一单据号（上下级或旁路均可，只填一个）。例：行发订 → 订单号；行收货 → 验收单号；验收单新建 → 订单号 |
-| `action` | string | 操作类型枚举，见 §5 |
-| `summary` | string | 一句话摘要 |
-| `changes` | `{ field, label, from, to }[]` | 关键字段前后值；可空（如纯导出） |
-| `ref` | object | 可选：`batchId`、`externalId`（P10 幂等）等扩展；**关联业务单号只放 `relatedId`，不在此重复** |
+| `action` | string | 操作类型，见 §5（对齐 `operate_type` 字典/码表） |
+| `summary` | string | 操作文字摘要 |
+| `operatorId` | string / number | 操作人 ID |
+| `operatorName` | string | 操作人姓名 |
+| `operateTime` | datetime | 操作时间 |
+| `clientIp` | string \| null | 客户端 IP，可空 |
+| `beforeJson` | object \| null | 操作前关键字段快照 |
+| `afterJson` | object \| null | 操作后关键字段快照 |
+| `externalId` | string \| null | P10 幂等键，可空 |
+| `createTime` / `updateTime` | datetime | 入库 / 更新时间 |
 
-展示文案映射（页签列「来源」）：`system`→系统，`turing`→图灵。
+建议索引：`(subjectType, subjectNo, operateTime)`、`refNo`。
+
+### 4.2 明细表（关联单号，0～N）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `itemId` | string / number | 明细主键 |
+| `logId` | string / number | 头表 ID |
+| `relNo` | string | **关联单号**：本次直接关联/变更的对方单据 |
+| `relType` | string \| null | 关联单据类型（订单/验收单/结算单等） |
+| `relAction` | string / number | 对该关联单的动作（绑定/解绑/写回/冲销等） |
+| `createTime` | datetime | 入库时间 |
+
+建议索引：`(logId, relNo)`、`relNo`。
+
+### 4.3 填表示例
+
+| 场景 | subjectNo | refNo | 明细 relNo |
+|------|-----------|-------|------------|
+| 新建批验 A 绑订单 B | A | — | B |
+| 订单行 L 经 YS 收货 | L | 所属订单号 O | YS |
+| 订单行发订 | L | — | 订单号 O |
+| 仅编辑订单头 | 订单号 | — | （无明细） |
+| 图灵 P10 写行 | L | 外部/发货溯源号 | （若有）批次/任务号 |
+
+### 4.4 展示
+
+- 来源：`system`→系统，`turing`→图灵。  
+- 关键变更：由 `beforeJson` / `afterJson` 差分展示为 `label from→to`。  
+- 关联单号列：拼接本头下各明细 `relNo`（可点，依 `relType` 跳转）。
 
 ---
 
@@ -122,7 +163,7 @@
 | `order_line.settle` | 生成结算单 / 确认结算等 | 结算状态、结算单号 |
 | `order_line.settle_fail` | 结算失败/驳回等 | 结算状态 |
 | `order_line.status_auto` | 行状态自动推进（如→处理中、→已关闭） | 行状态 from→to |
-| `order_line.turing_log` | 图灵 P10 写入（馆藏分配后、分拣交接等） | 由调用方提供 summary/changes；须 `ref.externalId` |
+| `order_line.turing_log` | 图灵 P10 写入（馆藏分配后、分拣交接等） | 由调用方提供 summary / before·after；须 `externalId` |
 
 发订成功时：除 `order.issue` 外，每个变为已发订的行记一条（可用 `order_line.status_auto` 或专用 `order_line.issue`——**采用 `order_line.issue`**，与订单头发订对应，便于筛选）。
 
@@ -132,7 +173,7 @@
 
 ### 5.3 单据主体（本期定义事件，UI 后做）
 
-单据日志：`subjectId` = 该单据号，`relatedId` = 本次最相关的另一单号（如绑定订单号，可空）。若操作同时改写订单行，再为每个触及行写一条 `order_line.*`（`subjectId` = 行号，`relatedId` = **本单据号**，便于从行日志跳回）。
+单据日志：头表 `subjectNo` = 该单据号，`subjectType` = 单据类型；绑定订单等直接对方写入明细 `relNo`；溯源号用 `refNo`。若操作同时改写订单行，再为每个触及行写一条 `order_line.*`（`subjectNo` = 行号，明细 `relNo` = **本单据号**，`refNo` = 订单号可选）。
 
 | subjectType | 必记动作 |
 |-------------|----------|
@@ -167,13 +208,14 @@
 
 | 列 | 说明 |
 |----|------|
-| 操作时间 | `occurredAt` |
-| 操作人 | `operator` |
+| 操作时间 | `operateTime` |
+| 操作人 | `operatorName` |
 | 来源 | 系统 / 图灵 |
-| 操作类型 | action 中文标签 |
+| 操作类型 | `action` 中文标签 |
 | 摘要 | `summary` |
-| 关键变更 | 多条 `label from→to` 用 ` · ` 拼接；过长截断，可展开 |
-| 关联单号 | `relatedId`（本次最相关单据；可点跳转）；无则 — |
+| 关键变更 | `beforeJson`/`afterJson` 差分；多条用 ` · ` 拼接，过长可展开 |
+| 关联单号 | 明细 `relNo` 列表；可点跳转；无则 — |
+| 参考单号 | `refNo`；可点；无则 — |
 
 - 筛选项：来源（全部 / 系统 / 图灵）、操作类型（全部 + 枚举）  
 - 默认时间倒序；分页 10/20/50  
@@ -182,7 +224,7 @@
 
 ### 6.3 查询
 
-按 §3 第 5 条：`subjectType=order_line` 且 `subjectId=当前行号`。筛选在客户端或查询参数中作用于结果集；切换筛选后分页重置为第 1 页。
+按 §3 第 5 条：`subjectType=order_line` 且 `subjectNo=当前行号`。筛选在客户端或查询参数中作用于结果集；切换筛选后分页重置为第 1 页。
 
 ### 6.4 关联跳转
 
@@ -230,11 +272,11 @@
 |----|------|
 | 范围 | 全量事件定义；本期 UI 仅订单行订购日志页签 |
 | 时间线范围 | 本行操作 + 关联单据触及本行 |
-| 粒度 | 摘要 + 关键字段前后值 |
+| 粒度 | 摘要 + beforeJson/afterJson 关键快照 |
 | 来源 | 仅 `system` / `turing`；无手写备注 |
 | 用途侧重 | 业务追溯为主，来源/类型可筛兼顾运维 |
-| 架构 | 统一日志模型（方案 1） |
-| 主体/关联 | `subjectId` 主体单号 + `relatedId` 关联单号（可空）；关联 = 本次操作关系最大的单据（上下级或旁路），只填一个 |
+| 架构 | 头表 + 关联明细（方案 1） |
+| 三号命名 | 驼峰：`subjectNo` 主体、`relNo` 关联（明细 0～N）、`refNo` 参考（头表可空） |
 | 页签布局 | 筛选条 + 表格（方案 A） |
 | 增补操作 | 列表新建订单、发货导入写回、换货到货、查重写回与书目关联、结算后续、申请结算、状态自动推进、发货冲销等全部纳入（头脑风暴缺口表 1–10） |
 | 不记 | 列配置/筛选/未提交弹窗/只读查看/预验收纯草稿 |
