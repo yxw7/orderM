@@ -104,6 +104,7 @@
 |------|------|------|
 | `itemId` | string / number | 明细主键 |
 | `logId` | string / number | 头表 ID |
+| `tenantId` | string / number | 租户 ID（与头表一致） |
 | `relNo` | string | **关联单号**：本次直接关联/变更的对方单据 |
 | `relType` | string \| null | 关联单据类型（订单/验收单/结算单等） |
 | `relAction` | string / number | 对该关联单的动作（绑定/解绑/写回/冲销等） |
