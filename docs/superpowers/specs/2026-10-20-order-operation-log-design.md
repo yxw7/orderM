@@ -58,7 +58,7 @@
 3. **批量操作**：每个成功触及的 order / order_line **各写一条**，summary 可带批次信息。  
 4. **订单行时间线查询**：`subjectType=order_line` 且 `subjectId=本行号`，**或** `relatedOrderLineNos` 含本行号。  
 5. **粒度**：摘要 + 关键字段 `changes[]`（`field` / `label` / `from` / `to`）；不做整行快照。  
-6. **来源**：`order_ui`（本系统）、`turing`（图灵 P10）、`system`（自动状态推进等）。  
+6. **来源**仅两类：`system`（本系统业务落库，含馆员操作与自动状态推进）、`turing`（图灵 P10）。  
 7. **写入失败不回滚已成功业务**；原型可容错，实现期可告警/重试。  
 8. **P10 幂等**：同一 `ref.externalId` 不双写。
 
@@ -71,7 +71,7 @@
 | `id` | string | 日志 ID |
 | `occurredAt` | datetime | 操作时间 |
 | `operator` / `operatorId` | string | 操作人（图灵可传其操作者或约定系统账号） |
-| `source` | enum | `order_ui` \| `turing` \| `system` |
+| `source` | enum | `system` \| `turing` |
 | `subjectType` | enum | `order` \| `order_line` \| `acceptance` \| `batch_acceptance` \| `return` \| `exchange` \| `settlement` \| `shortage` |
 | `subjectId` | string | 主体单号或订单行号 |
 | `relatedOrderLineNos` | string[] | 触及的订单行号（行时间线聚合键） |
@@ -80,7 +80,7 @@
 | `changes` | `{ field, label, from, to }[]` | 关键字段前后值；可空（如纯导出） |
 | `ref` | object | 可选：`docNo`、`batchId`、`externalId`（P10 幂等）、`orderNo` 等 |
 
-展示文案映射（页签列「来源」）：`order_ui`→本系统，`turing`→图灵，`system`→系统。
+展示文案映射（页签列「来源」）：`system`→系统，`turing`→图灵。
 
 ---
 
@@ -168,13 +168,13 @@
 |----|------|
 | 操作时间 | `occurredAt` |
 | 操作人 | `operator` |
-| 来源 | 本系统 / 图灵 / 系统 |
+| 来源 | 系统 / 图灵 |
 | 操作类型 | action 中文标签 |
 | 摘要 | `summary` |
 | 关键变更 | 多条 `label from→to` 用 ` · ` 拼接；过长截断，可展开 |
 | 关联单据 | `ref.docNo` 或 subject 单号；可点击跳转对应详情；无则 — |
 
-- 筛选项：来源（全部 / 本系统 / 图灵 / 系统）、操作类型（全部 + 枚举）  
+- 筛选项：来源（全部 / 系统 / 图灵）、操作类型（全部 + 枚举）  
 - 默认时间倒序；分页 10/20/50  
 - 空态：`暂无订购日志`  
 - 只读：无新增、无删除日志  
@@ -230,7 +230,7 @@
 | 范围 | 全量事件定义；本期 UI 仅订单行订购日志页签 |
 | 时间线范围 | 本行操作 + 关联单据触及本行 |
 | 粒度 | 摘要 + 关键字段前后值 |
-| 来源 | 本系统自动 + 图灵 P10；无手写备注 |
+| 来源 | 仅 `system` / `turing`；无手写备注 |
 | 用途侧重 | 业务追溯为主，来源/类型可筛兼顾运维 |
 | 架构 | 统一日志模型（方案 1） |
 | 页签布局 | 筛选条 + 表格（方案 A） |
