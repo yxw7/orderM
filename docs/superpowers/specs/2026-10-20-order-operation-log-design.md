@@ -107,6 +107,8 @@
 | `relNo` | string | **关联单号**：本次直接关联/变更的对方单据 |
 | `relType` | string \| null | 关联单据类型（订单/验收单/结算单等） |
 | `relAction` | string / number | 对该关联单的动作（绑定/解绑/写回/冲销等） |
+| `relDesc` | string \| null | **关联说明**：对该关联单本次关系的文字说明，可空 |
+| `ext` | object \| null | **关联扩展**：该明细侧扩展 JSON（关联参数、上下文等），可空 |
 | `createTime` | datetime | 入库时间 |
 
 建议索引：`(logId, relNo)`、`relNo`。
