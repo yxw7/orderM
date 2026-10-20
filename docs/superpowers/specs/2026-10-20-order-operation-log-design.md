@@ -119,16 +119,9 @@
 
 建议索引：`(logId, relNo)`、`(relType, relNo)`（支撑按单据反查事件）。
 
-### 4.3 填表示例
+### 4.3 填表示意
 
-| 场景 | 头 subjectNo | refNo | 明细（relType + relNo） |
-|------|--------------|-------|-------------------------|
-| 新建批验 A 绑订单 B | A（batch_acceptance） | — | order + B |
-| 验收单 YS 对行 L1、L2 收货 | YS（acceptance） | — | order_line+L1，order_line+L2，order+所属订单号（可选） |
-| 单行 L 发订（事件挂行） | L（order_line） | — | order + 所属订单号 |
-| 订单头发订（一事一头） | 订单号（order） | — | 各成功行 order_line + … |
-| 仅编辑订单头 | 订单号 | — | 可无明细，或仅 order 自身一条 |
-| 图灵 P10 写行 L | L | 外部流水 | （若有）其它涉及单 |
+完整业务场景写入见 **§5.5**。原则：一事一头；涉及单/行进明细；溯源进 `refNo`。
 
 ### 4.4 展示
 
@@ -146,7 +139,7 @@
 |--------|----------|---------------------|
 | `order.create` | 订单列表新建空单；书目查询新建订单；更换供应商新建订单 | 订单状态、供应商、预算等；来源入口写入 summary |
 | `order.edit` | 编辑订单（预算/供应商/发订备注等） | 对应字段 |
-| `order.issue` | 发订（单笔/批量） | 订单状态、发订人、发订时间、发订备注；**同时**对各成功行写 `order_line` 状态变化（见 5.2） |
+| `order.issue` | 发订（单笔/批量） | 订单状态、发订人、发订时间、发订备注；成功行写入明细（见 §5.5），**不**再按行复制头 |
 | `order.cancel` | 撤订（单笔/批量） | 订单状态、撤订原因；同步行撤订见 5.2 |
 | `order.delete` | 删除订单 | 删除标记或状态 |
 | `order.import` | 导入订单（含重新导入/继续入库） | 订单状态（如待导入→待发订）；行创建见 5.2 |
@@ -178,15 +171,11 @@
 | `order_line.status_auto` | 行状态自动推进（如→处理中、→已关闭） | 行状态 from→to |
 | `order_line.turing_log` | 图灵 P10 写入（馆藏分配后、分拣交接等） | 由调用方提供 summary / before·after；外部流水写入 `refNo`（幂等） |
 
-发订成功时：除 `order.issue` 外，每个变为已发订的行记一条（可用 `order_line.status_auto` 或专用 `order_line.issue`——**采用 `order_line.issue`**，与订单头发订对应，便于筛选）。
-
-| action | 说明 |
-|--------|------|
-| `order_line.issue` | 随订单发订同步：行状态待发订→已发订，发订人/时间等 |
+`order_line.issue`：**保留为 action 码**，仅当「事件主对象挂在订单行」时使用（少见）；订单头发订统一用 `order.issue` + 明细含各行，行页签靠明细 `relNo` 命中。
 
 ### 5.3 单据主体（本期定义事件，UI 后做）
 
-单据侧事件：头表 `subjectNo` = 该单据号；**所有涉及的订单/行/其它单**写入明细（不必再为每行复制一条头，除非采用「按行拆事件」）。溯源/外部号用头表 `refNo`。
+单据侧事件：头表 `subjectNo` = 该单据号；**所有涉及的订单/行/其它单**写入明细。溯源/外部号用头表 `refNo`。写入细则见 §5.5。
 
 | subjectType | 必记动作 |
 |-------------|----------|
@@ -196,16 +185,92 @@
 | `settlement` | 生成、确认、失败/驳回 |
 | `shortage` | 生成；（若产品后续有取消/关闭则一并记） |
 
-单据侧 `action` 命名采用 `acceptance.create`、`settlement.confirm` 等形式，实现计划中与前端枚举表一并列出；**行页签只查 `order_line` 主体记录**。
+单据侧 `action` 命名采用 `acceptance.create`、`settlement.confirm` 等形式。行页签查询见 §3 第 6 条。
 
 ### 5.4 明确不记
 
 - 列展示配置、筛选条件变更  
 - 仅打开未提交的弹窗  
 - 只读查看 MARC/单件浮窗、导出配置面板未执行导出  
-- 预验收仅草稿、未发生订单行套数/状态写回
+- 预验收仅草稿、未发生订单行套数/状态写回（若仅草稿入库，可记验收单头事件且明细不含行写回；行页签不必出现）
+
+### 5.5 业务场景写入对照（头表 / 明细）
+
+约定：下列「主表」= 头表一行；「关联表」= 明细 0～N 行。快照写头表 `beforeJson`/`afterJson`（主对象维度；多行批量时快照可放汇总或 `ext`，行级细节可放各明细 `ext`）。`operateResult`/`errorMsg` 按实际成败填写，表中默认成功路径。
+
+#### 5.5.1 订单
+
+| 业务场景 | action | 主表 subjectType / subjectNo | refNo | 关联表（relType + relNo，relAction 示意） |
+|----------|--------|------------------------------|-------|------------------------------------------|
+| 列表新建空订单 | `order.create` | order / 新订单号 | — | 可空，或 order+自身 |
+| 书目查询新建订单（含落行） | `order.create` | order / 新订单号 | — | 各新行 order_line；可选 bib 线索进 `ext` |
+| 更换供应商·新建订单 | `order.create` | order / 新订单号 | 源订单号（溯源） | 新行 order_line；源行 order_line（relAction=迁出关联） |
+| 编辑订单 | `order.edit` | order / 订单号 | — | 可空 |
+| 发订（单笔） | `order.issue` | order / 订单号 | — | 每个成功发订行 order_line（写回） |
+| 批量发订 | `order.issue` | **每个成功订单各 1 头** order / 该订单号 | — | 该单下成功行 order_line；失败单另头 `operateResult=0` |
+| 撤订（单笔/批量） | `order.cancel` | 每单 1 头 order / 订单号 | — | 被撤订的行 order_line |
+| 删除订单 | `order.delete` | order / 订单号 | — | 被删关联行 order_line（若有） |
+| 导入订单 / 重新导入 / 继续入库 | `order.import` | order / 订单号 | 导入任务号（可选） | 新建或更新的 order_line |
+| 导出订单（单笔/批量） | `order.export` | 每单 1 头 order / 订单号 | — | 可空；范围可写 `ext` |
+| 订单状态自动推进 | `order.status_auto` | order / 订单号 | 触发单据号（可选） | 相关行 order_line（若一并变） |
+
+#### 5.5.2 订单行
+
+| 业务场景 | action | 主表 | refNo | 关联表 |
+|----------|--------|------|-------|--------|
+| 加入订单创建行 | `order_line.create` | order_line / 新行号 | — | order + 所属订单号 |
+| 换商·加入已有订单追加行 | `order_line.create` | order_line / 新行号 | 源订单号或源行号 | order + 目标订单；源行 order_line |
+| 编辑订单行 | `order_line.edit` | order_line / 行号 | — | order + 所属订单 |
+| 撤订行（含批量/换商迁出撤订/催缺撤订） | `order_line.cancel` | **批量：可一事一头** order / 订单号，或按行一头 order_line | 催缺单号等（若有） | 被撤各行 order_line；换商时另含目标 order / 新行 |
+| 删除订单行 | `order_line.delete` | order_line / 行号 | — | order + 所属订单 |
+| 导出订单行 | `order_line.export` | 可挂首行或订单；推荐 order + 订单号一事一头 | — | 导出的各 order_line |
+| 查重写回 | `order_line.dedup` | **批量查重一事一头** 可用首行或虚拟批次；单行则 order_line / 行号 | — | 本批各 order_line；重复命中订单行可作 rel |
+| 关联/取消关联书目 | `order_line.bib_link` | order_line / 行号 | 书目记录号（溯源） | order + 所属订单 |
+| 行状态自动推进 | `order_line.status_auto` | order_line / 行号 | 触发单据（可选） | order + 所属订单 |
+
+#### 5.5.3 收货 / 退换 / 撤销
+
+| 业务场景 | action | 主表 | refNo | 关联表 |
+|----------|--------|------|-------|--------|
+| 逐条收货（挂当前验收单） | `order_line.receive` 或 `acceptance.receive` | **推荐** acceptance / 验收单号 | — | 本行 order_line；order；若有验收明细 acceptance_line |
+| 批量验收列表收货（多行） | 同上 | acceptance 或 batch_acceptance / 验收单号 | — | 各收货行 order_line；各 order；acceptance_line |
+| 发货单导入提交收/换/退 | 按处置拆 action 或一事多 relAction | acceptance 或导入任务作 subject（若有任务号）/ 否则订单 | 发货单号/任务号 | 各涉及 order_line、order；换/退单据号 |
+| 优先对换货冲销收货 | `order_line.receive_offset_exchange` | acceptance / 验收单号 | — | order_line；exchange（换货记录）；order |
+| 换货写回 | `order_line.exchange` | acceptance 或 exchange / 对应单号 | — | order_line；order；exchange |
+| 换货管理到货冲销 | `order_line.exchange_arrive` | exchange / 换货单号 | — | order_line；order |
+| 退货写回 | `order_line.return` | acceptance 或 return / 对应单号 | — | order_line；order；return |
+| 撤销收/换/退 | `order_line.revoke_disposition` | acceptance / 验收单号 | — | 回滚的 order_line；对应 acceptance_line |
+
+#### 5.5.4 催缺 / 结算
+
+| 业务场景 | action | 主表 | refNo | 关联表 |
+|----------|--------|------|-------|--------|
+| 生成催缺单 | `shortage.create`（行侧可筛到） | shortage / 催缺单号 | — | 各催缺行 order_line；涉及 order |
+| 验收单申请结算 | `acceptance.settle_apply` | acceptance / 验收单号 | — | 涉及 order_line；后续结算单可暂空 |
+| 生成结算单 | `settlement.create` | settlement / 结算单号 | — | 验收单 acceptance；各 order_line；order |
+| 确认结算 | `settlement.confirm` | settlement / 结算单号 | — | 同上 |
+| 结算失败/驳回 | `settlement.fail` | settlement / 结算单号 | — | 同上；`operateResult` 视业务定义 |
+
+#### 5.5.5 验收单 / 批验（单据头事件）
+
+| 业务场景 | action | 主表 | refNo | 关联表 |
+|----------|--------|------|-------|--------|
+| 新建验收单/批验（绑订单） | `acceptance.create` / `batch_acceptance.create` | acceptance 或 batch_acceptance / 新单号 | — | order + 绑定订单号 |
+| 编辑验收单 | `acceptance.edit` | acceptance / 单号 | — | order（若仍绑定） |
+| 预验收入库（仅草稿） | `acceptance.pre_accept` | acceptance / 单号 | 发货文件/任务号 | 草稿涉及行可记 order_line（可选）；无行套数写回则可不进行页签关注点 |
+| 结束验收 | `acceptance.finish` | acceptance / 单号 | — | 相关 order_line / order |
+| 导出验收清单 | `acceptance.export` | acceptance / 单号 | — | 可空或导出范围行 |
+| 批验虚拟单册生成 | `batch_acceptance.create`（virtual） | batch_acceptance / 单号 | — | order；各预生成相关 order_line / acceptance_line |
+| 虚拟→实际 | `batch_acceptance.promote` | batch_acceptance / 单号 | — | 相关 order_line、acceptance_line |
+
+#### 5.5.6 图灵 P10
+
+| 业务场景 | action | 主表 | refNo | 关联表 |
+|----------|--------|------|-------|--------|
+| 馆藏分配后 / 分拣交接后写日志 | `order_line.turing_log` 或调用方指定 | 通常 order_line / 行号 | **外部流水号（幂等）** | order；验收/批次等涉及单 |
 
 ---
+
 
 ## 6. 订单行「订购日志」页签
 
@@ -293,6 +358,7 @@
 | 架构 | 头表 = 一次操作事件；明细 = 本事件涉及的全部单据/行（多对多） |
 | 三号命名 | 驼峰：`subjectNo` 主操作对象、`relNo` 涉及单/行（明细）、`refNo` 参考溯源（头表可空） |
 | 行页签查询 | subject 为本行 **或** 明细含本行 |
+| 场景落库 | §5.5 对照表；默认一事一头，涉及方进明细 |
 | 结果/扩展 | `operateResult`（1成功/0失败）、`errorMsg`、`ext`（操作参数/客户端等） |
 | 页签布局 | 筛选条 + 表格（方案 A） |
 | 增补操作 | 列表新建订单、发货导入写回、换货到货、查重写回与书目关联、结算后续、申请结算、状态自动推进、发货冲销等全部纳入（头脑风暴缺口表 1–10） |
