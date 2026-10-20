@@ -27,7 +27,7 @@
 
 - 各单据详情页的日志 Tab / 独立「操作日志」管理菜单。  
 - 馆员手写备注类日志。  
-- 真实后端持久化、告警队列、跨请求幂等框架（原型用 mock；契约预留 P10 `externalId`）。  
+- 真实后端持久化、告警队列、跨请求幂等框架（原型用 mock；P10 幂等键写入 `refNo`）。  
 - 列展示配置、筛选、未提交弹窗等纯 UI 行为记日志。  
 - 预验收**仅写草稿**未确认收货时的行级收货日志（真写回仍走逐条/批验/发货导入等通道）。
 
@@ -64,7 +64,7 @@
 6. **粒度**：摘要 + `beforeJson` / `afterJson` 关键字段快照（展示可拼成 from→to）；不强制整单全量。  
 7. **来源**仅两类：`system`（本系统）、`turing`（图灵 P10）。  
 8. **写入失败不回滚已成功业务**；原型可容错，实现期可告警/重试。  
-9. **P10 幂等**：同一 `externalId` 不双写。
+9. **P10 幂等**：图灵外部流水写入头表 `refNo`；同一 `source=turing` + `refNo` 不双写。
 
 ---
 
@@ -79,7 +79,7 @@
 | `logId` | string / number | 日志主键 |
 | `subjectNo` | string | **主体单号**：操作归属主单据 |
 | `subjectType` | enum | 主体类型：`order` \| `order_line` \| `acceptance` \| `batch_acceptance` \| `return` \| `exchange` \| `settlement` \| `shortage` |
-| `refNo` | string \| null | **参考单号**：上游溯源单据，非本次操作对象；可空 |
+| `refNo` | string \| null | **参考单号**：上游溯源/外部流水等，非本次操作对象；可空。图灵 P10 外部流水亦写入此字段并作幂等键 |
 | `refType` | string \| null | 参考单类型（可空，便于跳转） |
 | `source` | enum | `system` \| `turing` |
 | `action` | string | 操作类型，见 §5（对齐 `operate_type` 字典/码表） |
@@ -90,7 +90,6 @@
 | `clientIp` | string \| null | 客户端 IP，可空 |
 | `beforeJson` | object \| null | 操作前关键字段快照 |
 | `afterJson` | object \| null | 操作后关键字段快照 |
-| `externalId` | string \| null | P10 幂等键，可空 |
 | `createTime` / `updateTime` | datetime | 入库 / 更新时间 |
 
 建议索引：`(subjectType, subjectNo, operateTime)`、`refNo`。
@@ -163,7 +162,7 @@
 | `order_line.settle` | 生成结算单 / 确认结算等 | 结算状态、结算单号 |
 | `order_line.settle_fail` | 结算失败/驳回等 | 结算状态 |
 | `order_line.status_auto` | 行状态自动推进（如→处理中、→已关闭） | 行状态 from→to |
-| `order_line.turing_log` | 图灵 P10 写入（馆藏分配后、分拣交接等） | 由调用方提供 summary / before·after；须 `externalId` |
+| `order_line.turing_log` | 图灵 P10 写入（馆藏分配后、分拣交接等） | 由调用方提供 summary / before·after；外部流水写入 `refNo`（幂等） |
 
 发订成功时：除 `order.issue` 外，每个变为已发订的行记一条（可用 `order_line.status_auto` 或专用 `order_line.issue`——**采用 `order_line.issue`**，与订单头发订对应，便于筛选）。
 
@@ -241,7 +240,7 @@
 ### 7.2 图灵 P10
 
 - 接口语义：新增订购/单册相关日志 → 落为本模型一条（通常 `subjectType=order_line`，`source=turing`，`action=order_line.turing_log` 或调用方指定更细 action）。  
-- 请求须带 `externalId`；重复提交返回已有记录。  
+- 请求须带参考单号写入 `refNo`（外部流水/溯源号）；同一 `source=turing` + `refNo` 重复提交返回已有记录。  
 - 出现阶段对齐现有设计：预验收馆藏分配后、上机分拣交接后等。
 
 ### 7.3 错误处理
@@ -250,7 +249,7 @@
 |------|------|
 | 业务失败 | 不写日志 |
 | 业务成功、日志失败 | 不回滚业务；告警/重试（原型可降级） |
-| P10 重复 `externalId` | 幂等返回，不新增 |
+| P10 重复 `refNo`（同 source=turing） | 幂等返回，不新增 |
 | 关联单据跳转失效 | 提示后停留当前页 |
 
 ---
