@@ -43,7 +43,7 @@
 
 | 方案 | 说明 | 结论 |
 |------|------|------|
-| 1 | 统一操作日志表：`subjectType` + `relatedOrderLineNos` 聚合 | **采用** |
+| 1 | 统一操作日志表：`subjectType` + **主体单号** + **关联单号（可空）** | **采用** |
 | 2 | 行时间线投影 + 单据日志双写 | 否决（双写一致性成本高） |
 | 3 | 字段级变更流水再拼操作 | 否决（噪声大、与业务语言不合） |
 
@@ -56,11 +56,12 @@
 1. **统一记录结构**，所有主体共用同一模型（见 §4）。  
 2. **仅业务成功落库后**记日志；校验失败、用户取消不记。  
 3. **批量操作**：每个成功触及的 order / order_line **各写一条**，summary 可带批次信息。  
-4. **订单行时间线查询**：`subjectType=order_line` 且 `subjectId=本行号`，**或** `relatedOrderLineNos` 含本行号。  
-5. **粒度**：摘要 + 关键字段 `changes[]`（`field` / `label` / `from` / `to`）；不做整行快照。  
-6. **来源**仅两类：`system`（本系统业务落库，含馆员操作与自动状态推进）、`turing`（图灵 P10）。  
-7. **写入失败不回滚已成功业务**；原型可容错，实现期可告警/重试。  
-8. **P10 幂等**：同一 `ref.externalId` 不双写。
+4. **主体单号 / 关联单号**：不绑死订单行；任意单据日志均用「主体 = 当前单据，关联 = 上下文上级（可空）」。订单行日志示例：主体单号 = 订单行号，关联单号 = 订单号。验收单日志示例：主体 = 验收单号，关联 = 订单号（可空）。  
+5. **订单行时间线查询**：`subjectType=order_line` 且 `subjectId=本行号`。单据写回本行时**同时**落一条 `order_line.*`（主体为本行、关联为订单号），故行页签无需按数组反查多行。  
+6. **粒度**：摘要 + 关键字段 `changes[]`（`field` / `label` / `from` / `to`）；不做整行快照。  
+7. **来源**仅两类：`system`（本系统业务落库，含馆员操作与自动状态推进）、`turing`（图灵 P10）。  
+8. **写入失败不回滚已成功业务**；原型可容错，实现期可告警/重试。  
+9. **P10 幂等**：同一 `ref.externalId` 不双写。
 
 ---
 
@@ -73,12 +74,12 @@
 | `operator` / `operatorId` | string | 操作人（图灵可传其操作者或约定系统账号） |
 | `source` | enum | `system` \| `turing` |
 | `subjectType` | enum | `order` \| `order_line` \| `acceptance` \| `batch_acceptance` \| `return` \| `exchange` \| `settlement` \| `shortage` |
-| `subjectId` | string | 主体单号或订单行号 |
-| `relatedOrderLineNos` | string[] | 触及的订单行号（行时间线聚合键） |
+| `subjectId` | string | **主体单号**：当前操作主体的业务单号（订单号、订单行号、验收单号、结算单号等） |
+| `relatedId` | string \| null | **关联单号**：可空；上下文/上级单据号。例：订单行日志 → 所属订单号；验收单日志 → 绑定订单号 |
 | `action` | string | 操作类型枚举，见 §5 |
 | `summary` | string | 一句话摘要 |
 | `changes` | `{ field, label, from, to }[]` | 关键字段前后值；可空（如纯导出） |
-| `ref` | object | 可选：`docNo`、`batchId`、`externalId`（P10 幂等）、`orderNo` 等 |
+| `ref` | object | 可选：本次业务旁路单据（如收货对应的验收单号 `docNo`）、`batchId`、`externalId`（P10 幂等）等；**不**再冗余存放已在 `relatedId` 中的上级单号 |
 
 展示文案映射（页签列「来源」）：`system`→系统，`turing`→图灵。
 
@@ -131,7 +132,7 @@
 
 ### 5.3 单据主体（本期定义事件，UI 后做）
 
-写单据日志时必须填 `relatedOrderLineNos`（可知范围内）；行时间线可同时存在对应 `order_line.*` 记录。
+单据日志：`subjectId` = 该单据号，`relatedId` = 关联订单号（可知则填，可空）。若操作同时改写订单行，再为每个触及行写一条 `order_line.*`（`subjectId` = 行号，`relatedId` = 订单号，`ref.docNo` = 本单据号便于跳转）。
 
 | subjectType | 必记动作 |
 |-------------|----------|
@@ -141,7 +142,7 @@
 | `settlement` | 生成、确认、失败/驳回 |
 | `shortage` | 生成；（若产品后续有取消/关闭则一并记） |
 
-单据侧 `action` 命名采用 `acceptance.create`、`settlement.confirm` 等形式，实现计划中与前端枚举表一并列出；**行页签展示以 `order_line.*` 与聚合到的单据摘要为主**。
+单据侧 `action` 命名采用 `acceptance.create`、`settlement.confirm` 等形式，实现计划中与前端枚举表一并列出；**行页签只查 `order_line` 主体记录**。
 
 ### 5.4 明确不记
 
@@ -172,7 +173,7 @@
 | 操作类型 | action 中文标签 |
 | 摘要 | `summary` |
 | 关键变更 | 多条 `label from→to` 用 ` · ` 拼接；过长截断，可展开 |
-| 关联单据 | `ref.docNo` 或 subject 单号；可点击跳转对应详情；无则 — |
+| 关联单号 | `relatedId`（订单行场景多为所属订单号）；可点跳转；无则 —。旁路业务单（验收/结算等）用 `ref.docNo`，有则在摘要或同列次要展示并可点 |
 
 - 筛选项：来源（全部 / 系统 / 图灵）、操作类型（全部 + 枚举）  
 - 默认时间倒序；分页 10/20/50  
@@ -181,7 +182,7 @@
 
 ### 6.3 查询
 
-按当前订单行号聚合（§3 第 4 条）。筛选在客户端或查询参数中作用于结果集；切换筛选后分页重置为第 1 页。
+按 §3 第 5 条：`subjectType=order_line` 且 `subjectId=当前行号`。筛选在客户端或查询参数中作用于结果集；切换筛选后分页重置为第 1 页。
 
 ### 6.4 关联跳转
 
@@ -233,6 +234,7 @@
 | 来源 | 仅 `system` / `turing`；无手写备注 |
 | 用途侧重 | 业务追溯为主，来源/类型可筛兼顾运维 |
 | 架构 | 统一日志模型（方案 1） |
+| 主体/关联 | `subjectId` 主体单号 + `relatedId` 关联单号（可空）；取代 `relatedOrderLineNos[]` |
 | 页签布局 | 筛选条 + 表格（方案 A） |
 | 增补操作 | 列表新建订单、发货导入写回、换货到货、查重写回与书目关联、结算后续、申请结算、状态自动推进、发货冲销等全部纳入（头脑风暴缺口表 1–10） |
 | 不记 | 列配置/筛选/未提交弹窗/只读查看/预验收纯草稿 |
