@@ -56,7 +56,7 @@
 1. **头表 = 一次操作事件一条记录**：记录**主操作对象**（`subjectNo` + `subjectType`）、操作人、前后快照（`beforeJson` / `afterJson`）、操作结果（`operateResult` / `errorMsg`）及摘要、来源等。  
 2. **明细表 = 本次操作涉及的所有业务单据/单据行**：解决订单、订单行、验收单、验收明细、退货/换货、催缺、结算单等之间的**多对多关联**。每条明细一个 `relNo` + `relType`（及 `relAction` / `relDesc` / `ext`）。  
 3. **操作结果**：`operateResult`：`1` 成功、`0` 失败。成功时按落库结果写明细与快照；失败时填 `errorMsg`，明细可写已识别到的涉及单。纯 UI 取消（未提交）不记。  
-4. **批量 / 一单多行**：优先 **1 次操作事件 = 1 条头**，所有涉及单/行进明细（例如一批收货：头挂验收单，明细含各订单行 + 订单号等）。若产品要按行拆事件，也可一行一头，但默认采「一事一头」。  
+4. **批量 / 一单多行**：优先 **1 次操作事件 = 1 条头**，所有涉及单/行进明细（例如一批收货：头挂验收单，明细含各订单行 + 订单号等）。若一次用户动作产生**多条头**（如批量发订每单一头），这些头共用同一个可空字段 **`batchId`**；单笔操作 `batchId` 为空。  
 5. **三号语义**（契约驼峰）：  
    - **`subjectNo`**：主操作对象单号（事件挂靠谁）。  
    - **`relNo`（明细）**：本事件涉及的业务单/行（可多条，覆盖多对多）。  
@@ -87,6 +87,7 @@
 | `refType` | string \| null | 参考单类型（可空） |
 | `source` | enum | `system` \| `turing` |
 | `action` | string | 操作类型，见 §5 |
+| `batchId` | string \| null | **批量操作 ID**：同一次用户批量动作产生的多条头表日志共用；单笔为 `null`。库可对 `batch_id` |
 | `summary` | string | 操作文字摘要 |
 | `operatorId` | string / number | 操作人 ID |
 | `operatorName` | string | 操作人姓名 |
@@ -99,7 +100,7 @@
 | `afterJson` | object \| null | 操作后关键字段快照 |
 | `createTime` / `updateTime` | datetime | 入库 / 更新时间 |
 
-建议索引：`(subjectType, subjectNo, operateTime)`、`refNo`。
+建议索引：`(subjectType, subjectNo, operateTime)`、`refNo`、`batchId`。
 
 ### 4.2 明细表（本事件涉及的全部单据/行，0～N）
 
@@ -196,37 +197,43 @@
 
 ### 5.5 业务场景写入对照（头表 / 明细）
 
-约定：下列「主表」= 头表一行；「关联表」= 明细 0～N 行。快照写头表 `beforeJson`/`afterJson`（主对象维度；多行批量时快照可放汇总或 `ext`，行级细节可放各明细 `ext`）。`operateResult`/`errorMsg` 按实际成败填写，表中默认成功路径。
+约定：下列「主表」= 头表一行；「关联表」= 明细 0～N 行。快照写头表 `beforeJson`/`afterJson`（主对象维度；多行批量时快照可放汇总或 `ext`，行级细节可放各明细 `ext`）。`operateResult`/`errorMsg` 按实际成败填写，表中默认成功路径。  
+**`batchId`**：同一次批量 UI/API 动作下写入的多条头共用一个新生成 ID；下表「batchId」列写「共用」或「—」（单笔）。
 
 #### 5.5.1 订单
 
-| 业务场景 | action | 主表 subjectType / subjectNo | refNo | 关联表（relType + relNo，relAction 示意） |
-|----------|--------|------------------------------|-------|------------------------------------------|
-| 列表新建空订单 | `order.create` | order / 新订单号 | — | 可空，或 order+自身 |
-| 书目查询新建订单（含落行） | `order.create` | order / 新订单号 | — | 各新行 order_line；可选 bib 线索进 `ext` |
-| 更换供应商·新建订单 | `order.create` | order / 新订单号 | 源订单号（溯源） | 新行 order_line；源行 order_line（relAction=迁出关联） |
-| 编辑订单 | `order.edit` | order / 订单号 | — | 可空 |
-| 发订（单笔） | `order.issue` | order / 订单号 | — | 每个成功发订行 order_line（写回） |
-| 批量发订 | `order.issue` | **每个成功订单各 1 头** order / 该订单号 | — | 该单下成功行 order_line；失败单另头 `operateResult=0` |
-| 撤订（单笔/批量） | `order.cancel` | 每单 1 头 order / 订单号 | — | 被撤订的行 order_line |
-| 删除订单 | `order.delete` | order / 订单号 | — | 被删关联行 order_line（若有） |
-| 导入订单 / 重新导入 / 继续入库 | `order.import` | order / 订单号 | 导入任务号（可选） | 新建或更新的 order_line |
-| 导出订单（单笔/批量） | `order.export` | 每单 1 头 order / 订单号 | — | 可空；范围可写 `ext` |
-| 订单状态自动推进 | `order.status_auto` | order / 订单号 | 触发单据号（可选） | 相关行 order_line（若一并变） |
+| 业务场景 | action | 主表 subjectType / subjectNo | refNo | batchId | 关联表（relType + relNo，relAction 示意） |
+|----------|--------|------------------------------|-------|---------|------------------------------------------|
+| 列表新建空订单 | `order.create` | order / 新订单号 | — | — | 可空，或 order+自身 |
+| 书目查询新建订单（含落行） | `order.create` | order / 新订单号 | — | — | 各新行 order_line；可选 bib 线索进 `ext` |
+| 更换供应商·新建订单 | `order.create` | order / 新订单号 | 源订单号（溯源） | — | 新行 order_line；源行 order_line（relAction=迁出关联） |
+| 编辑订单 | `order.edit` | order / 订单号 | — | — | 可空 |
+| 发订（单笔） | `order.issue` | order / 订单号 | — | — | 每个成功发订行 order_line（写回） |
+| 批量发订 | `order.issue` | **每个成功订单各 1 头** order / 该订单号 | — | **共用** | 该单下成功行 order_line；失败单另头同 `batchId`、`operateResult=0` |
+| 撤订（单笔） | `order.cancel` | order / 订单号 | — | — | 被撤订的行 order_line |
+| 批量撤订 | `order.cancel` | 每单 1 头 order / 订单号 | — | **共用** | 被撤订的行 order_line |
+| 删除订单 | `order.delete` | order / 订单号 | — | — | 被删关联行 order_line（若有） |
+| 导入订单 / 重新导入 / 继续入库 | `order.import` | order / 订单号 | 导入任务号（可选） | — | 新建或更新的 order_line |
+| 导出订单（单笔） | `order.export` | order / 订单号 | — | — | 可空；范围可写 `ext` |
+| 批量导出订单 | `order.export` | 每单 1 头 order / 订单号 | — | **共用** | 可空；范围可写 `ext` |
+| 订单状态自动推进 | `order.status_auto` | order / 订单号 | 触发单据号（可选） | — | 相关行 order_line（若一并变） |
 
 #### 5.5.2 订单行
 
-| 业务场景 | action | 主表 | refNo | 关联表 |
-|----------|--------|------|-------|--------|
-| 加入订单创建行 | `order_line.create` | order_line / 新行号 | — | order + 所属订单号 |
-| 换商·加入已有订单追加行 | `order_line.create` | order_line / 新行号 | 源订单号或源行号 | order + 目标订单；源行 order_line |
-| 编辑订单行 | `order_line.edit` | order_line / 行号 | — | order + 所属订单 |
-| 撤订行（含批量/换商迁出撤订/催缺撤订） | `order_line.cancel` | **批量：可一事一头** order / 订单号，或按行一头 order_line | 催缺单号等（若有） | 被撤各行 order_line；换商时另含目标 order / 新行 |
-| 删除订单行 | `order_line.delete` | order_line / 行号 | — | order + 所属订单 |
-| 导出订单行 | `order_line.export` | 可挂首行或订单；推荐 order + 订单号一事一头 | — | 导出的各 order_line |
-| 查重写回 | `order_line.dedup` | **批量查重一事一头** 可用首行或虚拟批次；单行则 order_line / 行号 | — | 本批各 order_line；重复命中订单行可作 rel |
-| 关联/取消关联书目 | `order_line.bib_link` | order_line / 行号 | 书目记录号（溯源） | order + 所属订单 |
-| 行状态自动推进 | `order_line.status_auto` | order_line / 行号 | 触发单据（可选） | order + 所属订单 |
+| 业务场景 | action | 主表 | refNo | batchId | 关联表 |
+|----------|--------|------|-------|---------|--------|
+| 加入订单创建行 | `order_line.create` | order_line / 新行号 | — | — | order + 所属订单号 |
+| 换商·加入已有订单追加行 | `order_line.create` | order_line / 新行号 | 源订单号或源行号 | — | order + 目标订单；源行 order_line |
+| 编辑订单行 | `order_line.edit` | order_line / 行号 | — | — | order + 所属订单 |
+| 撤订行（单笔/换商迁出/催缺） | `order_line.cancel` | order_line / 行号，或 order / 订单号一事一头 | 催缺单号等（若有） | — | 被撤行 order_line；换商时另含目标 order / 新行 |
+| 批量撤订行 | `order_line.cancel` | 按行多头或按单多头 | — | **共用**（若拆成多头） | 被撤各行 order_line |
+| 删除订单行 | `order_line.delete` | order_line / 行号 | — | — | order + 所属订单 |
+| 导出订单行（单笔范围） | `order_line.export` | 推荐 order / 订单号一事一头 | — | — | 导出的各 order_line |
+| 批量导出订单行 | `order_line.export` | 若拆多头则每头… | — | **共用** | 导出的各 order_line |
+| 查重写回（单行） | `order_line.dedup` | order_line / 行号 | — | — | order_line；重复命中可作 rel |
+| 批量查重写回 | `order_line.dedup` | **推荐一事一头**（挂首行或订单） | — | —（单头）；若拆多头则**共用** | 本批各 order_line |
+| 关联/取消关联书目 | `order_line.bib_link` | order_line / 行号 | 书目记录号（溯源） | — | order + 所属订单 |
+| 行状态自动推进 | `order_line.status_auto` | order_line / 行号 | 触发单据（可选） | — | order + 所属订单 |
 
 #### 5.5.3 收货 / 退换 / 撤销
 
