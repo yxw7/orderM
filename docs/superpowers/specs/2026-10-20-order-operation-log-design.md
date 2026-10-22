@@ -25,7 +25,7 @@
 
 ### 1.3 非目标（本期）
 
-- 各单据详情页的日志 Tab / 独立「操作日志」管理菜单。  
+- 各单据详情页的日志 Tab / 独立「操作日志」管理菜单。（**验收单页签 + 单册抽屉**另见 `2026-10-22-acceptance-item-operation-log-design.md`，不在本文件本期交付内。）  
 - 馆员手写备注类日志。  
 - 真实后端持久化、告警队列、跨请求幂等框架（原型用 mock；P10 幂等键写入 `refNo`）。  
 - **图灵对接**（含 P10「新增订购日志」联调与真实写入；模型/mock 可预留 `source=turing` 与 `refNo`）。  
@@ -83,7 +83,7 @@
 | `logId` | string / number | 日志主键 |
 | `tenantId` | string / number | 租户 ID |
 | `subjectNo` | string | **主体单号**：主操作对象 |
-| `subjectType` | enum | 主体类型：`order` \| `order_line` \| `acceptance` \| `batch_acceptance` \| `return` \| `exchange` \| `settlement` \| `shortage`（验收明细等可用扩展类型码，如 `acceptance_line`） |
+| `subjectType` | enum | 主体类型：`order` \| `order_line` \| `acceptance` \| `item` \| `return` \| `exchange` \| `settlement` \| `shortage`（验收明细等可用扩展类型码，如 `acceptance_line`）。**批验与验收单管理统一用 `acceptance`**；原草案 `batch_acceptance` 已合并，见 `2026-10-22-acceptance-item-operation-log-design.md`。`item` = 订单侧单册（稳定单册号，非条码） |
 | `refNo` | string \| null | **参考单号**：上游溯源/外部流水等；可空。P10 外部流水写入此字段并作幂等键 |
 | `refType` | string \| null | 参考单类型（可空） |
 | `source` | enum | `system` \| `turing` |
@@ -175,19 +175,19 @@
 
 `order_line.issue`：**保留为 action 码**，仅当「事件主对象挂在订单行」时使用（少见）；订单头发订统一用 `order.issue` + 明细含各行，行页签靠明细 `relNo` 命中。
 
-### 5.3 单据主体（本期定义事件，UI 后做）
+### 5.3 单据主体（验收/单册 UI 见 10-22；其余本期仅定义事件）
 
 单据侧事件：头表 `subjectNo` = 该单据号；**所有涉及的订单/行/其它单**写入明细。溯源/外部号用头表 `refNo`。写入细则见 §5.5。
 
 | subjectType | 必记动作 |
 |-------------|----------|
-| `acceptance` | 新建/编辑、预验收入库（草稿）、结束验收、申请结算、导出 |
-| `batch_acceptance` | 新建（含单册生成方式 none/virtual/actual）、列表收货写回、虚拟→实际（若有） |
+| `acceptance` | 新建/编辑（含批验 `itemGenMode`）、预验收入库（草稿）、收货/换/退/撤销、结束验收、申请结算、导出、重启（若有）。**批验不再使用 `batch_acceptance` 主体类型** |
+| `item` | 单册创建、`pre→actual`、字段更新、作废/删除（若有）、P10 单册侧预留；完整清单与双写见 `2026-10-22-acceptance-item-operation-log-design.md` |
 | `return` / `exchange` | 创建、到货冲销、状态变更 |
 | `settlement` | 生成、确认、失败/驳回 |
 | `shortage` | 生成；（若产品后续有取消/关闭则一并记） |
 
-单据侧 `action` 命名采用 `acceptance.create`、`settlement.confirm` 等形式。行页签查询见 §3 第 6 条。
+单据侧 `action` 命名采用 `acceptance.create`、`item.promote`、`settlement.confirm` 等形式。行页签查询见 §3 第 6 条。验收单页签 / 单册抽屉见 10-22。
 
 ### 5.4 明确不记
 
@@ -241,7 +241,7 @@
 | 业务场景 | action | 主表 | refNo | 关联表 |
 |----------|--------|------|-------|--------|
 | 逐条收货（挂当前验收单） | `order_line.receive` 或 `acceptance.receive` | **推荐** acceptance / 验收单号 | — | 本行 order_line；order；若有验收明细 acceptance_line |
-| 批量验收列表收货（多行） | 同上 | acceptance 或 batch_acceptance / 验收单号 | — | 各收货行 order_line；各 order；acceptance_line |
+| 批量验收列表收货（多行） | 同上 | acceptance / 验收单号（触及单册时另写各 item 头，共用 batchId） | — | 各收货行 order_line；各 order；acceptance_line；item |
 | 发货单导入提交收/换/退 | 按处置拆 action 或一事多 relAction | acceptance 或导入任务作 subject（若有任务号）/ 否则订单 | 发货单号/任务号 | 各涉及 order_line、order；换/退单据号 |
 | 优先对换货冲销收货 | `order_line.receive_offset_exchange` | acceptance / 验收单号 | — | order_line；exchange（换货记录）；order |
 | 换货写回 | `order_line.exchange` | acceptance 或 exchange / 对应单号 | — | order_line；order；exchange |
@@ -263,13 +263,13 @@
 
 | 业务场景 | action | 主表 | refNo | 关联表 |
 |----------|--------|------|-------|--------|
-| 新建验收单/批验（绑订单） | `acceptance.create` / `batch_acceptance.create` | acceptance 或 batch_acceptance / 新单号 | — | order + 绑定订单号 |
+| 新建验收单/批验（绑订单） | `acceptance.create` | acceptance / 新单号 | — | order + 绑定订单号；批验特性进 ext |
 | 编辑验收单 | `acceptance.edit` | acceptance / 单号 | — | order（若仍绑定） |
 | 预验收入库（仅草稿） | `acceptance.pre_accept` | acceptance / 单号 | 发货文件/任务号 | 草稿涉及行可记 order_line（可选）；无行套数写回则可不进行页签关注点 |
 | 结束验收 | `acceptance.finish` | acceptance / 单号 | — | 相关 order_line / order |
 | 导出验收清单 | `acceptance.export` | acceptance / 单号 | — | 可空或导出范围行 |
-| 批验虚拟单册生成 | `batch_acceptance.create`（virtual） | batch_acceptance / 单号 | — | order；各预生成相关 order_line / acceptance_line |
-| 虚拟→实际 | `batch_acceptance.promote` | batch_acceptance / 单号 | — | 相关 order_line、acceptance_line |
+| 批验虚拟单册生成 | `acceptance.create`（virtual；可另写各 `item.create`） | acceptance / 单号 | — | order；各预生成相关 order_line / acceptance_line / item |
+| 虚拟→实际（收货确认） | `acceptance.receive` + 各 `item.promote` | acceptance / 单号；各 item / 单册号 | — | 相关 order_line、acceptance_line、item；多头共用 batchId |
 
 #### 5.5.6 图灵 P10
 
@@ -376,6 +376,6 @@ DataTable（风格对齐相关订单行/验收/结算 Tab；**无筛选条**）�
 ## 10. 后续工作
 
 1. 编写 implementation plan（mock 页签优先，再挂业务写点）。  
-2. 单据详情日志 Tab 另开设计。  
+2. 验收单操作日志页签 + 单册抽屉：见 `2026-10-22-acceptance-item-operation-log-design.md`（已定稿待审阅）。  
 3. P10 接口字段级契约与联调。  
 4. 实现期将 `order_line.issue` 与发订、批量部分成功提示对齐。  
